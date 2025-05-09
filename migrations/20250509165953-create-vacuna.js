@@ -2,42 +2,26 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Usuarios', {
+    await queryInterface.createTable('Vacunas', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      id_rol: {
+      lote_id: {
         type: Sequelize.INTEGER,
         references: {
-          //Importante, Agregar la "s" porque al crear tablas, sequelize agrega siempre una "s"
-          model: 'Rols',
+          model: 'Lotes',
           key: 'id'
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      Nombre: {
+      tipo: {
         type: Sequelize.STRING
       },
-      Apellido: {
-        type: Sequelize.STRING
-      },
-      DNI: {
-        type: Sequelize.STRING
-      },
-      Correo: {
-        type: Sequelize.STRING
-      },
-      Telefono: {
-        type: Sequelize.STRING
-      },
-      usuario: {
-        type: Sequelize.STRING
-      },
-      password: {
+      nombre_comercial: {
         type: Sequelize.STRING
       },
       createdAt: {
@@ -51,6 +35,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Usuarios');
+    await queryInterface.dropTable('Vacunas');
   }
 };

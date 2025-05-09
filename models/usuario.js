@@ -14,8 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       Usuario.belongsTo(models.Rol, {
         foreignKey: 'id',
         target_Key: 'id_rol'
-      });
-    }
+      });    }
   }
   Usuario.init({
     id_rol: DataTypes.INTEGER,
