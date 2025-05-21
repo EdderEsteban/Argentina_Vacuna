@@ -2,13 +2,18 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Roles', {  
+    await queryInterface.createTable('Estados', {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      nombre: {  
+      nombre: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
+      },
+      codigo: {
         type: Sequelize.STRING,
         allowNull: false,
         unique: true
@@ -22,11 +27,15 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+      },
+      deletedAt: {
+        type: Sequelize.DATE,
+        allowNull: true
       }
     });
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('Roles');
+    await queryInterface.dropTable('Estados');
   }
 };

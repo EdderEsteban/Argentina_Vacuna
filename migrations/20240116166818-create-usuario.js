@@ -4,56 +4,70 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('Usuarios', {
       id: {
-        allowNull: false,
-        autoIncrement: true,
+        type: Sequelize.INTEGER,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        autoIncrement: true
       },
       id_rol: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
-          //Importante, Agregar la "s" porque al crear tablas, sequelize agrega siempre una "s"
-          model: 'Rols',
+          model: 'Roles',
           key: 'id'
         },
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        onDelete: 'RESTRICT'  // Previene borrado si hay usuarios
       },
-      Nombre: {
-        type: Sequelize.STRING
-      },
-      Apellido: {
-        type: Sequelize.STRING
-      },
-      DNI: {
+      nombre: {
         type: Sequelize.STRING,
+        allowNull: false
+      },
+      apellido: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
+      dni: {
+        type: Sequelize.STRING,
+        allowNull: false,
         unique: true
       },
-      Correo: {
+      correo: {
         type: Sequelize.STRING,
-        unique: true
+        allowNull: false,
+        unique: true,
+        validate: {
+          isEmail: true
+        }
       },
-      Telefono: {
+      telefono: {
         type: Sequelize.STRING
       },
       usuario: {
         type: Sequelize.STRING,
+        allowNull: false,
         unique: true
       },
       password: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        allowNull: false
       },
       createdAt: {
+        type: Sequelize.DATE,
         allowNull: false,
-        type: Sequelize.DATE
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
       updatedAt: {
+        type: Sequelize.DATE,
         allowNull: false,
-        type: Sequelize.DATE
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+      },
+      deletedAt: {
+        type: Sequelize.DATE,
+        allowNull: true
       }
     });
-  },
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Usuarios');
+
+    await queryInterface.addIndex('Usuarios', ['dni']);
+    await queryInterface.addIndex('Usuarios', ['correo']);
   }
 };

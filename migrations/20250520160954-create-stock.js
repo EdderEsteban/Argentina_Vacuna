@@ -2,22 +2,27 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Lotes', {
+    await queryInterface.createTable('Stocks', {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      num_lote: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
-      },
-      id_laboratorio: {
+      id_lote: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Laboratorios',
+          model: 'Lotes',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'RESTRICT'
+      },
+      id_ubicacion: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Ubicaciones',
           key: 'id'
         },
         onUpdate: 'CASCADE',
@@ -25,19 +30,11 @@ module.exports = {
       },
       cantidad: {
         type: Sequelize.INTEGER,
-        allowNull: false
-      },
-      fecha_fab: {
-        type: Sequelize.DATEONLY,
-        allowNull: false
-      },
-      fecha_venc: {
-        type: Sequelize.DATEONLY,
-        allowNull: false
-      },
-      fecha_compra: {
-        type: Sequelize.DATEONLY,
-        allowNull: false
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+          min: 0
+        }
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -48,18 +45,18 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
-      },
-      deletedAt: {
-        type: Sequelize.DATE,
-        allowNull: true
       }
     });
 
-    await queryInterface.addIndex('Lotes', ['num_lote']);
-    await queryInterface.addIndex('Lotes', ['fecha_venc']);
+    // Índices compuestos para evitar duplicados y optimizar consultas
+    await queryInterface.addIndex('Stocks', ['id_lote', 'id_ubicacion'], {
+      unique: true,
+      name: 'stock_lote_ubicacion_unique'
+    });
+    await queryInterface.addIndex('Stocks', ['id_ubicacion']);
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('Lotes');
+    await queryInterface.dropTable('Stocks');
   }
 };
