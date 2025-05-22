@@ -1,0 +1,23 @@
+extends __Layout/base
+
+block content
+    .container.my-5.pt-4
+        h1 Bienvenido al Sistema de Registro de Vacunas Nacional
+        p Para comenzar, por favor inicie sesión con su usuario y contraseña
+
+        .container.mt-5.mb-5
+            .row.justify-content-center
+                .col-12.col-md-8.col-lg-6.col-xl-4
+                    .card
+                        .card-body
+                            h2.card-title.text-center.mb-4 Login
+                                form(action="/login" method="POST")
+                                .mb-3
+                                    input.form-control(type="text" placeholder="Usuario" name="username")
+                                .mb-3
+                                    input.form-control(type="password" placeholder="Contraseña" name="password")
+                                .d-grid
+                                    button.btn.btn-primary(type="submit") Iniciar Sesión
+
+        p Si no tiene cuenta, solicite una al Area Tecnica para registrarse, por favor haga clic en el siguiente enlace:
+        a(tipe="button" href="/registro") Registro
