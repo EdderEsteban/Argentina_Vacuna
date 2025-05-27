@@ -1,0 +1,40 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 ✏️ Editar Laboratorio
+
+    form(method="POST" action=`/actualizarlaboratorio/${laboratorio.id}`)
+      input(type="hidden" name="_csrf" value=csrfToken)
+      
+      .mb-3
+        label.form-label(for="nombre") Nombre del Laboratorio
+        input.form-control(
+          type="text"
+          id="nombre"
+          name="nombre"
+          value=laboratorio.nombre
+          required
+          minlength="3"
+          maxlength="100"
+        )
+        small.form-text.text-muted Mínimo 3 caracteres, máximo 100
+        
+      .mb-3
+        label.form-label(for="nacionalidad") Nacionalidad
+        input.form-control(
+          type="text"
+          id="nacionalidad"
+          name="nacionalidad"
+          value=laboratorio.nacionalidad
+          required
+        )
+        small.form-text.text-muted País de origen del laboratorio
+        
+      .d-flex.gap-2
+        button.btn.btn-primary(type="submit")
+          i.bi.bi-save.me-2
+          | Guardar Cambios
+        a.btn.btn-secondary(href="/laboratorios")
+          i.bi.bi-x-circle.me-2
+          | Cancelar

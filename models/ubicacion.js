@@ -53,8 +53,9 @@ module.exports = (sequelize, DataTypes) => {
         ) {
           throw new Error('LEl campo provincia es obligatorio para centros de vacunación y depósitos provinciales');
         }
-      },
-      hooks: {
+      }       
+    },
+    hooks: {
         async beforeValidate(ubicacion, options) {
           if (ubicacion.id_provincia) {
             const provincia = await sequelize.models.Provincia.findByPk(ubicacion.id_provincia);
@@ -63,8 +64,8 @@ module.exports = (sequelize, DataTypes) => {
             }
           }
         }
-      }       
-    }
+      } 
   });
+
   return Ubicacion;
 };

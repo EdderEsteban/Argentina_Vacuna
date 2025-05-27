@@ -1,0 +1,39 @@
+extends ../__layout/main
+
+block content
+    .container.mt-4
+        h1.mb-4 🧫 Nuevo Laboratorio
+
+        form#formNuevoLaboratorio
+            input(type="hidden" name="_csrf" value=csrfToken)
+
+            .mb-3
+                label.form-label(for="nombreLaboratorio") Nombre del Laboratorio
+                input.form-control(
+                    type="text"
+                    id="nombreLaboratorio"
+                    name="nombreLaboratorio"
+                    required
+                    autofocus
+                )
+                small.form-text.text-muted Mínimo 3 caracteres, máximo 100
+
+            .mb-3
+                label.form-label(for="nacionalidadLaboratorio") Nacionalidad
+                input.form-control(
+                    type="text"
+                    id="nacionalidadLaboratorio"
+                    name="nacionalidadLaboratorio"
+                    required
+                )
+                small.form-text.text-muted País de origen del laboratorio
+
+            .d-flex.gap-2
+                button.btn.btn-primary(type="button" id="guardarNuevoLaboratorio")
+                    i.bi.bi-save.me-2
+                    | Guardar Cambios
+                a.btn.btn-secondary(type="button" id="cancelarNuevoLaboratorio")
+                    i.bi.bi-x-circle.me-2
+                    | Cancelar
+
+    script(src="/js/laboratorio.js")
