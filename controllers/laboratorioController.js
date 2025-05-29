@@ -3,22 +3,37 @@ const { Op } = require('sequelize');
 
 const labo = {}
 
-// Listar laboratorios
+// Listar laboratorios con paginación
 labo.listar = async (req, res) => {
-    try {
-        const laboratorios = await Laboratorio.findAll({
-            where: { deletedAt: null },
-            order: [['nombre', 'ASC']]
-        });
-        res.render('laboratorio/listadoLaboratorio', {
-            laboratorios
-        });
+  try {
+    const page = parseInt(req.query.page) || 1; // Página actual (default: 1)
+    const limit = 10; // Laboratorios por página
+    const offset = (page - 1) * limit;
 
-    } catch (error) {
-        console.error('Error al listar laboratorios:', error);
-        res.redirect('/404');
-    }
-}
+    const { count, rows: laboratorios } = await Laboratorio.findAndCountAll({
+      where: { deletedAt: null },
+      order: [['nombre', 'ASC']],
+      limit,
+      offset
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.render('laboratorio/listadoLaboratorio', {
+      laboratorios,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages
+      }
+    });
+
+  } catch (error) {
+    console.error('Error al listar laboratorios:', error);
+    res.redirect('/404');
+  }
+};
 
 // Mostrar formulario de creación
 labo.mostrarNuevo = async (req, res) => {

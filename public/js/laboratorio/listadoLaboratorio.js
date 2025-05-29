@@ -1,8 +1,7 @@
-// ----------------------------------- Event Delegation -----------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-    // Manejador para editar
+   // Manejador para editar y borrar laboratorios
     document.querySelector('.table').addEventListener('click', async (e) => {
         const btnEditar = e.target.closest('.editar-laboratorio');
         const btnBorrar = e.target.closest('.borrar-laboratorio');
@@ -14,13 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (btnBorrar) {
             const labId = btnBorrar.dataset.id;
-            await handleBorrarLaboratorio(labId, csrfToken);
+            await btnBorrarLaboratorio(labId, csrfToken);
         }
     });
 });
 
-// ----------------------------------- Funciones Específicas -----------------------------------
-async function handleBorrarLaboratorio(id, csrfToken) {
+async function btnBorrarLaboratorio(id, csrfToken) {
     const confirmacion = await Swal.fire({
         title: '¿Borrar laboratorio?',
         text: "¡Esta acción no se puede revertir!",
@@ -43,11 +41,8 @@ async function handleBorrarLaboratorio(id, csrfToken) {
 
             if (!response.ok) throw new Error('Error en la respuesta del servidor');
 
-            // Actualizar la UI sin recargar
-            const fila = document.querySelector(`[data-id="${id}"]`).closest('tr');
-            fila.remove();
-
-            await Swal.fire('¡Borrado!', 'El laboratorio fue eliminado.', 'success');
+            // Recargar la página para actualizar paginación
+            window.location.reload();
 
         } catch (error) {
             console.error('Error al borrar:', error);

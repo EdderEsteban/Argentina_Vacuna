@@ -5,13 +5,13 @@ block content
     h1.mb-4 🧪 Listado de Laboratorios
 
     //- Botón de nuevo laboratorio
-    a.btn.btn-primary(href='/nuevolaboratorio')
+    a.btn.btn-primary.mb-3(href='/nuevolaboratorio')
       i.bi.bi-plus-circle.me-2
       | Nuevo Laboratorio
 
     //- Tabla responsive
     .table-responsive
-      table.table.table-striped.table-hover.align-middle.mt-3
+      table.table.table-striped.table-hover.align-middle
         thead.table-dark
           tr
             th(scope='col') Nombre
@@ -26,7 +26,49 @@ block content
                 .d-flex.gap-2
                   a.btn.btn-sm.btn-outline-primary.editar-laboratorio(data-id=laboratorio.id)
                     i.bi.bi-pencil
-                  button.btn.btn-sm.btn-outline-danger.borrar-laboratorio(data-id=laboratorio.id)
+                  button.btn.btn-sm.btn-outline-danger.borrar-laboratorio(
+                    data-id=laboratorio.id
+                  )
                     i.bi.bi-trash
+
+    //- Controles de paginación
+    if pagination.totalPages > 1
+      nav(aria-label='Paginación de laboratorios')
+        ul.pagination.justify-content-center
+          li.page-item(class=pagination.currentPage === 1 ? 'disabled' : '')
+            a.page-link(
+              href=`/laboratorios?page=${pagination.currentPage - 1}`
+              aria-label='Anterior'
+            )
+              span(aria-hidden='true') &laquo;
+              span.sr-only Anterior
+          
+          //- Rango de páginas (máximo 5 visibles)
+          - let startPage = Math.max(1, pagination.currentPage - 2)
+          - let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2)
+          
+          if startPage > 1
+            li.page-item
+              a.page-link(href=`/laboratorios?page=1`) 1
+            li.page-item.disabled
+              span.page-link ...
+
+          each pageNum in Array(endPage - startPage + 1).fill().map((_, i) => startPage + i)
+            li.page-item(class=pageNum === pagination.currentPage ? 'active' : '')
+              a.page-link(href=`/laboratorios?page=${pageNum}`)= pageNum
+          
+          if endPage < pagination.totalPages
+            li.page-item.disabled
+              span.page-link ...
+            li.page-item
+              a.page-link(href=`/laboratorios?page=${pagination.totalPages}`)= pagination.totalPages
+          
+          li.page-item(class=pagination.currentPage === pagination.totalPages ? 'disabled' : '')
+            a.page-link(
+              href=`/laboratorios?page=${pagination.currentPage + 1}`
+              aria-label='Siguiente'
+            )
+              span(aria-hidden='true') &raquo;
+              span.sr-only Siguiente
 
   script(src="/js/laboratorio/listadoLaboratorio.js")
