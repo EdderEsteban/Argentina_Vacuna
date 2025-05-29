@@ -1,0 +1,42 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 🔍 Búsqueda Avanzada
+
+    //- Filtros
+    .card.mb-4
+      .card-body
+        .row.g-3
+          .col-md-6
+            .form-floating
+              input.form-control#inputNombre(
+                type="search" 
+                placeholder=""
+                autofocus
+              )
+              label.form-label(for="inputNombre") Nombre
+          .col-md-6
+            .form-floating
+              input.form-control#inputNacionalidad(
+                type="search" 
+                placeholder=""
+              )
+              label.form-label(for="inputNacionalidad") Nacionalidad
+
+
+    .table-responsive
+      table.table.table-striped.table-hover.align-middle
+        thead.table-dark
+          tr
+            th(scope='col') Nombre
+            th(scope='col') Nacionalidad
+            th(scope='col' style='width: 150px') Acciones
+        tbody#resultadosBusqueda
+
+
+    //- Contenedor para paginación
+    #paginacionContainer.d-flex.justify-content-center.mt-4
+
+
+    script(src="/js/laboratorio/buscarLaboratorio.js")

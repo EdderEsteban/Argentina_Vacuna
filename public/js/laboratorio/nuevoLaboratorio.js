@@ -1,19 +1,22 @@
 // -----------------------------------Variables-------------------------------------------------
 const formNuevoLaboratorio = document.getElementById('formNuevoLaboratorio');
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+const btnGuardar = document.getElementById('guardarNuevoLaboratorio');
 
 // -----------------------------------Botones de acción-----------------------------------------
-// Boton para guardar nuevo laboratorio
 document.getElementById('guardarNuevoLaboratorio').addEventListener('click', function (event) {
     event.preventDefault();
     enviarFormularioNuevoLaboratorio();
 });
+
 
 // Boton para cancelar nuevo laboratorio
 document.getElementById('cancelarNuevoLaboratorio').addEventListener('click', function (event) {
     event.preventDefault();
     window.location.href = '/laboratorios'; 
 });
+
+// Boton para eliminar laboratorio
 
 // ----------------------------------Funciones-------------------------------------------------
 // Validar campos del formulario de nuevo laboratorio
@@ -39,15 +42,20 @@ function validarNuevoLaboratorio(formData) {
 
 // Enviar formulario de nuevo laboratorio
 function enviarFormularioNuevoLaboratorio() {
+    // Estado inicial del botón
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = `
+        <i class="bi bi-hourglass me-2"></i>
+        Guardando...
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    `;
 
-    // Crear objeto con los datos del formulario
     const formLaboratorioData = {
         nombre: formNuevoLaboratorio.nombreLaboratorio.value.trim(),
         nacionalidad: formNuevoLaboratorio.nacionalidadLaboratorio.value.trim()
     };
-    // Validar los datos del formulario
-    if (validarNuevoLaboratorio(formLaboratorioData)) {
 
+    if (validarNuevoLaboratorio(formLaboratorioData)) {
         fetch('/crearlaboratorio', {
             method: 'POST',
             headers: {
@@ -56,7 +64,6 @@ function enviarFormularioNuevoLaboratorio() {
             },
             body: JSON.stringify(formLaboratorioData),
         })
-           
         .then(response => {
             if (!response.ok) return response.json().then(err => { throw err; });
             return response.json();
@@ -65,7 +72,8 @@ function enviarFormularioNuevoLaboratorio() {
             Swal.fire({
                 icon: 'success',
                 title: 'Éxito',
-                text: data.message || 'Laboratorio creado correctamente'
+                text: data.message || 'Laboratorio creado correctamente',
+                timer: 2000
             }).then(() => {
                 window.location.href = '/laboratorios';
             });
@@ -85,6 +93,21 @@ function enviarFormularioNuevoLaboratorio() {
                 html: `<div class="text-danger">${mensaje}</div>`,
                 footer: footer
             });
+        })
+        .finally(() => {
+            // Restaurar estado original del botón
+            btnGuardar.disabled = false;
+            btnGuardar.innerHTML = `
+                <i class="bi bi-save me-2"></i>
+                Guardar Cambios
+            `;
         });
+    } else {
+        // Si la validación falla, restaurar el botón
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = `
+            <i class="bi bi-save me-2"></i>
+            Guardar Cambios
+        `;
     }
 }

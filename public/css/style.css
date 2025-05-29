@@ -1,0 +1,14 @@
+/* Paginacion */
+.pagination {
+  margin-bottom: 0;
+}
+
+.page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.page-link {
+  cursor: pointer;
+}
+

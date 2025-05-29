@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 26-05-2025 a las 16:31:48
+-- Tiempo de generación: 29-05-2025 a las 20:36:15
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -163,7 +163,21 @@ CREATE TABLE `laboratorios` (
 INSERT INTO `laboratorios` (`id`, `nombre`, `nacionalidad`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
 (1, 'Pfizer', 'Estados Unidos', '2025-05-23 15:55:47', '2025-05-23 15:55:47', NULL),
 (2, 'Moderna', 'Estados Unidos', '2025-05-23 15:55:47', '2025-05-23 15:55:47', NULL),
-(3, 'Gamaleya', 'Rusia', '2025-05-23 15:56:24', '2025-05-23 15:56:24', NULL);
+(3, 'Gamaleya', 'Rusia', '2025-05-23 15:56:24', '2025-05-26 15:38:10', NULL),
+(4, 'Sanofi', 'Argentina', '2025-05-26 16:06:37', '2025-05-29 14:01:16', NULL),
+(20, 'Prueb', 'Argentina', '2025-05-26 19:09:06', '2025-05-29 14:00:17', NULL),
+(24, 'Pruebaa', 'Argentina', '2025-05-26 19:14:40', '2025-05-29 14:00:24', NULL),
+(27, 'asd', 'Argentina', '2025-05-27 15:53:11', '2025-05-29 15:24:21', NULL),
+(30, 'asda', 'Argentina', '2025-05-27 16:40:05', '2025-05-29 18:25:31', '2025-05-29 18:25:31'),
+(31, 'Pruebaaa', 'Argentina', '2025-05-27 16:40:28', '2025-05-29 14:00:36', NULL),
+(32, 'mas labo', 'Argentina', '2025-05-29 14:08:15', '2025-05-29 14:08:15', NULL),
+(33, 'y mas labo', 'Argentina', '2025-05-29 14:08:15', '2025-05-29 14:08:15', NULL),
+(34, 'uno mas', 'Argentina', '2025-05-29 15:13:06', '2025-05-29 15:13:06', NULL),
+(35, 'y va otro', 'Argentina', '2025-05-29 15:13:06', '2025-05-29 15:13:06', NULL),
+(36, 'numero 11', 'Argentina', '2025-05-29 15:13:40', '2025-05-29 15:13:40', NULL),
+(37, 'numero 12', 'Argentina', '2025-05-29 15:13:40', '2025-05-29 15:13:40', NULL),
+(38, 'numero 13', 'Argentina', '2025-05-29 15:14:01', '2025-05-29 15:14:01', NULL),
+(39, 'numero 14', 'Argentina', '2025-05-29 15:14:01', '2025-05-29 15:14:01', NULL);
 
 -- --------------------------------------------------------
 
@@ -333,7 +347,8 @@ INSERT INTO `sequelizemeta` (`name`) VALUES
 ('20250519160954-create-descarte.js'),
 ('20250520160954-create-stock.js'),
 ('20250520170000-add-triggers-vencimiento.js'),
-('20250521140001-create-trigger-stock.js');
+('20250521140001-create-trigger-stock.js'),
+('20250527190334-add-indexes-laboratorios.js');
 
 -- --------------------------------------------------------
 
@@ -458,7 +473,9 @@ ALTER TABLE `estados`
 --
 ALTER TABLE `laboratorios`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
+  ADD UNIQUE KEY `nombre` (`nombre`),
+  ADD KEY `laboratorios_nombre` (`nombre`),
+  ADD KEY `laboratorios_nacionalidad` (`nacionalidad`);
 
 --
 -- Indices de la tabla `lotes`
@@ -582,7 +599,7 @@ ALTER TABLE `estados`
 -- AUTO_INCREMENT de la tabla `laboratorios`
 --
 ALTER TABLE `laboratorios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT de la tabla `lotes`

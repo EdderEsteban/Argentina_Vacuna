@@ -1,4 +1,5 @@
 const { Laboratorio } = require('../models');
+const { Op } = require('sequelize');
 
 const labo = {}
 
@@ -6,6 +7,7 @@ const labo = {}
 labo.listar = async (req, res) => {
     try {
         const laboratorios = await Laboratorio.findAll({
+            where: { deletedAt: null },
             order: [['nombre', 'ASC']]
         });
         res.render('laboratorio/listadoLaboratorio', {
@@ -36,9 +38,9 @@ labo.crearLaboratorio = async (req, res) => {
             nombre: req.body.nombre.trim(),
             nacionalidad: req.body.nacionalidad.trim()
         });
-        
+
         // Respuesta para AJAX (Fetch)
-        res.status(201).json({ 
+        res.status(201).json({
             success: true,
             message: 'Laboratorio creado exitosamente',
             data: laboratorio
@@ -86,35 +88,94 @@ labo.actualizarLaboratorio = async (req, res) => {
     try {
         const laboratorio = await Laboratorio.findByPk(req.params.id);
 
+        if (!laboratorio) {
+            return res.status(404).json({
+                success: false,
+                message: 'Laboratorio no encontrado'
+            });
+        }
+
         await laboratorio.update({
             nombre: req.body.nombre.trim(),
             nacionalidad: req.body.nacionalidad.trim()
         });
-        res.redirect('/laboratorios');
+
+        res.json({
+            success: true,
+            message: 'Laboratorio actualizado exitosamente',
+            data: laboratorio
+        });
 
     } catch (error) {
-        console.error('Error al actualizar laboratorio:', error);
-        const errores = error.errors?.map(err => err.message) || ['Error al actualizar el laboratorio'];
-        res.redirect(`/editarlaboratorio/${id}`);
+        const errores = error.errors?.map(err => ({
+            campo: err.path,
+            mensaje: err.message
+        })) || [{ mensaje: 'Error desconocido' }];
+
+        res.status(400).json({
+            success: false,
+            message: 'Error al actualizar laboratorio',
+            errores
+        });
     }
-}
+};
 
 // Eliminar laboratorio (soft delete)
-labo.eliminarLaboratorio = async (req, res) => {
+labo.borrarLaboratorio = async (req, res) => {
     try {
-        console.log('Eliminando laboratorio con ID:', req.params.id);
         await Laboratorio.destroy({
             where: { id: req.params.id }
         });
-        //mensaje sweet alert
-        res.redirect('/laboratorios');
-
+        res.sendStatus(204); // Respuesta exitosa sin contenido
     } catch (error) {
-        console.error('Error al eliminar laboratorio:', error);
-        // mensaje sweet alert
-        res.redirect('/laboratorios');
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
-}
+};
+
+// Formulario de búsqueda
+labo.mostrarBuscar = (req, res) => {
+    res.render('laboratorio/buscarLaboratorio', {
+    });
+};
+
+// Buscar laboratorio por nombre
+labo.buscarLaboratorio = async (req, res) => {
+  try {
+    const { nombre, nacionalidad, page = 1 } = req.query;
+    const limit = 10; // Aca se ajusta el numero de resultados por página
+    const offset = (page - 1) * limit; 
+
+    const where = {};
+    if (nombre) where.nombre = { [Op.like]: `${nombre}%` };
+    if (nacionalidad) where.nacionalidad = { [Op.like]: `${nacionalidad}%` };
+
+    const { count, rows } = await Laboratorio.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['nombre', 'ASC']]
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.json({
+      laboratorios: rows,
+      pagination: {
+        totalItems: count,
+        currentPage: parseInt(page),
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+    });
+  } catch (error) {
+    console.error('Error en búsqueda:', error);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+};
 
 
 module.exports = labo;

@@ -8,7 +8,7 @@ block content
     a.btn.btn-primary(href='/nuevolaboratorio')
       i.bi.bi-plus-circle.me-2
       | Nuevo Laboratorio
-    
+
     //- Tabla responsive
     .table-responsive
       table.table.table-striped.table-hover.align-middle.mt-3
@@ -24,11 +24,9 @@ block content
               td= laboratorio.nacionalidad
               td
                 .d-flex.gap-2
-                  a.btn.btn-sm.btn-outline-primary(href=`editarlaboratorio/${laboratorio.id}`)
+                  a.btn.btn-sm.btn-outline-primary.editar-laboratorio(data-id=laboratorio.id)
                     i.bi.bi-pencil
-                  form(method='POST' action=`/borrarlaboratorio/${laboratorio.id}?_method=DELETE`)
-                    input(type='hidden' name='_csrf' value=csrfToken)
-                    button.btn.btn-sm.btn-outline-danger(type='submit')
-                      i.bi.bi-trash
+                  button.btn.btn-sm.btn-outline-danger.borrar-laboratorio(data-id=laboratorio.id)
+                    i.bi.bi-trash
 
-    
+  script(src="/js/laboratorio/listadoLaboratorio.js")
