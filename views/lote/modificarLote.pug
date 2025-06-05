@@ -1,0 +1,50 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 ✏️ Editar Lote
+    
+    if errores && errores.length
+      .alert.alert-danger
+        ul.mb-0
+          each error in errores
+            li= error
+
+    form#formEditarLaboratorio(data-id=laboratorio.id)
+      input(type="hidden" name="_csrf" value=csrfToken)
+
+      .form-floating.mb-3
+        input.form-control(
+          type="text"
+          id="nombre"
+          name="nombre"
+          value=laboratorio.nombre
+          required
+          minlength="3"
+          maxlength="100"
+          placeholder=""
+        )
+        label.form-label(for="nombre") Nombre del Laboratorio
+        small.form-text.text-muted Mínimo 3 caracteres, máximo 100
+
+      .form-floating.mb-3        
+        input.form-control(
+          type="text"
+          id="nacionalidad"
+          name="nacionalidad"
+          value=laboratorio.nacionalidad
+          placeholder=""
+          required
+        )
+        label.form-label(for="nacionalidad") Nacionalidad
+        small.form-text.text-muted País de origen del laboratorio
+
+      .d-flex.gap-2
+        button.btn.btn-primary(type="button" id="btnGuardarCambios")
+          i.bi.bi-save.me-2
+          | Guardar Cambios
+        a.btn.btn-secondary(href="/laboratorios")
+          i.bi.bi-x-circle.me-2
+          | Cancelar
+
+  script(src="/js/laboratorio/modificarLaboratorio.js")

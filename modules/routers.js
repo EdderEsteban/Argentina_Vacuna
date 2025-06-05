@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const handler = require("./handler.js");
 const laboratorio = require("../controllers/laboratorioController")
+const lote = require("../controllers/loteController");
 const csrf = require('csurf');
 const csrfProtection = csrf({ cookie: true });
 
@@ -25,8 +26,18 @@ router.get('/buscadorlaboratorio', csrfProtection, laboratorio.mostrarBuscar);
 // Endpoint de Busqueda Automatica
 router.get('/buscarlaboratorio', csrfProtection, laboratorio.buscarLaboratorio);
 
-// ----------------------------------------  ---------------------------------------
+// ---------------------------------------- Rutas de Lote ---------------------------------------
+// Listar lotes
+router.get("/lotes", lote.listar);
+// Formulario nuevo
+router.get('/nuevolote', csrfProtection, lote.mostrarNuevo);
+// Crear
+//router.post('/crearlote', csrfProtection, lote.crearLote);
 
+
+
+
+// ---------------------------------------- Rutas de Vacunas ---------------------------------------
 
 // Manejo de rutas no encontradas
 router.use(handler.error404);

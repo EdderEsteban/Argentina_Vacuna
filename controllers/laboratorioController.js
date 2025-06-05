@@ -12,7 +12,7 @@ labo.listar = async (req, res) => {
 
     const { count, rows: laboratorios } = await Laboratorio.findAndCountAll({
       where: { deletedAt: null },
-      order: [['nombre', 'ASC']],
+      order: [['id', 'ASC']],
       limit,
       offset
     });
@@ -171,7 +171,7 @@ labo.buscarLaboratorio = async (req, res) => {
       where,
       limit,
       offset,
-      order: [['nombre', 'ASC']]
+      order: [['id', 'ASC']]
     });
 
     const totalPages = Math.ceil(count / limit);

@@ -1,0 +1,82 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 📦 Listado de Lotes
+
+    //- Botón de nuevo laboratorio
+    a.btn.btn-primary.mb-3(href='/nuevolote')
+      i.bi.bi-plus-circle.me-2
+      | Nuevo Lote
+
+    //- Tabla responsive
+    .table-responsive
+      table.table.table-striped.table-hover.align-middle
+        thead.table-dark
+          tr
+            th(scope='col') N° Lote
+            th(scope='col') Laboratorio
+            th(scope='col') Cantidad 
+            th(scope='col') Fecha de Fabricación 
+            th(scope='col') Fecha de Vencimiento
+            th(scope='col') Fecha de Compra            
+            th(scope='col' style='width: 150px') Acciones
+        tbody
+          each lote in lotes
+            tr
+              td= lote.num_lote
+              td= lote.laboratorio.nombre 
+              td= lote.cantidad
+              td= lote.fecha_fab
+              td= lote.fecha_venc
+              td= lote.fecha_compra
+              td
+                .d-flex.gap-2
+                  a.btn.btn-sm.btn-outline-primary.editar-lote(data-id=lote.id)
+                    i.bi.bi-pencil
+                  button.btn.btn-sm.btn-outline-danger.borrar-lote(
+                    data-id=lote.id
+                  )
+                    i.bi.bi-trash
+
+    //- Controles de paginación
+    if pagination.totalPages > 1
+      nav(aria-label='Paginación de lotes')
+        ul.pagination.justify-content-center
+          li.page-item(class=pagination.currentPage === 1 ? 'disabled' : '')
+            a.page-link(
+              href=`/lotes?page=${pagination.currentPage - 1}`
+              aria-label='Anterior'
+            )
+              span(aria-hidden='true') &laquo;
+              span.sr-only Anterior
+          
+          //- Rango de páginas (máximo 5 visibles)
+          - let startPage = Math.max(1, pagination.currentPage - 2)
+          - let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2)
+          
+          if startPage > 1
+            li.page-item
+              a.page-link(href=`/lotes?page=1`) 1
+            li.page-item.disabled
+              span.page-link ...
+
+          each pageNum in Array(endPage - startPage + 1).fill().map((_, i) => startPage + i)
+            li.page-item(class=pageNum === pagination.currentPage ? 'active' : '')
+              a.page-link(href=`/lotes?page=${pageNum}`)= pageNum
+          
+          if endPage < pagination.totalPages
+            li.page-item.disabled
+              span.page-link ...
+            li.page-item
+              a.page-link(href=`/lotes?page=${pagination.totalPages}`)= pagination.totalPages
+          
+          li.page-item(class=pagination.currentPage === pagination.totalPages ? 'disabled' : '')
+            a.page-link(
+              href=`/lotes?page=${pagination.currentPage + 1}`
+              aria-label='Siguiente'
+            )
+              span(aria-hidden='true') &raquo;
+              span.sr-only Siguiente
+
+  script(src="/js/lote/listadoLote.js")

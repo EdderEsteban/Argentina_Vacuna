@@ -1,0 +1,88 @@
+extends ../__layout/main
+
+block content
+    .container.mt-4
+        h1.mb-4 📦 Nuevo Lote
+
+        form#formNuevoLote
+            input(type="hidden" name="_csrf" value=csrfToken)
+
+            .form-floating.mb-3 
+                input.form-control(
+                    type="text"
+                    id="numLote"
+                    name="numLote"
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="numLote") N° Lote
+                small.form-text.text-muted Mínimo 3 caracteres, máximo 100
+
+            .form-floating.mb-3
+                select.form-select(
+                    id="id_laboratorio"
+                    name="id_laboratorio"
+                    required
+                )
+                    option(value="" disabled selected) Seleccione un laboratorio 
+                    each laboratorio in laboratorios
+                        option(value=laboratorio.id)= laboratorio.nombre
+                label.form-label(for="id_laboratorio") Seleccione un Laboratorio
+                
+            .form-floating.mb-3 
+                input.form-control(
+                    type="text"
+                    id="cantidad"
+                    name="cantidad"
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="cantidad") Cantidad
+
+            .form-floating.mb-3 
+                input.form-control(
+                    type="date"
+                    id="fecha_fab"
+                    name="fecha_fab"
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="fecha_fab") Fecha de Fabricación  
+                
+            .form-floating.mb-3 
+                input.form-control(
+                    type="date"
+                    id="fecha_venc"
+                    name="fecha_venc"
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="fecha_venc") Fecha de Vencimiento 
+                
+            .form-floating.mb-3 
+                input.form-control(
+                    type="date"
+                    id="fecha_compra"
+                    name="fecha_compra"
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="fecha_compra") Fecha de Compra
+
+            .d-flex.gap-2
+                button.btn.btn-primary(type="button" id="guardarNuevoLote")
+                    i.bi.bi-save.me-2
+                    | Guardar Cambios
+                a.btn.btn-secondary(type="button" id="cancelarNuevoLote")
+                    i.bi.bi-x-circle.me-2
+                    | Cancelar
+
+    script(src="/js/lote/nuevoLote.js")
+    script.
+        $(document).ready(function() {
+            $('#id_laboratorio').select2({
+                placeholder: '',
+                allowClear: true,
+                width: '100%' 
+            });
+        });
