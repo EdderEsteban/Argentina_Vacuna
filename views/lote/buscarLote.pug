@@ -1,0 +1,90 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 🔍 Búsqueda de Lotes
+
+    // Filtros de búsqueda
+    .card.mb-4
+      .card-body
+        .row.g-3
+          .col-md-6
+            .form-floating
+              input.form-control#inputNumLote(type="search" placeholder="" autofocus)
+              label.form-label(for="inputNumLote") N° Lote
+          .form-floating.col-md-6
+            select.form-select(
+                    id="id_laboratorio"
+                    name="id_laboratorio"
+                    required
+                )
+                    option(value="" disabled selected) Seleccione un laboratorio 
+                    each laboratorio in laboratorios
+                        option(value=laboratorio.id)= laboratorio.nombre
+            label.form-label(for="id_laboratorio") Seleccione un Laboratorio
+          .form-floating.col-md-6
+            select.form-select#inputFechaCompraMes
+              option(value="" disabled selected) Seleccione mes
+              option(value="1") Enero
+              option(value="2") Febrero
+              option(value="3") Marzo
+              option(value="4") Abril
+              option(value="5") Mayo
+              option(value="6") Junio
+              option(value="7") Julio
+              option(value="8") Agosto
+              option(value="9") Septiembre
+              option(value="10") Octubre
+              option(value="11") Noviembre
+              option(value="12") Diciembre
+            label.form-label(for="inputFechaCompraMes") Mes de Compra
+          .col-md-6
+            .form-floating
+              input.form-control#inputFechaCompraAnno(type="text" min="2000" max="2100" placeholder="")
+              label.form-label(for="inputFechaCompraAnno") Año de Compra
+          .form-floating.col-md-6
+            select.form-select#inputFechaVencMes
+              option(value="" disabled selected) Seleccione mes
+              option(value="1") Enero
+              option(value="2") Febrero
+              option(value="3") Marzo
+              option(value="4") Abril
+              option(value="5") Mayo
+              option(value="6") Junio
+              option(value="7") Julio
+              option(value="8") Agosto
+              option(value="9") Septiembre
+              option(value="10") Octubre
+              option(value="11") Noviembre
+              option(value="12") Diciembre
+            label.form-label(for="inputFechaVencMes") Mes de Vencimiento
+          .col-md-6
+            .form-floating
+              input.form-control#inputFechaVencAnno(type="text" min="2000" max="2100" placeholder="")
+              label.form-label(for="inputFechaVencAnno") Año de Vencimiento
+
+        .d-flex.justify-content-end.mt-3
+          button.btn.btn-primary(id="btnBuscar") Buscar
+          button.btn.btn-secondary(id="btnLimpiar" style="margin-left: 10px;")
+            i.bi.bi-x-circle.me-2
+            | Limpiar
+
+    // Resultados de búsqueda
+    .table-responsive
+      table.table.table-striped.table-hover.align-middle
+        thead.table-dark
+          tr
+            th(scope='col') N° Lote
+            th(scope='col') Laboratorio
+            th(scope='col') Cantidad
+            th(scope='col') Fecha de Compra
+            th(scope='col') Fecha de Fabricación
+            th(scope='col') Fecha de Vencimiento
+            th(scope='col' style='width: 150px') Acciones
+        tbody#resultadosBusqueda
+
+    // Contenedor para paginación
+    #paginacionContainer.d-flex.justify-content-center.mt-4
+
+  script(src="/js/lote/buscarLote.js")
+  

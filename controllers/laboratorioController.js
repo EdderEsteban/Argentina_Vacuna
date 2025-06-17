@@ -35,7 +35,7 @@ labo.listar = async (req, res) => {
   }
 };
 
-// Mostrar formulario de creación
+// Mostrar formulario de creación de nuevo laboratorio
 labo.mostrarNuevo = async (req, res) => {
     try {
         console.log('Cargando formulario de nuevo laboratorio');
@@ -46,15 +46,14 @@ labo.mostrarNuevo = async (req, res) => {
     }
 }
 
-// Crear nuevo laboratorio
+// POST Crear nuevo laboratorio
 labo.crearLaboratorio = async (req, res) => {
     try {
         const laboratorio = await Laboratorio.create({
             nombre: req.body.nombre.trim(),
             nacionalidad: req.body.nacionalidad.trim()
         });
-
-        // Respuesta para AJAX (Fetch)
+        
         res.status(201).json({
             success: true,
             message: 'Laboratorio creado exitosamente',
@@ -77,14 +76,12 @@ labo.crearLaboratorio = async (req, res) => {
     }
 };
 
-// Mostrar formulario de edición
+// Mostrar formulario de edición de laboratorio
 labo.editarLaboratorio = async (req, res) => {
     try {
-        console.log('Cargando vista laboratorio con ID:', req.params.id);
         const laboratorio = await Laboratorio.findByPk(req.params.id);
 
         if (!laboratorio) {
-            console.error('Laboratorio no encontrado con ID:', req.params.id);
             return res.redirect('laboratorio/listadoLaboratorio');
         }
 
@@ -156,7 +153,7 @@ labo.mostrarBuscar = (req, res) => {
     });
 };
 
-// Buscar laboratorio por nombre
+// Buscador laboratorio 
 labo.buscarLaboratorio = async (req, res) => {
   try {
     const { nombre, nacionalidad, page = 1 } = req.query;

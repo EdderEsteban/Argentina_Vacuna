@@ -23,7 +23,7 @@ router.put('/actualizarlaboratorio/:id', csrfProtection, laboratorio.actualizarL
 router.delete('/borrarlaboratorio/:id', csrfProtection, laboratorio.borrarLaboratorio);
 // Formulario de búsqueda
 router.get('/buscadorlaboratorio', csrfProtection, laboratorio.mostrarBuscar);
-// Endpoint de Busqueda Automatica
+// Endpoint de Busqueda Automatica 
 router.get('/buscarlaboratorio', csrfProtection, laboratorio.buscarLaboratorio);
 
 // ---------------------------------------- Rutas de Lote ---------------------------------------
@@ -32,7 +32,17 @@ router.get("/lotes", lote.listar);
 // Formulario nuevo
 router.get('/nuevolote', csrfProtection, lote.mostrarNuevo);
 // Crear
-//router.post('/crearlote', csrfProtection, lote.crearLote);
+router.post('/crearlote', csrfProtection, lote.crearLote);
+// Formulario edición
+router.get('/editarlote/:id', csrfProtection, lote.editarLote);
+// Endpoint de Actualizar
+router.put('/actualizarlote/:id', csrfProtection, lote.actualizarLote);
+// Eliminar
+router.delete('/borrarlote/:id', csrfProtection, lote.borrarLote);
+// Formulario de búsqueda de lotes
+router.get('/buscardorlote', csrfProtection, lote.mostrarBuscar);
+// Endpoint de búsqueda
+router.get('/buscarlote', csrfProtection, lote.buscarLotes);
 
 
 

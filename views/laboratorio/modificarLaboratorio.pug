@@ -4,12 +4,6 @@ block content
   .container.mt-4
     h1.mb-4 ✏️ Editar Laboratorio
     
-    if errores && errores.length
-      .alert.alert-danger
-        ul.mb-0
-          each error in errores
-            li= error
-
     form#formEditarLaboratorio(data-id=laboratorio.id)
       input(type="hidden" name="_csrf" value=csrfToken)
 

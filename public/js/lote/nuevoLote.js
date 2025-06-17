@@ -1,7 +1,7 @@
 // -----------------------------------Variables-------------------------------------------------
 const formNuevoLote = document.getElementById('formNuevoLote');
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-const btnGuardar = document.getElementById('guardarNuevoLaboratorio');
+const btnGuardar = document.getElementById('guardarNuevoLote');
 
 // -----------------------------------Botones de acción-----------------------------------------
 document.getElementById('guardarNuevoLote').addEventListener('click', function (event) {
@@ -10,35 +10,83 @@ document.getElementById('guardarNuevoLote').addEventListener('click', function (
 });
 
 
-// Boton para cancelar nuevo laboratorio
+// Boton para cancelar nuevo lote
 document.getElementById('cancelarNuevoLote').addEventListener('click', function (event) {
     event.preventDefault();
-    window.location.href = '/lotes'; 
+    window.location.href = '/lotes';
 });
 
 // ----------------------------------Funciones-------------------------------------------------
-// Validar campos del formulario de nuevo laboratorio
+// Validar campos del formulario de nuevo lote
 function validarNuevoLote(formData) {
-    if (formData.nombre === '') {
+    if (formData.numLote === '') {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'El nombre del laboratorio es obligatorio.'
+            text: 'El número de lote es obligatorio.'
         });
         return false;
     }
-    if (formData.nacionalidad === '') {
+
+    if (formData.id_laboratorio === '') {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'La nacionalidad del laboratorio es obligatoria.'
+            text: 'Debe seleccionar un laboratorio.'
         });
         return false;
     }
+
+    if (formData.cantidad === '' || !/^\d+$/.test(formData.cantidad) || parseInt(formData.cantidad) <= 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La cantidad debe ser un número entero positivo mayor que cero.'
+        });
+        return false;
+    }
+
+    if (formData.fecha_fab === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La fecha de fabricación es obligatoria.'
+        });
+        return false;
+    }
+
+    if (formData.fecha_venc === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La fecha de vencimiento es obligatoria.'
+        });
+        return false;
+    }
+
+    if (formData.fecha_compra === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La fecha de compra es obligatoria.'
+        });
+        return false;
+    }
+
+    // Validar que la fecha de vencimiento sea posterior a la fecha de fabricación
+    if (new Date(formData.fecha_venc) <= new Date(formData.fecha_fab)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La fecha de vencimiento debe ser posterior a la fecha de fabricación.'
+        });
+        return false;
+    }
+
     return true;
 }
 
-// Enviar formulario de nuevo laboratorio
+// Enviar formulario de nuevo lote
 function enviarFormularioNuevoLote() {
     // Estado inicial del botón
     btnGuardar.disabled = true;
@@ -48,19 +96,24 @@ function enviarFormularioNuevoLote() {
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     `;
 
-    const formLaboratorioData = {
-        nombre: formNuevoLote.nombreLaboratorio.value.trim(),
-        nacionalidad: formNuevoLote.nacionalidadLaboratorio.value.trim()
+    const formLoteData = {
+        numLote: formNuevoLote.numLote.value.trim(),
+        id_laboratorio: formNuevoLote.id_laboratorio.value.trim(),
+        cantidad: formNuevoLote.cantidad.value.trim(),
+        fecha_fab: formNuevoLote.fecha_fab.value.trim(),
+        fecha_venc: formNuevoLote.fecha_venc.value.trim(),
+        fecha_compra: formNuevoLote.fecha_compra.value.trim()
     };
 
-    if (validarNuevoLaboratorio(formLaboratorioData)) {
+    // Validar los datos del formulario
+    if (validarNuevoLote(formLoteData)) {
         fetch('/crearlote', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-Token': csrfToken
             },
-            body: JSON.stringify(formLaboratorioData),
+            body: JSON.stringify(formLoteData),
         })
         .then(response => {
             if (!response.ok) return response.json().then(err => { throw err; });
@@ -70,16 +123,16 @@ function enviarFormularioNuevoLote() {
             Swal.fire({
                 icon: 'success',
                 title: 'Éxito',
-                text: data.message || 'Laboratorio creado correctamente',
+                text: data.message || 'Lote creado correctamente',
                 timer: 2000
             }).then(() => {
-                window.location.href = '/laboratorios';
+                window.location.href = '/lotes';
             });
         })
         .catch(error => {
             const mensaje = error.errores?.[0]?.mensaje 
                 || error.message 
-                || 'Error desconocido al crear el laboratorio';
+                || 'Error desconocido al crear el lote';
 
             const footer = error.errores?.length > 1 
                 ? `<div class="text-start small">${error.errores.slice(1).map(e => `• ${e.mensaje}`).join('<br>')}</div>` 

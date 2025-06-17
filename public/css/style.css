@@ -31,4 +31,36 @@
     border: 1px solid #ced4da !important;
     border-radius: 0.40rem !important;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
-}	
+}
+
+/* Estilos del Select2 */
+.select2-container {
+    display: block !important;
+    width: 100% !important;
+}
+
+.select2-selection {
+    height: auto !important;
+    min-height: calc(3.5rem + 2.5px) !important;
+    padding: 1.5rem 0.75rem 0.4rem !important;
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    line-height: 0.5 !important;
+    color: #495057 !important;
+    background-color: #fff !important;
+    background-clip: padding-box !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.40rem !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+/* Ocultar barras de desplazamiento en Select2 */
+.select2-dropdown {
+    overflow-y: auto !important;
+    max-height: 300px !important;
+    border-radius: 0.40rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    width: 100% !important;
+    left: 0 !important;
+    top: 100% !important;
+}
