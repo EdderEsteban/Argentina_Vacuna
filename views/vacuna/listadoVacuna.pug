@@ -18,6 +18,7 @@ block content
             th(scope='col') Laboratorio
             th(scope='col') Tipo
             th(scope='col') Nombre Comercial
+            th(scope='col') Cantidad
             th(scope='col') Fecha de Compra
             th(scope='col') Fecha de Fabricación
             th(scope='col') Fecha de Vencimiento
@@ -30,6 +31,7 @@ block content
               td= vacuna.lote.laboratorio.nombre
               td= vacuna.tipo
               td= vacuna.nombre_comercial
+              td= vacuna.lote.cantidad
               td= vacuna.lote.fecha_compra
               td= vacuna.lote.fecha_fab
               td= vacuna.lote.fecha_venc
