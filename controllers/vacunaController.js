@@ -1,5 +1,12 @@
-const { Vacuna, Lote, Estado } = require('../models');
+const { Vacuna, Lote, Laboratorio, Estado } = require('../models');
 const { Op } = require('sequelize');
+
+// Función para formatear fechas
+function formatearFecha(fecha) {
+    if (!fecha) return '';
+    const [anio, mes, dia] = fecha.split('-');
+    return `${dia}/${mes}/${anio}`;
+}
 
 const vacunaController = {};
 
@@ -13,7 +20,13 @@ vacunaController.listar = async (req, res) => {
         const { count, rows: vacunas } = await Vacuna.findAndCountAll({
             where: { deletedAt: null },
             include: [
-                { model: Lote, as: 'lote' },
+                { 
+                    model: Lote, 
+                    as: 'lote',
+                    include: [
+                        { model: Laboratorio, as: 'laboratorio' }
+                    ]
+                },
                 { model: Estado, as: 'estado' }
             ],
             order: [['id', 'ASC']],
@@ -23,8 +36,24 @@ vacunaController.listar = async (req, res) => {
 
         const totalPages = Math.ceil(count / limit);
 
+        // Formatear fechas de los lotes
+        const vacunasFormateadas = vacunas.map(vacuna => {
+            if (vacuna.lote) {
+                return {
+                    ...vacuna.dataValues,
+                    lote: {
+                        ...vacuna.lote.dataValues,
+                        fecha_fab: formatearFecha(vacuna.lote.fecha_fab),
+                        fecha_venc: formatearFecha(vacuna.lote.fecha_venc),
+                        fecha_compra: formatearFecha(vacuna.lote.fecha_compra)
+                    }
+                };
+            }
+            return vacuna.dataValues;
+        });
+
         res.render('vacuna/listadoVacuna', {
-            vacunas,
+            vacunas: vacunasFormateadas,
             pagination: {
                 currentPage: page,
                 totalPages,
@@ -45,6 +74,9 @@ vacunaController.mostrarNuevo = async (req, res) => {
         // Obtener todos los lotes activos
         const lotes = await Lote.findAll({
             where: { deletedAt: null },
+            include: [
+                { model: Laboratorio, as: 'laboratorio' }
+            ],
             order: [['id', 'ASC']]
         });
 
@@ -101,12 +133,15 @@ vacunaController.editarVacuna = async (req, res) => {
         const vacuna = await Vacuna.findByPk(req.params.id);
 
         if (!vacuna) {
-            return res.redirect('vacuna/listadoVacuna');
+            return res.redirect('vacunas');
         }
 
         // Obtener todos los lotes activos
         const lotes = await Lote.findAll({
             where: { deletedAt: null },
+            include: [
+                { model: Laboratorio, as: 'laboratorio' }
+            ],
             order: [['id', 'ASC']]
         });
 
@@ -206,15 +241,37 @@ vacunaController.buscarVacunas = async (req, res) => {
             offset,
             order: [['id', 'ASC']],
             include: [
-                { model: Lote, as: 'lote' },
+                { 
+                    model: Lote, 
+                    as: 'lote',
+                    include: [
+                        { model: Laboratorio, as: 'laboratorio' }
+                    ]
+                },
                 { model: Estado, as: 'estado' }
             ]
         });
 
         const totalPages = Math.ceil(count / limit);
 
+        // Formatear fechas de los lotes
+        const vacunasFormateadas = rows.map(vacuna => {
+            if (vacuna.lote) {
+                return {
+                    ...vacuna.dataValues,
+                    lote: {
+                        ...vacuna.lote.dataValues,
+                        fecha_fab: formatearFecha(vacuna.lote.fecha_fab),
+                        fecha_venc: formatearFecha(vacuna.lote.fecha_venc),
+                        fecha_compra: formatearFecha(vacuna.lote.fecha_compra)
+                    }
+                };
+            }
+            return vacuna.dataValues;
+        });
+
         res.json({
-            vacunas: rows,
+            vacunas: vacunasFormateadas,
             pagination: {
                 totalItems: count,
                 currentPage: parseInt(page),

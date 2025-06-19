@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'UsuarioUbicacion',
     tableName: 'UsuarioUbicaciones', 
     timestamps: true,
-    paranoid: false, // No necesita borrado lógico
+    paranoid: false, 
     indexes: [
       {
         unique: true,

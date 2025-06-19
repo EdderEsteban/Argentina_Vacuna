@@ -63,6 +63,10 @@ router.get('/buscadorvacuna', csrfProtection, vacuna.mostrarBuscar);
 // Endpoint de búsqueda
 router.get('/buscarvacuna', csrfProtection, vacuna.buscarVacunas);
 
+// ---------------------------------------- Rutas de Movimientos ---------------------------------------
+
+
+
 // Manejo de rutas no encontradas
 router.use(handler.error404);
 
