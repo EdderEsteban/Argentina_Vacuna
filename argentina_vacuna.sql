@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-05-2025 a las 20:36:15
+-- Tiempo de generación: 19-06-2025 a las 04:08:22
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -141,6 +141,18 @@ CREATE TABLE `estados` (
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `estados`
+--
+
+INSERT INTO `estados` (`id`, `nombre`, `codigo`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 'Pendiente', 'PEND', '2025-06-18 10:00:00', '2025-06-18 10:00:00', NULL),
+(2, 'Recepcionado', 'REC', '2025-06-18 10:00:00', '2025-06-18 10:00:00', NULL),
+(3, 'Almacenado', 'ALM', '2025-06-18 10:00:00', '2025-06-18 10:00:00', NULL),
+(4, 'Aplicado', 'APL', '2025-06-18 10:00:00', '2025-06-18 10:00:00', NULL),
+(5, 'Vencido', 'VEN', '2025-06-18 10:00:00', '2025-06-18 10:00:00', NULL),
+(6, 'Descartado', 'DES', '2025-06-18 10:00:00', '2025-06-18 10:00:00', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -165,19 +177,19 @@ INSERT INTO `laboratorios` (`id`, `nombre`, `nacionalidad`, `createdAt`, `update
 (2, 'Moderna', 'Estados Unidos', '2025-05-23 15:55:47', '2025-05-23 15:55:47', NULL),
 (3, 'Gamaleya', 'Rusia', '2025-05-23 15:56:24', '2025-05-26 15:38:10', NULL),
 (4, 'Sanofi', 'Argentina', '2025-05-26 16:06:37', '2025-05-29 14:01:16', NULL),
-(20, 'Prueb', 'Argentina', '2025-05-26 19:09:06', '2025-05-29 14:00:17', NULL),
-(24, 'Pruebaa', 'Argentina', '2025-05-26 19:14:40', '2025-05-29 14:00:24', NULL),
-(27, 'asd', 'Argentina', '2025-05-27 15:53:11', '2025-05-29 15:24:21', NULL),
-(30, 'asda', 'Argentina', '2025-05-27 16:40:05', '2025-05-29 18:25:31', '2025-05-29 18:25:31'),
-(31, 'Pruebaaa', 'Argentina', '2025-05-27 16:40:28', '2025-05-29 14:00:36', NULL),
-(32, 'mas labo', 'Argentina', '2025-05-29 14:08:15', '2025-05-29 14:08:15', NULL),
-(33, 'y mas labo', 'Argentina', '2025-05-29 14:08:15', '2025-05-29 14:08:15', NULL),
-(34, 'uno mas', 'Argentina', '2025-05-29 15:13:06', '2025-05-29 15:13:06', NULL),
-(35, 'y va otro', 'Argentina', '2025-05-29 15:13:06', '2025-05-29 15:13:06', NULL),
-(36, 'numero 11', 'Argentina', '2025-05-29 15:13:40', '2025-05-29 15:13:40', NULL),
-(37, 'numero 12', 'Argentina', '2025-05-29 15:13:40', '2025-05-29 15:13:40', NULL),
-(38, 'numero 13', 'Argentina', '2025-05-29 15:14:01', '2025-05-29 15:14:01', NULL),
-(39, 'numero 14', 'Argentina', '2025-05-29 15:14:01', '2025-05-29 15:14:01', NULL);
+(5, 'Prueb', 'Argentina', '2025-05-26 19:09:06', '2025-06-18 10:36:33', NULL),
+(6, 'Pruebaa', 'Argentina', '2025-05-26 19:14:40', '2025-06-18 10:36:40', NULL),
+(7, 'asd', 'Argentina', '2025-05-27 15:53:11', '2025-06-18 10:36:44', NULL),
+(8, 'asda', 'Argentina', '2025-05-27 16:40:05', '2025-06-18 10:36:47', NULL),
+(9, 'Pruebaaa', 'Argentina', '2025-05-27 16:40:28', '2025-06-18 10:36:51', NULL),
+(10, 'mas labo', 'Argentina', '2025-05-29 14:08:15', '2025-06-18 10:36:57', NULL),
+(11, 'y mas labo', 'Argentina', '2025-05-29 14:08:15', '2025-06-18 10:37:03', NULL),
+(12, 'uno mas', 'Argentina', '2025-05-29 15:13:06', '2025-06-18 10:37:07', NULL),
+(13, 'y va otro', 'Argentina', '2025-05-29 15:13:06', '2025-06-18 10:37:11', NULL),
+(14, 'numero 11', 'Argentina', '2025-05-29 15:13:40', '2025-06-18 10:37:16', NULL),
+(15, 'numero 12', 'Argentina', '2025-05-29 15:13:40', '2025-06-18 10:37:19', NULL),
+(16, 'numero 13', 'Argentina', '2025-05-29 15:14:01', '2025-06-18 10:37:23', NULL),
+(17, 'numero 14', 'Argentina', '2025-05-29 15:14:01', '2025-06-18 10:37:28', NULL);
 
 -- --------------------------------------------------------
 
@@ -197,6 +209,26 @@ CREATE TABLE `lotes` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `lotes`
+--
+
+INSERT INTO `lotes` (`id`, `num_lote`, `id_laboratorio`, `cantidad`, `fecha_fab`, `fecha_venc`, `fecha_compra`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, '123456', 1, 100, '2024-12-02', '2025-12-31', '2025-06-02', '2025-06-05 11:52:34', '2025-06-05 11:52:34', NULL),
+(2, '12345v', 4, 100, '2024-12-02', '2025-12-31', '2025-06-02', '2025-06-05 13:09:30', '2025-06-05 13:09:30', NULL),
+(3, '5678568', 2, 100, '2024-06-03', '2025-06-30', '2025-01-01', '2025-06-05 13:09:30', '2025-06-05 13:09:30', NULL),
+(4, '098765', 3, 200, '2025-05-01', '2025-12-31', '2025-06-12', '2025-06-12 16:00:01', '2025-06-17 18:38:28', NULL),
+(5, 'LOT-011', 1, 1000, '2025-01-01', '2026-12-31', '2024-12-15', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(6, 'LOT-012', 2, 1500, '2025-02-15', '2027-02-14', '2024-12-16', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(7, 'LOT-013', 3, 2000, '2025-03-20', '2027-03-19', '2024-12-17', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(8, 'LOT-014', 4, 1200, '2025-04-10', '2026-10-31', '2024-12-18', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(9, 'LOT-015', 5, 1800, '2025-05-05', '2027-05-04', '2024-12-19', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(10, 'LOT-016', 6, 900, '2025-06-18', '2026-06-17', '2024-12-20', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(11, 'LOT-017', 7, 1300, '2025-07-25', '2027-07-24', '2024-12-21', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(12, 'LOT-018', 8, 1700, '2025-08-30', '2027-08-29', '2024-12-22', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(13, 'LOT-019', 9, 1100, '2025-09-15', '2026-09-14', '2024-12-23', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL),
+(14, 'LOT-020', 10, 2200, '2025-10-01', '2027-09-30', '2024-12-24', '2025-06-18 10:54:26', '2025-06-18 10:54:26', NULL);
 
 --
 -- Disparadores `lotes`
@@ -434,6 +466,34 @@ CREATE TABLE `vacunas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Volcado de datos para la tabla `vacunas`
+--
+
+INSERT INTO `vacunas` (`id`, `id_lote`, `id_estado`, `tipo`, `nombre_comercial`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 1, 3, 'BCG', 'BCG GlaxoSmithKline', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(2, 2, 3, 'Triple Viral', 'Triple Viral Sanofi', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(3, 3, 3, 'Doble Viral', 'Doble Viral Pfizer', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(4, 4, 3, 'Tetanos', 'Tetanos GSK', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(5, 5, 3, 'Hepatitis B', 'Hepatitis B Moderna', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(6, 6, 3, 'Polio', 'Polio Sabin', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(7, 7, 3, 'COVID-19', 'COVID-19 Pfizer', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(8, 8, 3, 'Influenza', 'Influenza Sanofi', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(9, 9, 3, 'Neumocócica', 'Neumocócica Pfizer', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(10, 10, 3, 'HPV', 'HPV Gardasil', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(11, 11, 3, 'BCG', 'BCG GSK', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(12, 12, 3, 'Triple Viral', 'Triple Viral MSD', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(13, 13, 3, 'Doble Viral', 'Doble Viral Sanofi', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(14, 14, 3, 'Tetanos', 'Tetanos Pfizer', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(15, 1, 4, 'BCG', 'BCG GlaxoSmithKline', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(16, 2, 4, 'Triple Viral', 'Triple Viral Sanofi', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(17, 3, 4, 'Doble Viral', 'Doble Viral Pfizer', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(18, 4, 4, 'Tetanos', 'Tetanos GSK', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(19, 5, 4, 'Hepatitis B', 'Hepatitis B Moderna', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(20, 6, 4, 'Polio', 'Polio Sabin', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(21, 7, 4, 'COVID-19', 'COVID-19 Pfizer', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL),
+(22, 8, 4, 'Influenza', 'Influenza Sanofi', '2025-06-18 10:54:54', '2025-06-18 10:54:54', NULL);
+
+--
 -- Índices para tablas volcadas
 --
 
@@ -593,7 +653,7 @@ ALTER TABLE `descartes`
 -- AUTO_INCREMENT de la tabla `estados`
 --
 ALTER TABLE `estados`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `laboratorios`
@@ -605,7 +665,7 @@ ALTER TABLE `laboratorios`
 -- AUTO_INCREMENT de la tabla `lotes`
 --
 ALTER TABLE `lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientolotes`
@@ -653,7 +713,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `vacunas`
 --
 ALTER TABLE `vacunas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- Restricciones para tablas volcadas
