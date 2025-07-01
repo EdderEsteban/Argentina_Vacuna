@@ -4,7 +4,7 @@ block content
   .container.mt-4
     h1.mb-4 📦 Listado de Lotes
 
-    //- Botón de nuevo laboratorio
+    //- Botón de nuevo lote
     a.btn.btn-primary.mb-3(href='/nuevolote')
       i.bi.bi-plus-circle.me-2
       | Nuevo Lote
@@ -16,20 +16,34 @@ block content
           tr
             th(scope='col') N° Lote
             th(scope='col') Laboratorio
-            th(scope='col') Cantidad 
-            th(scope='col') Fecha de Fabricación 
+            th(scope='col') Tipo de Vacuna
+            th(scope='col') Nombre Comercial
+            th(scope='col') Fecha de Compra
+            th(scope='col') Fecha de Fabricación
             th(scope='col') Fecha de Vencimiento
-            th(scope='col') Fecha de Compra            
-            th(scope='col' style='width: 150px') Acciones
+            th(scope='col') Acciones
         tbody
           each lote in lotes
             tr
               td= lote.num_lote
-              td= lote.laboratorio.nombre 
-              td= lote.cantidad
+              td= lote.laboratorio.nombre
+              td
+                each vacuna in lote.vacunas
+                  if vacuna.tipo
+                    | #{vacuna.tipo}
+                    if lote.vacunas.length > 1
+                      if loop.last
+                        |  + #{lote.vacunas.length - 1} más
+              td
+                each vacuna in lote.vacunas
+                  if vacuna.nombre_comercial
+                    | #{vacuna.nombre_comercial}
+                    if lote.vacunas.length > 1
+                      if loop.last
+                        |  + #{lote.vacunas.length - 1} más
+              td= lote.fecha_compra
               td= lote.fecha_fab
               td= lote.fecha_venc
-              td= lote.fecha_compra
               td
                 .d-flex.gap-2
                   a.btn.btn-sm.btn-outline-primary.editar-lote(data-id=lote.id)
@@ -60,7 +74,6 @@ block content
               a.page-link(href=`/lotes?page=1`) 1
             li.page-item.disabled
               span.page-link ...
-
           each pageNum in Array(endPage - startPage + 1).fill().map((_, i) => startPage + i)
             li.page-item(class=pageNum === pagination.currentPage ? 'active' : '')
               a.page-link(href=`/lotes?page=${pageNum}`)= pageNum

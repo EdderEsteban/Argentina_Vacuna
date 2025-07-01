@@ -41,6 +41,26 @@ block content
 
             .form-floating.mb-3 
                 input.form-control(
+                    type="text"
+                    id="tipo_vacuna"
+                    name="tipo_vacuna"
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="tipo_vacuna") Tipo de Vacuna
+
+            .form-floating.mb-3 
+                input.form-control(
+                    type="text"
+                    id="nombre_comercial"
+                    name="nombre_comercial"
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="nombre_comercial") Nombre Comercial y Presentación
+
+            .form-floating.mb-3 
+                input.form-control(
                     type="date"
                     id="fecha_fab"
                     name="fecha_fab"
@@ -70,10 +90,10 @@ block content
                 label.form-label(for="fecha_compra") Fecha de Compra
 
             .d-flex.gap-2
-                button.btn.btn-primary(type="button" id="guardarNuevoLote")
+                button.btn.btn-primary.mb-3(type="button" id="guardarNuevoLote")
                     i.bi.bi-save.me-2
                     | Guardar Cambios
-                a.btn.btn-secondary(type="button" id="cancelarNuevoLote")
+                a.btn.btn-secondary.mb-3(type="button" id="cancelarNuevoLote")
                     i.bi.bi-x-circle.me-2
                     | Cancelar
 

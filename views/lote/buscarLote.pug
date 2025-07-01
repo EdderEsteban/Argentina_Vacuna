@@ -8,11 +8,11 @@ block content
     .card.mb-4
       .card-body
         .row.g-3
-          .col-md-6
+          .col-md-3
             .form-floating
               input.form-control#inputNumLote(type="search" placeholder="" autofocus)
               label.form-label(for="inputNumLote") N° Lote
-          .form-floating.col-md-6
+          .form-floating.col-md-3
             select.form-select(
                     id="id_laboratorio"
                     name="id_laboratorio"
@@ -22,7 +22,16 @@ block content
                     each laboratorio in laboratorios
                         option(value=laboratorio.id)= laboratorio.nombre
             label.form-label(for="id_laboratorio") Seleccione un Laboratorio
-          .form-floating.col-md-6
+
+          .form-floating.col-md-3
+            input.form-control#inputTipoVacuna(type="search" placeholder="")
+            label.form-label(for="inputTipoVacuna") Tipo de Vacuna
+
+          .form-floating.col-md-3
+            input.form-control#inputNombreComercialVacuna(type="search" placeholder="")
+            label.form-label(for="inputNombreComercialVacuna") Nombre Comercial de Vacuna
+
+          .form-floating.col-md-3
             select.form-select#inputFechaCompraMes
               option(value="" disabled selected) Seleccione mes
               option(value="1") Enero
@@ -38,11 +47,12 @@ block content
               option(value="11") Noviembre
               option(value="12") Diciembre
             label.form-label(for="inputFechaCompraMes") Mes de Compra
-          .col-md-6
-            .form-floating
-              input.form-control#inputFechaCompraAnno(type="text" min="2000" max="2100" placeholder="")
-              label.form-label(for="inputFechaCompraAnno") Año de Compra
-          .form-floating.col-md-6
+          
+          .form-floating.col-md-3
+            input.form-control#inputFechaCompraAnno(type="text" min="2000" max="2100" placeholder="")
+            label.form-label(for="inputFechaCompraAnno") Año de Compra
+          
+          .form-floating.col-md-3
             select.form-select#inputFechaVencMes
               option(value="" disabled selected) Seleccione mes
               option(value="1") Enero
@@ -58,14 +68,14 @@ block content
               option(value="11") Noviembre
               option(value="12") Diciembre
             label.form-label(for="inputFechaVencMes") Mes de Vencimiento
-          .col-md-6
-            .form-floating
-              input.form-control#inputFechaVencAnno(type="text" min="2000" max="2100" placeholder="")
-              label.form-label(for="inputFechaVencAnno") Año de Vencimiento
-
+          
+          .form-floating.col-md-3
+            input.form-control#inputFechaVencAnno(type="text" min="2000" max="2100" placeholder="")
+            label.form-label(for="inputFechaVencAnno") Año de Vencimiento
+          
         .d-flex.justify-content-end.mt-3
-          button.btn.btn-primary(id="btnBuscar") Buscar
-          button.btn.btn-secondary(id="btnLimpiar" style="margin-left: 10px;")
+          button#btnBuscar.btn.btn-primary Buscar
+          button#btnLimpiar.btn.btn-secondary(style="margin-left: 10px;")
             i.bi.bi-x-circle.me-2
             | Limpiar
 
@@ -76,15 +86,15 @@ block content
           tr
             th(scope='col') N° Lote
             th(scope='col') Laboratorio
-            th(scope='col') Cantidad
+            th(scope='col') Tipo de Vacuna
+            th(scope='col') Nombre Comercial
             th(scope='col') Fecha de Compra
             th(scope='col') Fecha de Fabricación
             th(scope='col') Fecha de Vencimiento
-            th(scope='col' style='width: 150px') Acciones
+            th(scope='col') Acciones
         tbody#resultadosBusqueda
 
     // Contenedor para paginación
     #paginacionContainer.d-flex.justify-content-center.mt-4
 
   script(src="/js/lote/buscarLote.js")
-  

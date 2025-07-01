@@ -9,7 +9,6 @@ document.getElementById('guardarNuevoLote').addEventListener('click', function (
     enviarFormularioNuevoLote();
 });
 
-
 // Boton para cancelar nuevo lote
 document.getElementById('cancelarNuevoLote').addEventListener('click', function (event) {
     event.preventDefault();
@@ -42,6 +41,24 @@ function validarNuevoLote(formData) {
             icon: 'error',
             title: 'Error',
             text: 'La cantidad debe ser un número entero positivo mayor que cero.'
+        });
+        return false;
+    }
+
+    if (formData.tipo_vacuna === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'El tipo de vacuna es obligatorio.'
+        });
+        return false;
+    }
+
+    if (formData.nombre_comercial === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'El nombre comercial es obligatorio.'
         });
         return false;
     }
@@ -87,7 +104,7 @@ function validarNuevoLote(formData) {
 }
 
 // Enviar formulario de nuevo lote
-function enviarFormularioNuevoLote() {
+async function enviarFormularioNuevoLote() {
     // Estado inicial del botón
     btnGuardar.disabled = true;
     btnGuardar.innerHTML = `
@@ -100,13 +117,15 @@ function enviarFormularioNuevoLote() {
         numLote: formNuevoLote.numLote.value.trim(),
         id_laboratorio: formNuevoLote.id_laboratorio.value.trim(),
         cantidad: formNuevoLote.cantidad.value.trim(),
+        tipo_vacuna: formNuevoLote.tipo_vacuna.value.trim(),
+        nombre_comercial: formNuevoLote.nombre_comercial.value.trim(),
         fecha_fab: formNuevoLote.fecha_fab.value.trim(),
         fecha_venc: formNuevoLote.fecha_venc.value.trim(),
         fecha_compra: formNuevoLote.fecha_compra.value.trim()
     };
 
     // Validar los datos del formulario
-    if (validarNuevoLote(formLoteData)) {
+    if (await validarNuevoLote(formLoteData)) {
         fetch('/crearlote', {
             method: 'POST',
             headers: {
@@ -115,44 +134,44 @@ function enviarFormularioNuevoLote() {
             },
             body: JSON.stringify(formLoteData),
         })
-        .then(response => {
-            if (!response.ok) return response.json().then(err => { throw err; });
-            return response.json();
-        })
-        .then(data => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Éxito',
-                text: data.message || 'Lote creado correctamente',
-                timer: 2000
-            }).then(() => {
-                window.location.href = '/lotes';
-            });
-        })
-        .catch(error => {
-            const mensaje = error.errores?.[0]?.mensaje 
-                || error.message 
-                || 'Error desconocido al crear el lote';
+            .then(response => {
+                if (!response.ok) return response.json().then(err => { throw err; });
+                return response.json();
+            })
+            .then(data => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: data.message || 'Lote creado correctamente',
+                    timer: 2000
+                }).then(() => {
+                    window.location.href = '/lotes';
+                });
+            })
+            .catch(error => {
+                const mensaje = error.errores?.[0]?.mensaje
+                    || error.message
+                    || 'Error desconocido al crear el lote';
 
-            const footer = error.errores?.length > 1 
-                ? `<div class="text-start small">${error.errores.slice(1).map(e => `• ${e.mensaje}`).join('<br>')}</div>` 
-                : '';
+                const footer = error.errores?.length > 1
+                    ? `<div class="text-start small">${error.errores.slice(1).map(e => `• ${e.mensaje}`).join('<br>')}</div>`
+                    : '';
 
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                html: `<div class="text-danger">${mensaje}</div>`,
-                footer: footer
-            });
-        })
-        .finally(() => {
-            // Restaurar estado original del botón
-            btnGuardar.disabled = false;
-            btnGuardar.innerHTML = `
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    html: `<div class="text-danger">${mensaje}</div>`,
+                    footer: footer
+                });
+            })
+            .finally(() => {
+                // Restaurar estado original del botón
+                btnGuardar.disabled = false;
+                btnGuardar.innerHTML = `
                 <i class="bi bi-save me-2"></i>
                 Guardar Cambios
             `;
-        });
+            });
     } else {
         // Si la validación falla, restaurar el botón
         btnGuardar.disabled = false;

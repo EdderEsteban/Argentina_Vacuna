@@ -1,90 +1,110 @@
 extends ../__layout/main
 
 block content
-  .container.mt-4
-    h1.mb-4 ✏️ Editar Lote
+    .container.mt-4
+        h1.mb-4 ✏️ Editar Lote
 
-    form#formEditarLote(data-id=lote.id)
-      input(type="hidden" name="_csrf" value=csrfToken)
+        form#formEditarLote(data-id=lote.id)
+            input(type="hidden" name="_csrf" value=csrfToken)
 
-      .form-floating.mb-3 
-          input.form-control(
-              type="text"
-              id="numLote"
-              name="numLote"
-              value=lote.num_lote
-              required
-              minlength="3"
-              maxlength="100"
-              placeholder = ""
-          )
-          label.form-label(for="numLote") N° Lote
-          small.form-text.text-muted Mínimo 3 caracteres, máximo 100
+            .form-floating.mb-3 
+                input.form-control(
+                    type="text"
+                    id="numLote"
+                    name="numLote"
+                    value=lote.num_lote
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="numLote") N° Lote
+                small.form-text.text-muted Mínimo 3 caracteres, máximo 100
 
-      .form-floating.mb-3
-          select.form-select(
-              id="id_laboratorio"
-              name="id_laboratorio"
-              required
-          )
-              option(value="" disabled) Seleccione un laboratorio 
-              each laboratorio in laboratorios
-                  if lote.id_laboratorio == laboratorio.id
-                      option(value=laboratorio.id selected)= laboratorio.nombre
-                  else
-                      option(value=laboratorio.id)= laboratorio.nombre
-          label.form-label(for="id_laboratorio") Seleccione un Laboratorio
+            .form-floating.mb-3
+                select.form-select(
+                    id="id_laboratorio"
+                    name="id_laboratorio"
+                    required
+                )
+                    option(value="" disabled) Seleccione un laboratorio 
+                    each laboratorio in laboratorios
+                        if lote.id_laboratorio == laboratorio.id
+                            option(value=laboratorio.id selected)= laboratorio.nombre
+                        else
+                            option(value=laboratorio.id)= laboratorio.nombre
+                label.form-label(for="id_laboratorio") Seleccione un Laboratorio
                 
-      .form-floating.mb-3 
-          input.form-control(
-              type="text"
-              id="cantidad"
-              name="cantidad"
-              value=lote.cantidad
-              required
-              placeholder = ""
-          )
-          label.form-label(for="cantidad") Cantidad
+            .form-floating.mb-3 
+                input.form-control(
+                    type="text"
+                    id="cantidad"
+                    name="cantidad"
+                    value=lote.cantidad
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="cantidad") Cantidad
 
-      .form-floating.mb-3 
-          input.form-control(
-              type="date"
-              id="fecha_fab"
-              name="fecha_fab"
-              value=lote.fecha_fab
-              required
-              placeholder = ""
-          )
-          label.form-label(for="fecha_fab") Fecha de Fabricación  
+            .form-floating.mb-3 
+                input.form-control(
+                    type="text"
+                    id="tipo_vacuna"
+                    name="tipo_vacuna"
+                    value=(lote.vacunas && lote.vacunas.length > 0) ? lote.vacunas[0].tipo : ''
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="tipo_vacuna") Tipo de Vacuna
+
+            .form-floating.mb-3 
+                input.form-control(
+                    type="text"
+                    id="nombre_comercial"
+                    name="nombre_comercial"
+                    value=(lote.vacunas && lote.vacunas.length > 0) ? lote.vacunas[0].nombre_comercial : ''
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="nombre_comercial") Nombre Comercial
+
+            .form-floating.mb-3 
+                input.form-control(
+                    type="date"
+                    id="fecha_fab"
+                    name="fecha_fab"
+                    value=lote.fecha_fab
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="fecha_fab") Fecha de Fabricación  
                 
-      .form-floating.mb-3 
-          input.form-control(
-              type="date"
-              id="fecha_venc"
-              name="fecha_venc"
-              value=lote.fecha_venc
-              required
-              placeholder = ""
-          )
-          label.form-label(for="fecha_venc") Fecha de Vencimiento 
+            .form-floating.mb-3 
+                input.form-control(
+                    type="date"
+                    id="fecha_venc"
+                    name="fecha_venc"
+                    value=lote.fecha_venc
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="fecha_venc") Fecha de Vencimiento 
                 
-      .form-floating.mb-3 
-          input.form-control(
-              type="date"
-              id="fecha_compra"
-              name="fecha_compra"
-              value=lote.fecha_compra
-              required
-              placeholder = ""
-          )
-          label.form-label(for="fecha_compra") Fecha de Compra
+            .form-floating.mb-3 
+                input.form-control(
+                    type="date"
+                    id="fecha_compra"
+                    name="fecha_compra"
+                    value=lote.fecha_compra
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="fecha_compra") Fecha de Compra
 
-      .d-flex.gap-2
-          button.btn.btn-primary(type="button" id="btnGuardarCambios")
-              i.bi.bi-save.me-2
-              | Guardar Cambios
-          a.btn.btn-secondary(href="/lotes")
-              i.bi.bi-x-circle.me-2
-              | Cancelar
+            .d-flex.gap-2
+                button.btn.btn-primary.mb-3(type="button" id="btnGuardarCambios")
+                    i.bi.bi-save.me-2
+                    | Guardar Cambios
+                a.btn.btn-secondary.mb-3(type="button" id="btnCancelarCambios")
+                    i.bi.bi-x-circle.me-2
+                    | Cancelar
 
-  script(src="/js/lote/modificarLote.js")
+    script(src="/js/lote/modificarLote.js")
