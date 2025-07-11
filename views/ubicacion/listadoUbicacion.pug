@@ -1,0 +1,75 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 📍 Listado de Ubicaciones
+
+    button#btnNuevaUbicacion.btn.btn-primary.mb-3    
+      i.bi.bi-plus-circle.me-2
+      | Nueva Ubicación
+
+    .table-responsive
+      table.table.table-striped.table-hover.align-middle
+        thead.table-dark
+          tr
+            th(scope='col') Nombre
+            th(scope='col') Dirección
+            th(scope='col') Teléfono
+            th(scope='col') Tipo
+            th(scope='col') Provincia
+            th(scope='col') Acciones
+        tbody
+          each ubicacion in ubicaciones
+            tr
+              td= ubicacion.nombre
+              td= ubicacion.direccion
+              td= ubicacion.telefono
+              td= ubicacion.tipo
+              td= ubicacion.provincia.nombre
+              td
+                .d-flex.gap-2
+                  a.btn.btn-sm.btn-outline-primary(href=`/editarubicacion/${ubicacion.id}`)
+                    i.bi.bi-pencil
+                  button.btn.btn-sm.btn-outline-danger.borrar-ubicacion(data-id=ubicacion.id)
+                    i.bi.bi-trash
+
+    //- Controles de paginación
+    if pagination.totalPages > 1
+      nav(aria-label='Paginación de lotes')
+        ul.pagination.justify-content-center
+          li.page-item(class=pagination.currentPage === 1 ? 'disabled' : '')
+            a.page-link(
+              href=`/ubicaciones?page=${pagination.currentPage - 1}`
+              aria-label='Anterior'
+            )
+              span(aria-hidden='true') &laquo;
+              span.sr-only Anterior
+          
+          //- Rango de páginas (máximo 5 visibles)
+          - let startPage = Math.max(1, pagination.currentPage - 2)
+          - let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2)
+          
+          if startPage > 1
+            li.page-item
+              a.page-link(href=`/ubicaciones?page=1`) 1
+            li.page-item.disabled
+              span.page-link ...
+          each pageNum in Array(endPage - startPage + 1).fill().map((_, i) => startPage + i)
+            li.page-item(class=pageNum === pagination.currentPage ? 'active' : '')
+              a.page-link(href=`/ubicaciones?page=${pageNum}`)= pageNum
+
+          if endPage < pagination.totalPages
+            li.page-item.disabled
+              span.page-link ...
+            li.page-item
+              a.page-link(href=`/ubicaciones?page=${pagination.totalPages}`)= pagination.totalPages
+          
+          li.page-item(class=pagination.currentPage === pagination.totalPages ? 'disabled' : '')
+            a.page-link(
+              href=`/ubicaciones?page=${pagination.currentPage + 1}`
+              aria-label='Siguiente'
+            )
+              span(aria-hidden='true') &raquo;
+              span.sr-only Siguiente
+
+  script(src="/js/ubicacion/listadoUbicacion.js")

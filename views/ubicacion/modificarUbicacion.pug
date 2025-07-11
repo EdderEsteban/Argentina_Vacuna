@@ -1,0 +1,76 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 ✏️ Editar Ubicación
+
+    form#formEditarUbicacion(data-id=ubicacion.id)
+      input(type="hidden" name="_csrf" value=csrfToken)
+
+      .form-floating.mb-3
+        input.form-control(
+          type="text"
+          id="nombre"
+          name="nombre"
+          value=ubicacion.nombre
+          required
+          autofocus
+        )
+        label.form-label(for="nombre") Nombre
+        small.form-text.text-muted Mínimo 2 caracteres, máximo 100
+
+      .form-floating.mb-3
+        input.form-control(
+          type="text"
+          id="direccion"
+          name="direccion"
+          value=ubicacion.direccion
+        )
+        label.form-label(for="direccion") Dirección
+
+      .form-floating.mb-3
+        input.form-control(
+          type="tel"
+          id="telefono"
+          name="telefono"
+          value=ubicacion.telefono
+        )
+        label.form-label(for="telefono") Teléfono
+
+      .form-floating.mb-3
+        select.form-select(
+          id="id_provincia"
+          name="id_provincia"
+          required
+        )
+          option(value="" disabled) Seleccione una provincia
+          each provincia in provincias
+            if provincia.id == ubicacion.id_provincia
+              option(value=provincia.id selected) #{provincia.nombre}
+            else
+              option(value=provincia.id) #{provincia.nombre}
+        label.form-label(for="id_provincia") Provincia
+
+      .form-floating.mb-3
+        select.form-select(
+          id="tipo"
+          name="tipo"
+          required
+        )
+          option(value="" disabled) Seleccione un tipo de ubicación
+          option(value="Deposito Nacional", selected=ubicacion.tipo == 'Deposito Nacional') Depósito Nacional
+          option(value="Distribucion", selected=ubicacion.tipo == 'Distribucion') Distribución
+          option(value="Deposito Provincial", selected=ubicacion.tipo == 'Deposito Provincial') Depósito Provincial
+          option(value="Centro Vacunacion", selected=ubicacion.tipo == 'Centro Vacunacion') Centro de Vacunación
+          option(value="Centro Descarte", selected=ubicacion.tipo == 'Centro Descarte') Centro de Descarte
+        label.form-label(for="tipo") Tipo de Ubicación
+
+      .d-flex.justify-content-end.mt-3
+        button.btn.btn-primary.mb-3(type="button" id="btnGuardarCambios")
+          i.bi.bi-save.me-2
+          | Guardar Cambios
+        a.btn.btn-secondary.mb-3(type="button" id="btnCancelarCambios" style="margin-left: 10px;")
+          i.bi.bi-x-circle.me-2
+          | Cancelar
+
+    script(src="/js/ubicacion/modificarUbicacion.js")

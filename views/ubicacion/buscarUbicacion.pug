@@ -1,0 +1,59 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 📍 Búsqueda de Ubicaciones
+
+    // Filtros de búsqueda
+    .card.mb-4
+      .card-body
+        .row.g-3
+          .col-md-3
+            .form-floating
+              input.form-control#inputNombre(type="search" placeholder="" autofocus)
+              label.form-label(for="inputNombre") Nombre
+          .col-md-3
+            .form-floating
+              input.form-control#inputTelefono(type="search" placeholder="")
+              label.form-label(for="inputTelefono") Teléfono
+          .col-md-3
+            .form-floating
+              select.form-select#id_provincia
+                option(value="" disabled selected) Seleccione una provincia
+                each provincia in provincias
+                  option(value=provincia.id) #{provincia.nombre}
+              label.form-label(for="id_provincia") Provincia
+          .col-md-3
+            .form-floating
+              select.form-select#tipo
+                option(value="" disabled selected) Seleccione un tipo de ubicación
+                option(value="Deposito Nacional") Depósito Nacional
+                option(value="Distribucion") Distribución
+                option(value="Deposito Provincial") Depósito Provincial
+                option(value="Centro Vacunacion") Centro de Vacunación
+                option(value="Centro Descarte") Centro de Descarte
+              label.form-label(for="tipo") Tipo de Ubicación
+
+        .d-flex.justify-content-end.mt-3
+          button#btnBuscar.btn.btn-primary Buscar
+          button#btnLimpiar.btn.btn-secondary(style="margin-left: 10px;")
+            i.bi.bi-x-circle.me-2
+            | Limpiar 
+
+    // Resultados de búsqueda
+    .table-responsive
+      table.table.table-striped.table-hover.align-middle
+        thead.table-dark
+          tr
+            th(scope='col') Nombre
+            th(scope='col') Dirección
+            th(scope='col') Teléfono
+            th(scope='col') Provincia
+            th(scope='col') Tipo
+            th(scope='col') Acciones
+        tbody#resultadosBusqueda
+
+    // Contenedor para paginación
+    #paginacionContainer.d-flex.justify-content-center.mt-4
+
+  script(src="/js/ubicacion/buscarUbicacion.js")

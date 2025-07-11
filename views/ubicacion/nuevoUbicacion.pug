@@ -1,0 +1,73 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 📍 Nueva Ubicación
+
+    form#formNuevaUbicacion
+      input(type="hidden" name="_csrf" value=csrfToken)
+
+      .form-floating.mb-3
+        input.form-control(
+          type="text"
+          id="nombre"
+          name="nombre"
+          required
+          autofocus
+          placeholder = ""
+        )
+        label.form-label(for="nombre") Nombre
+        small.form-text.text-muted Mínimo 2 caracteres, máximo 100
+
+      .form-floating.mb-3
+        input.form-control(
+          type="text"
+          id="direccion"
+          name="direccion"
+          placeholder = ""
+        )
+        label.form-label(for="direccion") Dirección
+
+      .form-floating.mb-3
+        input.form-control(
+          type="tel"
+          id="telefono"
+          name="telefono"
+          placeholder = ""
+        )
+        label.form-label(for="telefono") Teléfono
+
+      .form-floating.mb-3
+        select.form-select(
+          id="id_provincia"
+          name="id_provincia"
+          required
+        )
+          option(value="" disabled selected) Seleccione una provincia
+          each provincia in provincias
+            option(value=provincia.id) #{provincia.nombre}
+        label.form-label(for="id_provincia") Provincia
+
+      .form-floating.mb-3
+        select.form-select(
+          id="tipo"
+          name="tipo"
+          required
+        )
+          option(value="" disabled selected) Seleccione un tipo de ubicación
+          option(value="Deposito Nacional") Depósito Nacional
+          option(value="Distribucion") Distribución
+          option(value="Deposito Provincial") Depósito Provincial
+          option(value="Centro Vacunacion") Centro de Vacunación
+          option(value="Centro Descarte") Centro de Descarte
+        label.form-label(for="tipo") Tipo de Ubicación
+
+      .d-flex.justify-content-end.mt-3
+        button.btn.btn-primary.mb-3(type="button" id="btnGuardar")
+          i.bi.bi-save.me-2
+          | Guardar
+        a.btn.btn-secondary.mb-3(href="/ubicaciones" type="button")
+          i.bi.bi-x-circle.me-2
+          | Cancelar
+
+    script(src="/js/ubicacion/nuevoUbicacion.js")

@@ -3,6 +3,7 @@ const handler = require("./handler.js");
 const laboratorio = require("../controllers/laboratorioController")
 const lote = require("../controllers/loteController");
 const paciente = require("../controllers/pacienteController");
+const ubicacion = require("../controllers/ubicacionController");
 const csrf = require('csurf');
 const csrfProtection = csrf({ cookie: true });
 
@@ -65,13 +66,34 @@ router.get('/buscarpaciente', csrfProtection, paciente.buscarPacientes);
 // Endpoint de detalles de paciente
 router.get('/detallespaciente/:id', csrfProtection, paciente.detallePaciente);
 
+// ---------------------------------------- Rutas de Ubicaciones ---------------------------------------
+
+// Listar ubicaciones
+router.get("/ubicaciones", ubicacion.listar);
+// Formulario nueva ubicación
+router.get('/nuevoubicacion', csrfProtection, ubicacion.mostrarNuevo);
+// Crear ubicación
+router.post('/crearubicacion', csrfProtection, ubicacion.crearUbicacion);
+// Formulario edición ubicación
+router.get('/editarubicacion/:id', csrfProtection, ubicacion.editarUbicacion);
+// Endpoint de Actualizar
+router.put('/actualizarubicacion/:id', csrfProtection, ubicacion.actualizarUbicacion);
+// Eliminar ubicación
+router.delete('/borrarubicacion/:id', csrfProtection, ubicacion.borrarUbicacion);
+// Formulario de búsqueda de ubicaciones
+router.get('/buscadorubicacion', csrfProtection, ubicacion.mostrarBuscar);
+// Endpoint de búsqueda de ubicaciones
+router.get('/buscarubicacion', csrfProtection, ubicacion.buscarUbicacion);
+
+// ---------------------------------------- Rutas de Aplicaciones ---------------------------------------
 
 
-// ---------------------------------------- Rutas de Movimientos ---------------------------------------
 
 
 
 // Manejo de rutas no encontradas
 router.use(handler.error404);
+// Manejo de errores
+router.use(handler.error500);
 
 module.exports = router;

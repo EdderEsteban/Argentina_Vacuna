@@ -56,7 +56,7 @@ paciente.listar = async (req, res) => {
 
     } catch (error) {
         console.error('Error al listar pacientes:', error);
-        res.redirect('/404');
+        res.redirect('/500');
     }
 };
 
@@ -80,7 +80,7 @@ paciente.mostrarNuevo = async (req, res) => {
 
     } catch (error) {
         console.log('Error al cargar formulario de nuevo paciente:', error);
-        res.redirect('/404');
+        res.redirect('/500');
     }
 };
 
@@ -182,7 +182,7 @@ paciente.editarPaciente = async (req, res) => {
 
     } catch (error) {
         console.error('Error al cargar formulario de edición:', error);
-        res.redirect('/404');
+        res.redirect('/500');
     }
 };
 
@@ -212,7 +212,7 @@ paciente.actualizarPaciente = async (req, res) => {
 
     } catch (error) {
         console.error('Error al actualizar paciente:', error);
-        res.redirect('/404');
+        res.redirect('/500');
     }
 };
 
@@ -251,7 +251,7 @@ paciente.mostrarBuscar = async (req, res) => {
 
     } catch (error) {
         console.error('Error al cargar formulario de búsqueda:', error);
-        res.redirect('/404');
+        res.redirect('/500');
     }
 };
 
@@ -295,7 +295,7 @@ paciente.buscarPacientes = async (req, res) => {
 
     } catch (error) {
         console.error('Error en búsqueda:', error);
-        res.status(500).json({ error: 'Error en el servidor' });
+        res.redirect('/500');
     }
 };
 
@@ -358,7 +358,7 @@ paciente.detallePaciente = async (req, res) => {
 
   } catch (error) {
     console.error('Error al obtener detalles del paciente:', error);
-    res.status(500).send('Error interno del servidor');
+    res.redirect('/500');
   }
 };
 

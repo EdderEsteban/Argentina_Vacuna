@@ -23,7 +23,8 @@ module.exports = {
           'Deposito Nacional',
           'Distribucion',
           'Deposito Provincial',
-          'Centro Vacunacion'
+          'Centro Vacunacion',
+          'Centro Descarte'
         ),
         allowNull: false
       },
