@@ -1,0 +1,83 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 👥 Listado de Pacientes
+
+    //- Botón de nuevo paciente
+    a.btn.btn-primary.mb-3(href='/nuevopaciente')
+      i.bi.bi-plus-circle.me-2
+      | Nuevo Paciente
+
+    //- Tabla responsive
+    .table-responsive
+      table.table.table-striped.table-hover.align-middle
+        thead.table-dark
+          tr
+            th(scope='col') Nombre
+            th(scope='col') Apellido
+            th(scope='col') DNI
+            th(scope='col') Teléfono
+            th(scope='col') Correo
+            th(scope='col') Provincia
+            th(scope='col') Ubicación de Registro
+            th(scope='col') Acciones
+        tbody
+          each paciente in pacientes
+            tr
+              td= paciente.id
+              td= paciente.nombre
+              td= paciente.apellido
+              td= paciente.dni
+              td= paciente.telefono
+              td= paciente.correo
+              td= paciente.provincia.nombre
+              td= paciente.ubicacionRegistro.nombre
+              td
+                .d-flex.gap-2
+                  a.btn.btn-sm.btn-outline-primary.editar-paciente(href=`/editarpaciente/${paciente.id}`)
+                    i.bi.bi-pencil
+                  button.btn.btn-sm.btn-outline-danger.borrar-paciente(data-id=paciente.id)
+                    i.bi.bi-trash
+
+    //- Controles de paginación
+    if pagination.totalPages > 1
+      nav(aria-label='Paginación de pacientes')
+        ul.pagination.justify-content-center
+          li.page-item(class=pagination.currentPage === 1 ? 'disabled' : '')
+            a.page-link(
+              href=`/pacientes?page=${pagination.currentPage - 1}`
+              aria-label='Anterior'
+            )
+              span(aria-hidden='true') &laquo;
+              span.sr-only Anterior
+          
+          //- Rango de páginas (máximo 5 visibles)
+          - let startPage = Math.max(1, pagination.currentPage - 2)
+          - let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2)
+          
+          if startPage > 1
+            li.page-item
+              a.page-link(href=`/pacientes?page=1`) 1
+            li.page-item.disabled
+              span.page-link ...
+          each pageNum in Array(endPage - startPage + 1).fill().map((_, i) => startPage + i)
+            li.page-item(class=pageNum === pagination.currentPage ? 'active' : '')
+              a.page-link(href=`/pacientes?page=${pageNum}`)= pageNum
+          
+          if endPage < pagination.totalPages
+            li.page-item.disabled
+              span.page-link ...
+            li.page-item
+              a.page-link(href=`/pacientes?page=${pagination.totalPages}`)= pagination.totalPages
+          
+          li.page-item(class=pagination.currentPage === pagination.totalPages ? 'disabled' : '')
+            a.page-link(
+              href=`/pacientes?page=${pagination.currentPage + 1}`
+              aria-label='Siguiente'
+            )
+              span(aria-hidden='true') &raquo;
+              span.sr-only Siguiente
+
+
+  script(src="/js/paciente/listadoPaciente.js")

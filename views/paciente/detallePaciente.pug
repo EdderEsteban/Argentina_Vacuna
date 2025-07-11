@@ -1,0 +1,52 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .row
+      .col-md-12
+        .card.border-secondary
+          .card-header.bg-secondary.text-white
+            h2.mb-0 Paciente: #{paciente.nombre} #{paciente.apellido} (DNI: #{paciente.dni})
+          
+          .card-body
+            ul.nav.nav-tabs.mb-3
+              li.nav-item
+                a.nav-link.active(data-bs-toggle="tab" href="#informacion") Información Personal
+              li.nav-item
+                a.nav-link(data-bs-toggle="tab" href="#vacunas") Historial de Vacunación
+            
+            .tab-content
+              .tab-pane.fade.show.active(id="informacion")
+                p <strong>Nombre:</strong> #{paciente.nombre} #{paciente.apellido}
+                p <strong>DNI:</strong> #{paciente.dni}
+                p <strong>Provincia:</strong> #{paciente.provincia.nombre}
+                p <strong>Ubicación de Registro:</strong> #{paciente.ubicacionRegistro.nombre}
+                p <strong>Teléfono:</strong> #{paciente.telefono || 'No especificado'}
+                p <strong>Correo Electrónico:</strong> #{paciente.correo || 'No especificado'}
+              
+              .tab-pane.fade(id="vacunas")
+                .table-responsive
+                  table.table.table-striped.table-hover
+                    thead.table-dark
+                      tr
+                        th Lote
+                        th Tipo de Vacuna
+                        th Fecha de Aplicación
+                        th Centro de Vacunación
+                        th Enfermero
+                    tbody
+                      if vacunas.length === 0
+                        tr
+                          td(colspan="5" class="text-center text-muted") No se encontraron vacunas aplicadas
+                      each vacuna in vacunas
+                        tr
+                          td #{vacuna.lote}
+                          td #{vacuna.tipo}
+                          td #{vacuna.fecha_aplicacion}
+                          td #{vacuna.ubicacion}
+                          td #{vacuna.usuario.nombre} #{vacuna.usuario.apellido}
+            
+            .d-flex.justify-content-end.mt-3
+              button#btnRegresar.btn.btn-secondary(type="button") Volver
+
+    script(src="/js/paciente/detallePaciente.js")

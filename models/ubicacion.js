@@ -44,6 +44,7 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Ubicacion',
     tableName: 'Ubicaciones',
+    paranoid: true,
     timestamps: true,
     validate: {
       provinciaRequerida() {

@@ -31,6 +31,7 @@ lote.listar = async (req, res) => {
                 {
                     model: Vacuna,
                     as: 'vacunas',
+                    limit: 1,
                     include: [
                         {
                             model: Estado,

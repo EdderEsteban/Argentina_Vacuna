@@ -1,0 +1,115 @@
+extends ../__layout/main
+
+block content
+    .container.mt-4
+        h1.mb-4 ✏️ Editar Paciente
+
+        form#formEditarPaciente
+            input(type="hidden" name="_csrf" value=csrfToken)
+            input(type="hidden" id="pacienteId" value=paciente.id)
+
+            .form-floating.mb-3 
+                input.form-control(
+                    type="text"
+                    id="nombrePaciente"
+                    name="nombrePaciente"
+                    required
+                    autofocus
+                    minlength="2"
+                    maxlength="100"
+                    value=paciente.nombre
+                )
+                label.form-label(for="nombrePaciente") Nombre
+                small.form-text.text-muted Mínimo 2 caracteres, máximo 100
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="text"
+                    id="apellidoPaciente"
+                    name="apellidoPaciente"
+                    required
+                    minlength="2"
+                    maxlength="100"
+                    value=paciente.apellido
+                )
+                label.form-label(for="apellidoPaciente") Apellido
+                small.form-text.text-muted Mínimo 2 caracteres, máximo 100
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="text"
+                    id="dniPaciente"
+                    name="dniPaciente"
+                    required
+                    minlength="7"
+                    maxlength="8"
+                    value=paciente.dni
+                )
+                label.form-label(for="dniPaciente") DNI
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="tel"
+                    id="telefonoPaciente"
+                    name="telefonoPaciente"
+                    value=paciente.telefono || ''
+                )
+                label.form-label(for="telefonoPaciente") Teléfono
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="email"
+                    id="correoPaciente"
+                    name="correoPaciente"
+                    value=paciente.correo || ''
+                )
+                label.form-label(for="correoPaciente") Correo Electrónico
+
+            .form-floating.mb-3
+                select.form-select(
+                    id="id_provincia"
+                    name="id_provincia"
+                    required
+                    value=paciente.id_provincia
+                )
+                    option(value="" disabled) -- Seleccionar Provincia --
+                    each provincia in provincias
+                        option(value=provincia.id, selected=provincia.id == paciente.id_provincia)= provincia.nombre
+                label.form-label(for="id_provincia") Provincia
+
+            .form-floating.mb-3
+                select.form-select(
+                    id="ubicacionRegistroPaciente"
+                    name="ubicacionRegistroPaciente"
+                    required
+                    value=paciente.id_ubicacion_registro
+                )
+                    option(value="" disabled) -- Seleccionar Centro de Salud --
+                    each ubicacion in ubicaciones
+                        option(value=ubicacion.id, selected=ubicacion.id == paciente.id_ubicacion_registro)= ubicacion.nombre
+                label.form-label(for="ubicacionRegistroPaciente") Centro de Salud
+
+            .d-flex.gap-2
+                button.btn.btn-primary.mb-3(type="button" id="guardarCambiosPaciente")
+                    i.bi.bi-save.me-2
+                    | Guardar Cambios
+                a.btn.btn-secondary.mb-3(type="button" id="cancelarEdicionPaciente")
+                    i.bi.bi-x-circle.me-2
+                    | Cancelar
+
+    script(src="/js/paciente/editarPaciente.js")
+
+    script.
+        $(document).ready(function() {
+          function inicializarSelect2(selector) {
+            $(selector).select2({
+              placeholder: '',
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(selector).parent()
+            });
+          }
+
+          inicializarSelect2('#id_provincia');
+          inicializarSelect2('#ubicacionRegistroPaciente');
+        });

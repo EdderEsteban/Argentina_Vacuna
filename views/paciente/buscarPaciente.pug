@@ -1,0 +1,73 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 👨‍⚕️ Búsqueda de Pacientes
+
+    // Filtros de búsqueda
+    .card.mb-4
+      .card-body
+        .row.g-3
+          .col-md-3
+            .form-floating
+              input.form-control#inputDNI(type="search" placeholder="" autofocus)
+              label.form-label(for="inputDNI") DNI
+              small.form-text.text-muted Ingrese el DNI del paciente
+          .form-floating.col-md-3
+            input.form-control#inputNombre(type="search" placeholder="")
+            label.form-label(for="inputNombre") Nombre
+          .form-floating.col-md-3
+            input.form-control#inputApellido(type="search" placeholder="")
+            label.form-label(for="inputApellido") Apellido
+          .form-floating.col-md-3
+            select.form-select#id_provincia
+              option(value="" disabled selected) Seleccione una provincia
+              each provincia in provincias
+                option(value=provincia.id)= provincia.nombre
+            label.form-label(for="id_provincia") Provincia
+          .form-floating.col-md-3
+            select.form-select#id_ubicacion
+              option(value="" disabled selected) Seleccione un centro de vacunación
+              each ubicacion in ubicaciones
+                option(value=ubicacion.id)= ubicacion.nombre
+            label.form-label(for="id_ubicacion") Centro de Vacunación
+
+        .d-flex.justify-content-end.mt-3
+          button#btnBuscar.btn.btn-primary Buscar
+          button#btnLimpiar.btn.btn-secondary(style="margin-left: 10px;")
+            i.bi.bi-x-circle.me-2
+            | Limpiar
+
+    // Resultados de búsqueda
+    .table-responsive
+      table.table.table-striped.table-hover.align-middle
+        thead.table-dark
+          tr
+            th(scope='col') DNI
+            th(scope='col') Nombre
+            th(scope='col') Apellido
+            th(scope='col') Provincia
+            th(scope='col') Ubicación de Registro
+            th(scope='col') Teléfono
+            th(scope='col') Correo Electrónico
+            th(scope='col') Acciones
+        tbody#resultadosBusqueda
+
+    // Contenedor para paginación
+    #paginacionContainer.d-flex.justify-content-center.mt-4
+
+  script(src="/js/paciente/buscarPaciente.js")
+  script.
+        $(document).ready(function() {
+          function inicializarSelect2(selector) {
+            $(selector).select2({
+              placeholder: '',
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $(selector).parent()
+            });
+          }
+
+          inicializarSelect2('#id_provincia');
+          inicializarSelect2('#id_ubicacion');
+        });

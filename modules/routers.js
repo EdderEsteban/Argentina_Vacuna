@@ -2,6 +2,7 @@ const router = require("express").Router();
 const handler = require("./handler.js");
 const laboratorio = require("../controllers/laboratorioController")
 const lote = require("../controllers/loteController");
+const paciente = require("../controllers/pacienteController");
 const csrf = require('csurf');
 const csrfProtection = csrf({ cookie: true });
 
@@ -43,6 +44,26 @@ router.delete('/borrarlote/:id', csrfProtection, lote.borrarLote);
 router.get('/buscardorlote', csrfProtection, lote.mostrarBuscar);
 // Endpoint de búsqueda
 router.get('/buscarlote', csrfProtection, lote.buscarLotes);
+
+// ---------------------------------------- Rutas de Pacientes ---------------------------------------
+// Listar pacientes
+router.get("/pacientes", paciente.listar);
+// Formulario nuevo paciente
+router.get('/nuevopaciente', csrfProtection, paciente.mostrarNuevo);
+// Crear paciente   
+router.post('/crearpaciente', csrfProtection, paciente.crearPaciente);
+// Formulario edición paciente
+router.get('/editarpaciente/:id', csrfProtection, paciente.editarPaciente);
+// Endpoint de Actualizar
+router.put('/actualizarpaciente/:id', csrfProtection, paciente.actualizarPaciente);
+// Eliminar
+router.delete('/borrarpaciente/:id', csrfProtection, paciente.borrarPaciente);
+// Formulario de búsqueda de pacientes
+router.get('/buscadorpaciente', csrfProtection, paciente.mostrarBuscar);
+// Endpoint de búsqueda
+router.get('/buscarpaciente', csrfProtection, paciente.buscarPacientes);
+// Endpoint de detalles de paciente
+router.get('/detallespaciente/:id', csrfProtection, paciente.detallePaciente);
 
 
 

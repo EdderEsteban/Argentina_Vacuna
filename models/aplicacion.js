@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
 
       this.belongsTo(models.Usuario, {
         foreignKey: 'id_usuario',
-        as: 'enfermero'
+        as: 'usuario'
       });
 
       this.belongsTo(models.Lote, { 
