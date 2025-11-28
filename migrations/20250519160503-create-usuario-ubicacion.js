@@ -1,25 +1,25 @@
 'use strict';
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('UsuarioUbicaciones', {
       id_usuario: {
         type: Sequelize.INTEGER,
         primaryKey: true,
-        references: {
-          model: 'Usuarios',
-          key: 'id'
-        },
+        references: { model: 'Usuarios', key: 'id' },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
       id_ubicacion: {
         type: Sequelize.INTEGER,
         primaryKey: true,
-        references: {
-          model: 'Ubicaciones',
-          key: 'id'
-        },
+        references: { model: 'Ubicaciones', key: 'id' },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+      },
+      id_rol: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: { model: 'Roles', key: 'id' },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
       },
@@ -35,8 +35,9 @@ module.exports = {
       }
     });
 
-    // Índice para búsquedas inversas
+    // Índice para búsquedas rápidas
     await queryInterface.addIndex('UsuarioUbicaciones', ['id_ubicacion', 'id_usuario']);
+    await queryInterface.addIndex('UsuarioUbicaciones', ['id_rol']);
   },
 
   async down(queryInterface) {

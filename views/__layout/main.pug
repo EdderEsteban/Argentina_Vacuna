@@ -56,6 +56,18 @@ html(lang="en")
 
         // Select2
         script(src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js")
+
+        // Script Textarea
+        script.
+            document.addEventListener('DOMContentLoaded', function() {
+                const textareas = document.querySelectorAll('textarea');
+                textareas.forEach(textarea => {
+                    textarea.addEventListener('input', function(e) {
+                        this.style.height = 'auto';
+                        this.style.height = (this.scrollHeight) + 'px';
+                    });
+                });
+            });
         
 
 

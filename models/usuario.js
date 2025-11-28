@@ -4,34 +4,27 @@ const {
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Usuario extends Model {
-     /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
+    /**
+    * Helper method for defining associations.
+    * This method is not a part of Sequelize lifecycle.
+    * The `models/index` file will call this method automatically.
+    */
     static associate(models) {
-      Usuario.belongsTo(models.Rol, {
-        foreignKey: 'id_rol', 
-        as: 'rol'
-      });
-
       Usuario.hasMany(models.Aplicacion, {
         foreignKey: 'id_usuario',
         as: 'aplicaciones'
       });
+      Usuario.belongsToMany(models.Ubicacion, {
+        through: models.UsuarioUbicacion,
+        foreignKey: 'id_usuario',
+        otherKey: 'id_ubicacion',
+        as: 'ubicaciones'
+      });
     }
+
   }
 
   Usuario.init({
-    id_rol: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      validate: {
-        notEmpty: {
-          msg: 'El rol es obligatorio'
-        }
-      }
-    },
     nombre: {
       type: DataTypes.STRING(100),
       allowNull: false,

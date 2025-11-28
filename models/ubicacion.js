@@ -15,6 +15,16 @@ module.exports = (sequelize, DataTypes) => {
         targetKey: 'id',
         as: 'provincia'
       });
+      Ubicacion.belongsToMany(models.Usuario, {
+        through: models.UsuarioUbicacion,
+        foreignKey: 'id_ubicacion',
+        otherKey: 'id_usuario',
+        as: 'usuarios'
+      });
+      Ubicacion.hasMany(models.UsuarioUbicacion, {
+        foreignKey: 'id_ubicacion',
+        as: 'usuariosUbicacion'
+      });
     }
   }
   Ubicacion.init({
@@ -33,7 +43,8 @@ module.exports = (sequelize, DataTypes) => {
         'Distribucion',
         'Deposito Provincial',
         'Centro Vacunacion',
-        'Centro Descarte'
+        'Centro Descarte',
+        'Nivel Central'
       ),
       allowNull: false,
       validate: {
@@ -55,18 +66,18 @@ module.exports = (sequelize, DataTypes) => {
         ) {
           throw new Error('LEl campo provincia es obligatorio para centros de vacunación y depósitos provinciales');
         }
-      }       
+      }
     },
     hooks: {
-        async beforeValidate(ubicacion, options) {
-          if (ubicacion.id_provincia) {
-            const provincia = await sequelize.models.Provincia.findByPk(ubicacion.id_provincia);
-            if (!provincia) {
-              throw new Error('La provincia especificada no existe');
-            }
+      async beforeValidate(ubicacion, options) {
+        if (ubicacion.id_provincia) {
+          const provincia = await sequelize.models.Provincia.findByPk(ubicacion.id_provincia);
+          if (!provincia) {
+            throw new Error('La provincia especificada no existe');
           }
         }
-      } 
+      }
+    }
   });
 
   return Ubicacion;

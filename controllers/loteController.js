@@ -113,75 +113,78 @@ lote.mostrarNuevo = async (req, res) => {
 
 // POST Crear nuevo lote y sus vacunas
 lote.crearLote = async (req, res) => {
-    try {
-        // Validación de cantidad
-        if (!req.body.cantidad || !/^\d+$/.test(req.body.cantidad) || parseInt(req.body.cantidad) <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Error al crear lote',
-                errores: [{
-                    campo: 'cantidad',
-                    mensaje: 'La cantidad debe ser un número entero positivo mayor que cero.'
-                }]
-            });
-        }
+  try {
+    const {
+      numLote,
+      id_laboratorio,
+      cantidad,
+      fecha_fab,
+      fecha_venc,
+      fecha_compra,
+      tipo_vacuna,
+      nombre_comercial
+    } = req.body;
 
-        // Validar que el número de lote no se repita
-        const loteExistente = await Lote.findOne({
-            where: { num_lote: req.body.numLote.trim() }
-        });
-
-        if (loteExistente) {
-            return res.status(400).json({
-                success: false,
-                message: 'Error al crear lote',
-                errores: [{
-                    campo: 'numLote',
-                    mensaje: 'El número de lote ya existe.'
-                }]
-            });
-        }
-
-        // Crear el nuevo lote
-        const nuevoLote = await Lote.create({
-            num_lote: req.body.numLote.trim(),
-            id_laboratorio: req.body.id_laboratorio,
-            cantidad: req.body.cantidad,
-            fecha_fab: req.body.fecha_fab,
-            fecha_venc: req.body.fecha_venc,
-            fecha_compra: req.body.fecha_compra
-        });
-
-        // Crear vacunas para el lote (una por cada unidad en la cantidad)
-        for (let i = 0; i < parseInt(req.body.cantidad); i++) {
-            await Vacuna.create({
-                id_lote: nuevoLote.id,
-                tipo: req.body.tipo_vacuna.trim(),
-                nombre_comercial: req.body.nombre_comercial.trim(),
-                id_estado: 1 // Estado Predeterminado: 'Deposito Nacional'
-            });
-        }
-
-        res.status(201).json({
-            success: true,
-            message: 'Lote y vacunas creados exitosamente',
-            data: nuevoLote
-        });
-
-    } catch (error) {
-        console.error('Error detallado:', JSON.stringify(error, null, 2));
-        // Manejo de errores de Sequelize
-        const errores = error.errors?.map(err => ({
-            campo: err.path,
-            mensaje: err.message
-        })) || [{ mensaje: 'Error desconocido' }];
-
-        res.status(400).json({
-            success: false,
-            message: 'Error al crear lote',
-            errores
-        });
+    // Validaciones básicas
+    if (!cantidad || !/^\d+$/.test(cantidad) || parseInt(cantidad) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'La cantidad debe ser un número entero positivo mayor que cero.'
+      });
     }
+
+    const loteExistente = await Lote.findOne({ where: { num_lote: numLote.trim() } });
+    if (loteExistente) {
+      return res.status(400).json({
+        success: false,
+        message: 'El número de lote ya existe.'
+      });
+    }
+
+    // Crear el lote
+    const nuevoLote = await Lote.create({
+      num_lote: numLote.trim(),
+      id_laboratorio,
+      cantidad: parseInt(cantidad),
+      fecha_fab,
+      fecha_venc,
+      fecha_compra
+    });
+
+    // ✅ Crear solo 1 fila en Vacuna (tipo de vacuna dentro del lote)
+    await Vacuna.create({
+      id_lote: nuevoLote.id,
+      tipo: tipo_vacuna.trim(),
+      nombre_comercial: nombre_comercial.trim(),
+      id_estado: 1 // Disponible
+    });
+
+    // ✅ Inicializar stock en depósito nacional
+    await Stock.create({
+      id_lote: nuevoLote.id,
+      id_ubicacion: 1, // ID del depósito nacional
+      cantidad: parseInt(cantidad)
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Lote, vacuna y stock creados exitosamente',
+      data: nuevoLote
+    });
+
+  } catch (error) {
+    console.error('Error detallado:', JSON.stringify(error, null, 2));
+    const errores = error.errors?.map(err => ({
+      campo: err.path,
+      mensaje: err.message
+    })) || [{ mensaje: 'Error desconocido' }];
+
+    res.status(400).json({
+      success: false,
+      message: 'Error al crear lote',
+      errores
+    });
+  }
 };
 
 // Mostrar formulario de edición de lote
@@ -222,95 +225,78 @@ lote.editarLote = async (req, res) => {
 
 // Actualizar lote y sus vacunas asociadas
 lote.actualizarLote = async (req, res) => {
-    try {
-        const loteId = req.params.id;
-        const lote = await Lote.findByPk(loteId);
+  try {
+    const loteId = req.params.id;
+    const lote = await Lote.findByPk(loteId);
 
-        if (!lote) {
-            return res.status(404).json({
-                success: false,
-                message: 'Lote no encontrado'
-            });
-        }
-
-        // Validación de cantidad
-        if (!req.body.cantidad || !/^\d+$/.test(req.body.cantidad) || parseInt(req.body.cantidad) <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Error al actualizar lote',
-                errores: [{
-                    campo: 'cantidad',
-                    mensaje: 'La cantidad debe ser un número entero positivo mayor que cero.'
-                }]
-            });
-        }
-
-        // Actualizar el lote
-        await lote.update({
-            num_lote: req.body.numLote.trim(),
-            id_laboratorio: req.body.id_laboratorio,
-            cantidad: req.body.cantidad,
-            fecha_fab: req.body.fecha_fab,
-            fecha_venc: req.body.fecha_venc,
-            fecha_compra: req.body.fecha_compra
-        });
-
-        // Actualizar vacunas asociadas al lote
-        const nuevaCantidad = parseInt(req.body.cantidad);
-        const vacunasActuales = await Vacuna.findAll({
-            where: { id_lote: loteId },
-            paranoid: false // Incluir vacunas soft-delete
-        });
-
-        // Actualizar tipo y nombre comercial de las vacunas existentes
-        await Vacuna.update(
-            {
-                tipo: req.body.tipo_vacuna.trim(),
-                nombre_comercial: req.body.nombre_comercial.trim()
-            },
-            {
-                where: { id_lote: loteId }
-            }
-        );
-
-        // Gestionar la cantidad de vacunas
-        if (vacunasActuales.length < nuevaCantidad) {
-            // Crear nuevas vacunas si la cantidad aumentó
-            for (let i = vacunasActuales.length; i < nuevaCantidad; i++) {
-                await Vacuna.create({
-                    id_lote: loteId,
-                    tipo: req.body.tipo_vacuna.trim(),
-                    nombre_comercial: req.body.nombre_comercial.trim(),
-                    id_estado: 1 // Estado predeterminado
-                });
-            }
-        } else if (vacunasActuales.length > nuevaCantidad) {
-            // Eliminar vacunas extras
-            const vacunasParaEliminar = vacunasActuales.slice(nuevaCantidad);
-            await Vacuna.destroy({
-                where: { id: vacunasParaEliminar.map(v => v.id) }
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Lote y vacunas actualizados exitosamente',
-            data: lote
-        });
-
-    } catch (error) {
-        console.error('Error detallado:', JSON.stringify(error, null, 2));
-        const errores = error.errors?.map(err => ({
-            campo: err.path,
-            mensaje: err.message
-        })) || [{ mensaje: 'Error desconocido' }];
-
-        res.status(400).json({
-            success: false,
-            message: 'Error al actualizar lote',
-            errores
-        });
+    if (!lote) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lote no encontrado'
+      });
     }
+
+    // Validación de cantidad
+    const nuevaCantidad = parseInt(req.body.cantidad);
+    if (!req.body.cantidad || !/^\d+$/.test(req.body.cantidad) || nuevaCantidad <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Error al actualizar lote',
+        errores: [{
+          campo: 'cantidad',
+          mensaje: 'La cantidad debe ser un número entero positivo mayor que cero.'
+        }]
+      });
+    }
+
+    // Actualizar el lote
+    await lote.update({
+      num_lote: req.body.numLote.trim(),
+      id_laboratorio: req.body.id_laboratorio,
+      cantidad: nuevaCantidad,
+      fecha_fab: req.body.fecha_fab,
+      fecha_venc: req.body.fecha_venc,
+      fecha_compra: req.body.fecha_compra
+    });
+
+    //  Actualizar Vacuna asociada al lote
+    await Vacuna.update(
+      {
+        tipo: req.body.tipo_vacuna.trim(),
+        nombre_comercial: req.body.nombre_comercial.trim()
+      },
+      { where: { id_lote: loteId } }
+    );
+
+    //  Ajustar el stock total #REVISAR UBICACION#
+    const stock = await Stock.findOne({
+      where: { id_lote: loteId }
+    });
+
+    if (stock) {
+      stock.cantidad = nuevaCantidad;
+      await stock.save();
+    }
+
+    res.json({
+      success: true,
+      message: 'Lote, vacuna y stock actualizados exitosamente',
+      data: lote
+    });
+
+  } catch (error) {
+    console.error('Error detallado:', JSON.stringify(error, null, 2));
+    const errores = error.errors?.map(err => ({
+      campo: err.path,
+      mensaje: err.message
+    })) || [{ mensaje: 'Error desconocido' }];
+
+    res.status(400).json({
+      success: false,
+      message: 'Error al actualizar lote',
+      errores
+    });
+  }
 };
 
 // Eliminar lote (soft delete)

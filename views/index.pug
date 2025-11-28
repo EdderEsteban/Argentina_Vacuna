@@ -5,19 +5,35 @@ block content
         h1 Bienvenido al Sistema de Registro de Vacunas Nacional
         p Para comenzar, por favor inicie sesión con su usuario y contraseña
 
-        .container.mt-5.mb-5
-            .row.justify-content-center
-                .col-12.col-md-8.col-lg-6.col-xl-4
-                    .card
-                        .card-body
-                            h2.card-title.text-center.mb-4 Login
-                                form(action="/login" method="POST")
-                                .mb-3
-                                    input.form-control(type="text" placeholder="Usuario" name="username")
-                                .mb-3
-                                    input.form-control(type="password" placeholder="Contraseña" name="password")
-                                .d-grid
-                                    button.btn.btn-primary(type="submit") Iniciar Sesión
+    .container.mt-5
+     .row.justify-content-center
+       .col-md-6
+         .card.shadow
+           .card-body
+             h3.card-title.text-center.mb-4 🔐 Login
+             form#loginForm
+               .mb-3
+                 input.form-control(
+                   type="text"
+                   id="usuario"
+                   autocomplete="current-username"
+                   placeholder="Usuario"
+                   required
+                 )
+               .mb-3
+                 input.form-control(
+                   type="password"
+                   id="password"
+                   autocomplete="current-password"
+                   placeholder="Contraseña"
+                   required
+                 )
+               .d-grid
+                 button#iniciarSesion.btn.btn-primary Iniciar Sesión
+             hr
+             .text-center
+               small ¿No tenés cuenta?
+               br
+               a#solicitud.btn.btn-outline-secondary.btn-sm.mt-2 Solicitar Acceso
 
-        p Si no tiene cuenta, solicite una al Area Tecnica para registrarse, por favor haga clic en el siguiente enlace:
-        a(tipe="button" href="/registro") Registro
+    script(src="/js/login/index.js")

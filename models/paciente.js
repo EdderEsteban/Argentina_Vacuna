@@ -93,7 +93,7 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Paciente',
     tableName: 'Pacientes', // Plural coherente con Ubicaciones
-    paranoid: true, // Borrado lógico como buena práctica
+    paranoid: true, // Borrado lógico 
     hooks: {
       beforeValidate: async (paciente) => {
         // Autocompletar provincia si viene de ubicación

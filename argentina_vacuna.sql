@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 11-07-2025 a las 14:57:04
+-- Tiempo de generación: 20-08-2025 a las 18:36:19
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -171,7 +171,7 @@ INSERT INTO `estados` (`id`, `nombre`, `codigo`, `createdAt`, `updatedAt`, `dele
 (4, 'En Vacunatorio', 'VACU', '2025-06-18 10:00:00', '2025-06-26 12:07:19', NULL),
 (5, 'Aplicado', 'APLI', '2025-06-18 10:00:00', '2025-06-26 12:09:01', NULL),
 (6, 'Vencido', 'VENC', '2025-06-18 10:00:00', '2025-06-26 12:09:07', NULL),
-(9, 'Descartado', 'DESC', '2025-06-26 12:03:10', '2025-06-26 12:09:14', NULL);
+(7, 'Descartado', 'DESC', '2025-06-26 12:03:10', '2025-07-11 12:44:22', NULL);
 
 -- --------------------------------------------------------
 
@@ -223,7 +223,8 @@ CREATE TABLE `lotes` (
 
 INSERT INTO `lotes` (`id`, `num_lote`, `id_laboratorio`, `cantidad`, `fecha_fab`, `fecha_venc`, `fecha_compra`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
 (17, 'LOT-12345', 3, 15, '2025-01-01', '2025-12-31', '2025-06-26', '2025-06-26 15:11:42', '2025-07-01 18:26:33', NULL),
-(18, 'LOT-123', 1, 20, '2025-06-01', '2026-06-30', '2025-07-01', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL);
+(18, 'LOT-123', 1, 20, '2025-06-01', '2026-06-30', '2025-07-01', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
+(19, 'LOT-1111', 4, 10, '2025-01-01', '2025-07-30', '2025-07-23', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL);
 
 --
 -- Disparadores `lotes`
@@ -250,6 +251,9 @@ CREATE TABLE `movimientolotes` (
   `id_lote` int(11) NOT NULL,
   `id_ubicacion_origen` int(11) DEFAULT NULL,
   `id_ubicacion_destino` int(11) NOT NULL,
+  `id_usuario_origen` int(11) NOT NULL,
+  `id_usuario_destino` int(11) DEFAULT NULL,
+  `fecha_recepcion` datetime DEFAULT NULL,
   `cantidad` int(11) NOT NULL,
   `fecha_movimiento` date NOT NULL DEFAULT curdate(),
   `id_estado` int(11) NOT NULL DEFAULT 1,
@@ -262,33 +266,12 @@ CREATE TABLE `movimientolotes` (
 -- Disparadores `movimientolotes`
 --
 DELIMITER $$
-CREATE TRIGGER `actualizar_stock_movimiento` AFTER INSERT ON `movimientolotes` FOR EACH ROW BEGIN
-        -- Actualizar stock en origen (si existe)
-        IF NEW.id_ubicacion_origen IS NOT NULL THEN
-          UPDATE Stocks 
-          SET cantidad = cantidad - NEW.cantidad
-          WHERE id_lote = NEW.id_lote 
-            AND id_ubicacion = NEW.id_ubicacion_origen;
-        END IF;
-
-        -- Actualizar stock en destino (upsert)
-        INSERT INTO Stocks (id_lote, id_ubicacion, cantidad, createdAt, updatedAt)
-        VALUES (NEW.id_lote, NEW.id_ubicacion_destino, NEW.cantidad, NOW(), NOW())
-        ON DUPLICATE KEY UPDATE 
-          cantidad = cantidad + NEW.cantidad,
-          updatedAt = NOW();
-      END
-$$
-DELIMITER ;
-DELIMITER $$
 CREATE TRIGGER `validar_stock_movimiento` BEFORE INSERT ON `movimientolotes` FOR EACH ROW BEGIN
         DECLARE stock_actual INT;
-        
         IF NEW.id_ubicacion_origen IS NOT NULL THEN
           SELECT cantidad INTO stock_actual 
           FROM Stocks 
           WHERE id_lote = NEW.id_lote AND id_ubicacion = NEW.id_ubicacion_origen;
-          
           IF stock_actual < NEW.cantidad THEN
             SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'No hay suficiente stock para este movimiento';
@@ -441,7 +424,27 @@ INSERT INTO `sequelizemeta` (`name`) VALUES
 ('20250520160954-create-stock.js'),
 ('20250520170000-add-triggers-vencimiento.js'),
 ('20250521140001-create-trigger-stock.js'),
-('20250527190334-add-indexes-laboratorios.js');
+('20250527190334-add-indexes-laboratorios.js'),
+('20250820155308-create-solicitudes-acceso.js');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `solicitudesacceso`
+--
+
+CREATE TABLE `solicitudesacceso` (
+  `id` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `apellido` varchar(100) NOT NULL,
+  `dni` varchar(20) NOT NULL,
+  `correo` varchar(100) NOT NULL,
+  `motivo` text NOT NULL,
+  `estado` enum('Pendiente','Aprobado','Rechazado') NOT NULL DEFAULT 'Pendiente',
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deletedAt` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -469,7 +472,7 @@ CREATE TABLE `ubicaciones` (
   `nombre` varchar(255) DEFAULT NULL,
   `direccion` varchar(255) DEFAULT NULL,
   `telefono` varchar(255) DEFAULT NULL,
-  `tipo` enum('Deposito Nacional','Distribucion','Deposito Provincial','Centro Vacunacion') NOT NULL,
+  `tipo` enum('Deposito Nacional','Distribucion','Deposito Provincial','Centro Vacunacion','Centro Descarte') NOT NULL,
   `id_provincia` int(11) DEFAULT NULL,
   `createdAt` datetime NOT NULL,
   `updatedAt` datetime NOT NULL,
@@ -481,7 +484,7 @@ CREATE TABLE `ubicaciones` (
 --
 
 INSERT INTO `ubicaciones` (`id`, `nombre`, `direccion`, `telefono`, `tipo`, `id_provincia`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(1, 'Hospital Posadas', 'Av. San Martín 123', '4455-6677', 'Deposito Provincial', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
+(1, 'Hospital Posadas', 'Av. San Martín 123', '4455-6677', 'Deposito Provincial', 1, '2025-07-03 13:42:36', '2025-07-11 14:25:50', NULL),
 (2, 'Hospital Garrahan', 'Av. Monroe 890', '11-3344-5566', 'Deposito Nacional', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (3, 'Hospital Italiano', 'Av. Córdoba 1234', '11-7788-9900', 'Centro Vacunacion', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (4, 'Hospital de San Isidro', 'Av. Maipú 567', '4567-8901', 'Centro Vacunacion', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
@@ -509,7 +512,9 @@ INSERT INTO `ubicaciones` (`id`, `nombre`, `direccion`, `telefono`, `tipo`, `id_
 (26, 'Hospital de Santa Fe', 'Av. Barrientos 456', '3456-778899', 'Centro Vacunacion', 20, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (27, 'Hospital de Rosario', 'Av. Pellegrini 100', '3415-678900', 'Centro Vacunacion', 20, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (28, 'Hospital de Tucumán', 'Av. Independencia 234', '3815-678900', 'Centro Vacunacion', 23, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
-(29, 'Hospital de Salta', 'Av. Belgrano 567', '3874-556677', 'Centro Vacunacion', 16, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL);
+(29, 'Hospital de Salta', 'Av. Belgrano 567', '3874-556677', 'Centro Vacunacion', 16, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
+(31, 'Oca Transporte', 'CABA 123', '2224444444', 'Distribucion', 1, '2025-07-11 14:35:53', '2025-07-11 14:37:50', NULL),
+(32, 'Andreani Transporte', 'Ministro Berrondo 338', '02664271316', 'Distribucion', 18, '2025-07-24 16:19:17', '2025-07-24 16:19:17', NULL);
 
 -- --------------------------------------------------------
 
@@ -643,7 +648,17 @@ INSERT INTO `vacunas` (`id`, `id_lote`, `id_estado`, `tipo`, `nombre_comercial`,
 (74, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
 (75, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
 (76, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(77, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL);
+(77, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
+(78, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(79, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(80, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(81, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(82, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(83, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(84, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(85, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(86, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
+(87, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL);
 
 --
 -- Índices para tablas volcadas
@@ -704,6 +719,8 @@ ALTER TABLE `lotes`
 --
 ALTER TABLE `movimientolotes`
   ADD PRIMARY KEY (`id`),
+  ADD KEY `id_usuario_origen` (`id_usuario_origen`),
+  ADD KEY `id_usuario_destino` (`id_usuario_destino`),
   ADD KEY `movimiento_lotes_id_lote` (`id_lote`),
   ADD KEY `movimiento_lotes_id_ubicacion_origen` (`id_ubicacion_origen`),
   ADD KEY `movimiento_lotes_id_ubicacion_destino` (`id_ubicacion_destino`),
@@ -740,6 +757,14 @@ ALTER TABLE `roles`
 ALTER TABLE `sequelizemeta`
   ADD PRIMARY KEY (`name`),
   ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indices de la tabla `solicitudesacceso`
+--
+ALTER TABLE `solicitudesacceso`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `solicitudes_acceso_estado` (`estado`),
+  ADD KEY `solicitudes_acceso_correo` (`correo`);
 
 --
 -- Indices de la tabla `stocks`
@@ -817,7 +842,7 @@ ALTER TABLE `laboratorios`
 -- AUTO_INCREMENT de la tabla `lotes`
 --
 ALTER TABLE `lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientolotes`
@@ -844,6 +869,12 @@ ALTER TABLE `roles`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
+-- AUTO_INCREMENT de la tabla `solicitudesacceso`
+--
+ALTER TABLE `solicitudesacceso`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `stocks`
 --
 ALTER TABLE `stocks`
@@ -853,7 +884,7 @@ ALTER TABLE `stocks`
 -- AUTO_INCREMENT de la tabla `ubicaciones`
 --
 ALTER TABLE `ubicaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -865,7 +896,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `vacunas`
 --
 ALTER TABLE `vacunas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
 
 --
 -- Restricciones para tablas volcadas
@@ -902,7 +933,9 @@ ALTER TABLE `movimientolotes`
   ADD CONSTRAINT `movimientolotes_ibfk_1` FOREIGN KEY (`id_lote`) REFERENCES `lotes` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `movimientolotes_ibfk_2` FOREIGN KEY (`id_ubicacion_origen`) REFERENCES `ubicaciones` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `movimientolotes_ibfk_3` FOREIGN KEY (`id_ubicacion_destino`) REFERENCES `ubicaciones` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `movimientolotes_ibfk_4` FOREIGN KEY (`id_estado`) REFERENCES `estados` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `movimientolotes_ibfk_4` FOREIGN KEY (`id_usuario_origen`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `movimientolotes_ibfk_5` FOREIGN KEY (`id_usuario_destino`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `movimientolotes_ibfk_6` FOREIGN KEY (`id_estado`) REFERENCES `estados` (`id`) ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `pacientes`

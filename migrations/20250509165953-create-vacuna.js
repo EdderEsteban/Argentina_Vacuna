@@ -21,7 +21,7 @@ module.exports = {
       id_estado: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        defaultValue: 1, // 1 = 'Disponible' 
+        defaultValue: 1,
         references: {
           model: 'Estados',
           key: 'id'
@@ -65,7 +65,7 @@ module.exports = {
     await queryInterface.addIndex('Vacunas', ['tipo']);
     await queryInterface.addIndex('Vacunas', ['nombre_comercial']);
 
-    // Crear trigger para actualizar estado cuando el lote venza
+    // Trigger para actualizar estado cuando el lote venza
     await queryInterface.sequelize.query(`
       CREATE TRIGGER actualizar_estado_vencimiento
       AFTER UPDATE ON Lotes
@@ -81,7 +81,6 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    // Eliminar trigger
     await queryInterface.sequelize.query(`
       DROP TRIGGER IF EXISTS actualizar_estado_vencimiento
     `);

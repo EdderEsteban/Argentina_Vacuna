@@ -1,0 +1,35 @@
+extends __layout/main
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-8
+        .card.shadow
+          .card-header.bg-info.text-white
+            h4.mb-0 📋 Solicitud de Acceso
+          .card-body
+            form#formSolicitud
+              input(type="hidden" name="_csrf" value=csrfToken)
+              .row
+                .col-md-6.mb-3.form-floating
+                  input.form-control#nombre(type="text" name="nombre"  placeholder="")
+                  label.form-label(for="nombre") Nombre*
+                .col-md-6.mb-3.form-floating
+                  input.form-control#apellido(type="text" name="apellido"  placeholder="")
+                  label.form-label(for="apellido") Apellido
+                .col-md-6.mb-3.form-floating
+                  input.form-control#dni(type="text" name="dni"  placeholder="")
+                  label.form-label(for="dni") DNI
+                .col-md-6.mb-3.form-floating
+                  input.form-control#correo(type="email" name="correo"  placeholder="")
+                  label.form-label(for="correo") Correo Electrónico
+                .col-md-6.mb-3.form-floating
+                  input.form-control#telefono(type="text" name="telefono" placeholder="Teléfono")
+                  label.form-label(for="telefono") Teléfono
+                .col-md-6.mb-3.form-floating
+                  textarea.form-control#motivo(name="motivo" rows="3"  placeholder="")
+                  label.form-label(for="motivo") Motivo / Rol solicitado
+              .d-grid
+                button.btn.btn-primary#btnEnviarSolicitud(type="submit") Enviar Solicitud
+
+  script(src="/js/login/solicitud.js")

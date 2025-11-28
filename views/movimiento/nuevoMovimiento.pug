@@ -1,0 +1,42 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 🚛 Nuevo Movimiento de Lote
+
+    form#formMovimiento
+      .row.g-3
+        .col-md-4
+          label.form-label(for="id_lote") Lote
+          select.form-select#id_lote(name="id_lote" required)
+            option(value="" disabled selected) Seleccione un lote
+            each lote in lotes
+              option(value=lote.id)= lote.num_lote
+
+        .col-md-4
+          label.form-label(for="id_ubicacion_origen") Ubicación Origen
+          select.form-select#id_ubicacion_origen(name="id_ubicacion_origen")
+            option(value="") Depósito Nacional (sin origen)
+            each u in ubicaciones
+              option(value=u.id)= `${u.nombre} (${u.tipo})`
+
+        .col-md-4
+          label.form-label(for="id_ubicacion_destino") Ubicación Destino
+          select.form-select#id_ubicacion_destino(name="id_ubicacion_destino" required)
+            option(value="" disabled selected) Seleccione destino
+            each u in ubicaciones
+              option(value=u.id)= `${u.nombre} (${u.tipo})`
+
+        .col-md-4
+          label.form-label(for="cantidad") Cantidad
+          input.form-control#cantidad(type="text" name="cantidad" min="1" required)
+
+        .col-md-4
+          label.form-label(for="fecha_movimiento") Fecha de Movimiento
+          input.form-control#fecha_movimiento(type="date" name="fecha_movimiento" value=new Date().toISOString().split('T')[0] required)
+
+      .d-flex.justify-content-end.mt-4
+        button.btn.btn-primary(type="submit") Registrar Movimiento
+        a.btn.btn-secondary.ms-2(href="/movimientos") Cancelar
+
+  script(src="/js/movimientoLote/nuevoMovimiento.js")

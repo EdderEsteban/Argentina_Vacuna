@@ -1,60 +1,34 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class UsuarioUbicacion extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // Relación con Usuario
-      this.belongsTo(models.Usuario, {
-        foreignKey: 'id_usuario',
-        as: 'usuario'
-      });
-      
-      // Relación con Ubicacion
-      this.belongsTo(models.Ubicacion, {
-        foreignKey: 'id_ubicacion',
-        as: 'ubicacion'
-      });
+      this.belongsTo(models.Usuario, { foreignKey: 'id_usuario', as: 'usuario' });
+      this.belongsTo(models.Ubicacion, { foreignKey: 'id_ubicacion', as: 'ubicacion' });
+      this.belongsTo(models.Rol, { foreignKey: 'id_rol', as: 'rol' });
     }
   }
+
   UsuarioUbicacion.init({
     id_usuario: {
       type: DataTypes.INTEGER,
-      primaryKey: true,
-      references: {
-        model: 'Usuarios',
-        key: 'id'
-      }
+      primaryKey: true
     },
     id_ubicacion: {
       type: DataTypes.INTEGER,
-      primaryKey: true,
-      references: {
-        model: 'Ubicaciones',
-        key: 'id'
-      }
+      primaryKey: true
+    },
+    id_rol: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     }
   }, {
     sequelize,
     modelName: 'UsuarioUbicacion',
-    tableName: 'UsuarioUbicaciones', 
+    tableName: 'UsuarioUbicaciones',
     timestamps: true,
-    paranoid: false, 
     indexes: [
-      {
-        unique: true,
-        fields: ['id_usuario', 'id_ubicacion']
-      },
-      {
-        name: 'idx_ubicacion_usuario',
-        fields: ['id_ubicacion'] // Para búsquedas desde ubicación
-      }
+      { unique: true, fields: ['id_usuario', 'id_ubicacion', 'id_rol'] }
     ]
   });
 

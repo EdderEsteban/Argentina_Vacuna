@@ -4,11 +4,48 @@ const laboratorio = require("../controllers/laboratorioController")
 const lote = require("../controllers/loteController");
 const paciente = require("../controllers/pacienteController");
 const ubicacion = require("../controllers/ubicacionController");
+const movimientoLote = require("../controllers/movimientoLoteController");
+const loginController = require("../controllers/loginController");
+const usuarios = require("../controllers/usuarioController");
 const csrf = require('csurf');
 const csrfProtection = csrf({ cookie: true });
 
+
 // Rutas estaticas
-router.get("/", handler.index);
+router.get("/", csrfProtection,handler.index);
+
+
+// ---------------------------------------- Rutas de Login --------------------------------------------
+router.get("/dashboard", csrfProtection,loginController.dashboard)
+router.post("/login", csrfProtection, loginController.login);
+router.get("/solicitud", csrfProtection, loginController.solicitud);
+router.post("/nuevaSolicitud", csrfProtection, loginController.nuevaSolicitud);
+
+// ---------------------------------------- Rutas de Usuarios ---------------------------------------
+// Listar usuarios
+router.get("/usuarios", csrfProtection, usuarios.listar);
+// Formulario nuevo usuario
+router.get('/nuevoUsuario', csrfProtection, usuarios.mostrarNuevo);
+// Crear usuario
+router.post('/crearUsuario', csrfProtection, usuarios.crearUsuario);
+// Formulario edición usuario
+router.get('/editarUsuario/:id', csrfProtection, usuarios.editarUsuario);
+// Obtener ubicaciones actuales del usuario
+router.get('/usuarios/:id/ubicaciones', usuarios.obtenerUbicaciones);
+// Actualizar ubicaciones y roles del usuario
+router.put('/usuarios/:id/ubicaciones', csrfProtection, usuarios.actualizarUbicaciones);
+// Blanquear password
+router.post('/usuarios/:id/blanquear', csrfProtection, usuarios.blanquearPassword);
+// Consulta de roles para el modal
+router.get('/roles', csrfProtection, usuarios.consultarRoles);
+// Endpoint de Actualizar usuario
+router.put('/actualizarUsuario/:id', csrfProtection, usuarios.actualizarUsuario);
+//Eliminar usuario
+router.delete('/borrarUsuario/:id', csrfProtection, usuarios.borrarUsuario);
+/* Formulario de búsqueda de usuarios
+router.get('/buscadorUsuario', csrfProtection, usuarios.mostrarBuscar); 
+// Endpoint de búsqueda de usuarios
+router.get('/buscarUsuario', csrfProtection, usuarios.buscarUsuarios); */
 
 // --------------------------------------- Rutas de Laboratorio ---------------------------------------
 // Listar laboratorios
@@ -85,11 +122,16 @@ router.get('/buscadorubicacion', csrfProtection, ubicacion.mostrarBuscar);
 // Endpoint de búsqueda de ubicaciones
 router.get('/buscarubicacion', csrfProtection, ubicacion.buscarUbicacion);
 
-// ---------------------------------------- Rutas de Aplicaciones ---------------------------------------
+// ---------------------------------------- Rutas de Movimientos ---------------------------------------
 
+// Listar movimientos de lotes
+router.get("/movimientos", movimientoLote.listar);
+// Mostrar formulario de nuevo movimiento
+router.get('/nuevomovimiento', csrfProtection, movimientoLote.mostrarNuevo);
+// Crear movimiento
+router.post('/crearmovimiento', csrfProtection, movimientoLote.crearMovimiento);
 
-
-
+// ---------------------------------------- Rutas no encontradas y errores ---------------------------------------
 
 // Manejo de rutas no encontradas
 router.use(handler.error404);

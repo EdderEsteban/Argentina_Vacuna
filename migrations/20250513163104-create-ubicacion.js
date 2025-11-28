@@ -24,7 +24,8 @@ module.exports = {
           'Distribucion',
           'Deposito Provincial',
           'Centro Vacunacion',
-          'Centro Descarte'
+          'Centro Descarte',
+          'Nivel Central'
         ),
         allowNull: false
       },

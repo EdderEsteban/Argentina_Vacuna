@@ -13,13 +13,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'id_estado',
         as: 'estado'
       });
-
-      Vacuna.hasOne(models.Aplicacion, {
-        foreignKey: 'id_vacuna',
-        as: 'aplicacion'
-      });
     }
-  }
+  };
 
   Vacuna.init({
     id_lote: {
@@ -73,7 +68,7 @@ module.exports = (sequelize, DataTypes) => {
           const lote = await sequelize.models.Lote.findByPk(vacuna.id_lote);
           if (!lote) throw new Error('Lote no encontrado');
         }
-        
+
         if (vacuna.id_estado) {
           const estado = await sequelize.models.Estado.findByPk(vacuna.id_estado);
           if (!estado) throw new Error('Estado no válido');

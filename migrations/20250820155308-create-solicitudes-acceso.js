@@ -2,44 +2,41 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Usuarios', {
+    await queryInterface.createTable('SolicitudesAcceso', {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
-      },      
+      },
       nombre: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(100),
         allowNull: false
       },
       apellido: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(100),
         allowNull: false
       },
       dni: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
+        type: Sequelize.STRING(20),
+        allowNull: false
       },
       correo: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(100),
         allowNull: false,
-        unique: true,
-        validate: {
-          isEmail: true
-        }
+        validate: { isEmail: true }
       },
       telefono: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING(20),
+        allowNull: true
       },
-      usuario: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
-      },
-      password: {
-        type: Sequelize.STRING,
+      motivo: {
+        type: Sequelize.TEXT,
         allowNull: false
+      },
+      estado: {
+        type: Sequelize.ENUM('Pendiente', 'Aprobado', 'Rechazado'),
+        allowNull: false,
+        defaultValue: 'Pendiente'
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -57,7 +54,12 @@ module.exports = {
       }
     });
 
-    await queryInterface.addIndex('Usuarios', ['dni']);
-    await queryInterface.addIndex('Usuarios', ['correo']);
+    // Índice para búsquedas rápidas
+    await queryInterface.addIndex('SolicitudesAcceso', ['estado']);
+    await queryInterface.addIndex('SolicitudesAcceso', ['correo']);
+  },
+
+  async down(queryInterface) {
+    await queryInterface.dropTable('SolicitudesAcceso');
   }
 };

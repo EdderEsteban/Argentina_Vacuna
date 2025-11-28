@@ -1,0 +1,104 @@
+extends ../__layout/main
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6
+        .card.shadow
+          .card-header.bg-primary.text-white
+            h4.mb-0 ✏️ Modificar Usuario
+          .card-body
+            form#formModificarUsuario
+              input(type="hidden" name="_csrf" value=csrfToken)
+              input(type="hidden" name="id" value=user.id)
+
+              // --- Solo lectura ---
+              .row
+                .col-md-6.mb-3
+                  label.form-label Nombre
+                  .form-control-plaintext.border.rounded.p-2.bg-light= user.nombre
+                .col-md-6.mb-3
+                  label.form-label Apellido
+                  .form-control-plaintext.border.rounded.p-2.bg-light= user.apellido
+
+              .row
+                .col-md-6.mb-3
+                  label.form-label DNI
+                  .form-control-plaintext.border.rounded.p-2.bg-light= user.dni
+                .col-md-6.mb-3
+                  label.form-label Usuario
+                  .form-control-plaintext.border.rounded.p-2.bg-light= user.usuario
+
+              // --- Editables ---
+              .row
+                .col-md-6.mb-3.form-floating
+                  input.form-control#correo(type="email" name="correo" value=user.correo required)
+                  label(for="correo") Correo Electrónico
+                .col-md-6.mb-3.form-floating
+                  input.form-control#telefono(type="text" name="telefono" value=user.telefono)
+                  label(for="telefono") Teléfono
+
+              // --- Blanquear contraseña ---
+              .mb-3
+                button.btn.btn-warning#btnBlanquear(type="button")
+                  i.bi.bi-key.me-2
+                  | Blanquear Contraseña
+
+              // --- Efectores actuales ---
+              .mb-3
+                label.form-label Efectores Asignados
+                if efectores && efectores.length
+                  ul.list-group#listaEfectores
+                    each ef in efectores
+                      li.list-group-item.d-flex.justify-content-between
+                        span= ef.nombre
+                        span.badge.bg-primary= ef.usuariosUbicacion[0].rol.nombre
+                else
+                  .form-control-plaintext.text-muted Sin efectores asignados
+
+              // --- Botón para re-asignar ---
+              .mb-3
+                button.btn.btn-outline-primary(type="button" data-bs-toggle="modal" data-bs-target="#modalUbicaciones")
+                  i.bi.bi-geo-alt.me-2
+                  | Re-asignar Ubicaciones / Perfiles
+
+              // --- Resumen de lo que se asigne en el modal ---
+              #resumenUbicaciones.mt-2(style="display:none; max-width:400px;")
+                h6.mb-2 Nuevas asignaciones
+                ul.list-group#listaResumen
+
+              // --- Botones finales ---
+              .d-flex.gap-2
+                button.btn.btn-primary#btnGuardar(type="button")
+                  i.bi.bi-save.me-2
+                  | Guardar Cambios
+                a.btn.btn-secondary(href="/usuario") Cancelar
+
+  // ---------- Modal Re-asignar ----------
+  .modal.fade#modalUbicaciones(tabindex="-1" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title Re-asignar ubicaciones y perfiles
+        .modal-body
+          .row
+            .col-md-5
+              label Disponibles
+              select.form-select#selUbicacionesDisponibles(multiple size="10")
+                each u in ubicaciones
+                  option(value=u.id)= u.nombre
+            .col-md-7
+              label Asignadas
+              .table-responsive(style="max-height:220px;")
+                table.table.table-sm#tablaUbicacionesAsignadas
+                  thead
+                    tr
+                      th Ubicación
+                      th Perfil
+                      th
+                  tbody
+        .modal-footer
+          button.btn.btn-secondary(data-bs-dismiss="modal") Cerrar
+          button.btn.btn-primary#btnGuardarUbicaciones Guardar
+
+  script(src="/js/usuario/modificarUsuario.js")

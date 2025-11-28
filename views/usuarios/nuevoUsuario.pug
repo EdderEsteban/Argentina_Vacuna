@@ -1,0 +1,90 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 ➕ Nuevo Usuario
+
+    form#formNuevoUsuario
+      input(type="hidden" name="_csrf" value=csrfToken)
+
+      .row
+        .col-6.mb-3
+          .form-floating
+            input.form-control#nombreUsuario(type="text" name="nombre" required minlength="2" maxlength="100" placeholder="")
+            label(for="nombreUsuario") Nombre
+        .col-6.mb-3
+          .form-floating
+            input.form-control#apellidoUsuario(type="text" name="apellido" required minlength="2" maxlength="100" placeholder="")
+            label(for="apellidoUsuario") Apellido
+
+      .row
+        .col-6.mb-3
+          .form-floating
+            input.form-control#dniUsuario(type="text" name="dni" required minlength="7" maxlength="8" placeholder="")
+            label(for="dniUsuario") DNI
+        .col-6.mb-3
+          .form-floating
+            input.form-control#usuario(type="text" name="usuario" required minlength="4" maxlength="50" autocomplete="username" placeholder="")
+            label(for="usuario") Usuario
+
+      .row
+        .col-6.mb-3
+          .form-floating
+            input.form-control#passwordUsuario(type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="")
+            label(for="passwordUsuario") Contraseña
+        .col-6.mb-3
+          .form-floating
+            input.form-control#correoUsuario(type="email" name="correo" placeholder="")
+            label(for="correoUsuario") Correo Electrónico
+
+      .row
+        .col-6.mb-3
+          .form-floating
+            input.form-control#telefonoUsuario(type="tel" name="telefono" placeholder="")
+            label(for="telefonoUsuario") Teléfono
+        
+        .col-lg-6
+          h6.mb-2 Resumen de asignaciones
+          #resumenUbicaciones.mt-3(style="display:none")
+          ul.list-group#listaResumen
+
+      // Botón + resumen
+      .mb-3
+        button.btn.btn-outline-primary(type="button" data-bs-toggle="modal" data-bs-target="#modalUbicaciones")
+          i.bi.bi-geo-alt.me-2
+          | Asignar ubicaciones y perfiles        
+
+      .d-flex.gap-2
+        button#guardarNuevoUsuario.btn.btn-success
+          i.bi.bi-save.me-2
+          | Guardar
+        a#cancelar.btn.btn-secondary
+          i.bi.bi-x-circle.me-2
+          | Cancelar
+
+  // ---------- Modal ----------
+  .modal.fade#modalUbicaciones(tabindex="-1" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title Asignar ubicaciones y perfiles
+        .modal-body
+          .row
+            .col-md-5
+              label Disponibles
+              select.form-select#selUbicacionesDisponibles(multiple size="10")
+                each u in ubicaciones
+                  option(value=u.id)= u.nombre
+            .col-md-7
+              label Asignadas
+              table.table#tablaUbicacionesAsignadas
+                thead
+                  tr
+                    th Ubicación
+                    th Perfil
+                tbody
+        .modal-footer
+          button.btn.btn-secondary(data-bs-dismiss="modal") Cerrar
+          button.btn.btn-primary#btnGuardarUbicaciones Guardar
+
+  script(src="/js/usuario/nuevoUsuario.js")

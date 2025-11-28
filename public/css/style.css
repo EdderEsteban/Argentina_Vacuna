@@ -64,3 +64,43 @@
     left: 0 !important;
     top: 100% !important;
 }
+
+textarea {
+    field-sizing: content;
+    overflow: hidden;
+    max-height: 200px;
+} 
+
+/* Contenedor del select2 múltiple dentro de .form-floating */
+.seleccionmultiple + .select2-container .select2-selection--multiple {
+    min-height: 3.5rem !important;
+    max-height: none !important;              /* ← elimina scroll interno */
+    overflow-y: visible !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: 0.4rem !important;
+    padding-left: 0.75rem !important;
+    border-radius: 0.4rem !important;
+    background-color: #fff !important;
+}
+
+/* Tamaño y posición del label cuando hay tags o foco */
+.seleccionmultiple + .select2-container--focus + label,
+.seleccionmultiple + .select2-container--above + label,
+.seleccionmultiple + .select2-container--below + label,
+.seleccionmultiple.has-value + label {
+    top: 0.1rem !important;
+    font-size: 0.75rem !important;
+    transform: translateY(1) !important;
+    opacity: 1 !important;
+}
+
+/* Tags legibles y compactos */
+.seleccionmultiple + .select2-container .select2-selection__choice {
+    margin: 0.15rem 0.25rem 0 0 !important;
+    padding: 0.25rem 1.2rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25 !important;
+    border-radius: 0.3rem !important;
+    background-color: #e9ecef !important;
+    border: 1px solid #ced4da !important;
+}
