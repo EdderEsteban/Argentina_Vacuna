@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 20-08-2025 a las 18:36:19
+-- Tiempo de generación: 16-02-2026 a las 04:24:21
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -41,45 +41,29 @@ CREATE TABLE `aplicaciones` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `aplicaciones`
---
-
-INSERT INTO `aplicaciones` (`id`, `id_vacuna`, `id_paciente`, `id_ubicacion`, `id_usuario`, `id_lote`, `fecha_aplicacion`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(94, 33, 1, 1, 7, 17, '2025-07-10 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(95, 34, 1, 2, 8, 17, '2025-07-15 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(96, 35, 2, 3, 9, 17, '2025-07-12 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(97, 36, 2, 4, 10, 17, '2025-07-18 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(98, 37, 3, 5, 11, 17, '2025-07-13 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(99, 48, 8, 16, 12, 18, '2025-07-28 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(100, 49, 9, 17, 13, 18, '2025-07-21 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(101, 50, 9, 18, 14, 18, '2025-07-30 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(102, 51, 10, 19, 15, 18, '2025-07-23 00:00:00', '2025-07-08 13:41:20', '2025-07-08 13:41:20', NULL),
-(103, 52, 11, 20, 16, 18, '2025-08-01 00:00:00', '2025-07-08 13:41:20', '2025-07-08 15:20:20', NULL);
-
---
 -- Disparadores `aplicaciones`
 --
 DELIMITER $$
 CREATE TRIGGER `prevenir_aplicacion_vencida` BEFORE INSERT ON `aplicaciones` FOR EACH ROW BEGIN
-    DECLARE fecha_vencimiento DATE;
-    DECLARE estado_vacuna INT;
+        DECLARE fecha_vencimiento DATE;
+        DECLARE estado_vacuna INT;
 
-    -- Obtener la fecha de vencimiento del lote
-    SELECT fecha_venc INTO fecha_vencimiento
-    FROM Lotes
-    WHERE id = NEW.id_lote;
+        -- Obtener la fecha de vencimiento del lote
+        SELECT fecha_venc INTO fecha_vencimiento
+        FROM Lotes
+        WHERE id = NEW.id_lote;
 
-    -- Obtener el estado de la vacuna
-    SELECT id_estado INTO estado_vacuna
-    FROM Vacunas
-    WHERE id = NEW.id_vacuna;
+        -- Obtener el estado de la vacuna
+        SELECT id_estado INTO estado_vacuna
+        FROM Vacunas
+        WHERE id = NEW.id_vacuna;
 
-    -- Verificar si la vacuna está vencida o su lote ha vencido
-    IF estado_vacuna = (SELECT id FROM Estados WHERE codigo = 'VENC') OR fecha_vencimiento < CURDATE() THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'No se puede aplicar una vacuna vencida';
-    END IF;
-END
+        -- Verificar si la vacuna está vencida o su lote ha vencido
+        IF estado_vacuna = (SELECT id FROM Estados WHERE codigo = 'VENC') OR fecha_vencimiento < CURDATE() THEN
+          SIGNAL SQLSTATE '45000'
+          SET MESSAGE_TEXT = 'No se puede aplicar una vacuna vencida';
+        END IF;
+      END
 $$
 DELIMITER ;
 
@@ -160,19 +144,6 @@ CREATE TABLE `estados` (
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `estados`
---
-
-INSERT INTO `estados` (`id`, `nombre`, `codigo`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(1, 'Deposito Nacional', 'DNAC', '2025-06-18 10:00:00', '2025-06-26 12:06:50', NULL),
-(2, 'Deposito Provincial', 'DPRO', '2025-06-18 10:00:00', '2025-06-26 12:06:57', NULL),
-(3, 'En Transoporte', 'TRANS', '2025-06-18 10:00:00', '2025-06-26 12:07:08', NULL),
-(4, 'En Vacunatorio', 'VACU', '2025-06-18 10:00:00', '2025-06-26 12:07:19', NULL),
-(5, 'Aplicado', 'APLI', '2025-06-18 10:00:00', '2025-06-26 12:09:01', NULL),
-(6, 'Vencido', 'VENC', '2025-06-18 10:00:00', '2025-06-26 12:09:07', NULL),
-(7, 'Descartado', 'DESC', '2025-06-26 12:03:10', '2025-07-11 12:44:22', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -187,16 +158,6 @@ CREATE TABLE `laboratorios` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `laboratorios`
---
-
-INSERT INTO `laboratorios` (`id`, `nombre`, `nacionalidad`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(1, 'Pfizer', 'Estados Unidos', '2025-05-23 15:55:47', '2025-05-23 15:55:47', NULL),
-(2, 'Moderna', 'Estados Unidos', '2025-05-23 15:55:47', '2025-05-23 15:55:47', NULL),
-(3, 'Gamaleya', 'Rusia', '2025-05-23 15:56:24', '2025-05-26 15:38:10', NULL),
-(4, 'Sanofi', 'Argentina', '2025-05-26 16:06:37', '2025-05-29 14:01:16', NULL);
 
 -- --------------------------------------------------------
 
@@ -216,15 +177,6 @@ CREATE TABLE `lotes` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `lotes`
---
-
-INSERT INTO `lotes` (`id`, `num_lote`, `id_laboratorio`, `cantidad`, `fecha_fab`, `fecha_venc`, `fecha_compra`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(17, 'LOT-12345', 3, 15, '2025-01-01', '2025-12-31', '2025-06-26', '2025-06-26 15:11:42', '2025-07-01 18:26:33', NULL),
-(18, 'LOT-123', 1, 20, '2025-06-01', '2026-06-30', '2025-07-01', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(19, 'LOT-1111', 4, 10, '2025-01-01', '2025-07-30', '2025-07-23', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL);
 
 --
 -- Disparadores `lotes`
@@ -266,6 +218,25 @@ CREATE TABLE `movimientolotes` (
 -- Disparadores `movimientolotes`
 --
 DELIMITER $$
+CREATE TRIGGER `actualizar_stock_movimiento` AFTER INSERT ON `movimientolotes` FOR EACH ROW BEGIN
+        -- Actualizar stock en origen (si existe)
+        IF NEW.id_ubicacion_origen IS NOT NULL THEN
+          UPDATE Stocks 
+          SET cantidad = cantidad - NEW.cantidad
+          WHERE id_lote = NEW.id_lote 
+            AND id_ubicacion = NEW.id_ubicacion_origen;
+        END IF;
+
+        -- Actualizar stock en destino (upsert)
+        INSERT INTO Stocks (id_lote, id_ubicacion, cantidad, createdAt, updatedAt)
+        VALUES (NEW.id_lote, NEW.id_ubicacion_destino, NEW.cantidad, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE 
+          cantidad = cantidad + NEW.cantidad,
+          updatedAt = NOW();
+      END
+$$
+DELIMITER ;
+DELIMITER $$
 CREATE TRIGGER `validar_stock_movimiento` BEFORE INSERT ON `movimientolotes` FOR EACH ROW BEGIN
         DECLARE stock_actual INT;
         IF NEW.id_ubicacion_origen IS NOT NULL THEN
@@ -301,32 +272,6 @@ CREATE TABLE `pacientes` (
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `pacientes`
---
-
-INSERT INTO `pacientes` (`id`, `nombre`, `apellido`, `dni`, `telefono`, `correo`, `id_provincia`, `id_ubicacion_registro`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(1, 'Juan', 'Pérez', '34567890', '1234567890', 'juan.perez@email.com', 1, 1, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(2, 'María', 'Gómez', '29876543', '0987654321', 'maria.gomez@email.com', 2, 2, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(3, 'Carlos', 'Rodríguez', '39789012', '1122334455', 'carlos.rodriguez@email.com', 3, 3, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(4, 'Ana', 'López', '25678901', '5544332211', 'ana.lopez@email.com', 4, 4, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(5, 'Roberto', 'Díaz', '31456789', '1133557799', 'roberto.diaz@email.com', 5, 5, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(6, 'Elena', 'Fernández', '28765432', '2244668800', 'elena.fernandez@email.com', 6, 6, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(7, 'Miguel', 'Sánchez', '31234567', '3366992211', 'miguel.sanchez@email.com', 7, 7, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(8, 'Sofía', 'Martínez', '22789012', '4477112233', 'sofia.martinez@email.com', 8, 8, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(9, 'David', 'Hernández', '35432109', '5522114477', 'david.hernandez@email.com', 9, 9, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(10, 'Lucía', 'García', '24167890', '6633882244', 'lucia.garcia@email.com', 10, 10, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(11, 'Andrés', 'Soto', '37654321', '7711553399', 'andres.soto@email.com', 11, 11, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(12, 'Valeria', 'Contreras', '23456789', '8844226600', 'valeria.contreras@email.com', 12, 12, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(13, 'Mateo', 'Vargas', '39876543', '9911332255', 'mateo.vargas@email.com', 13, 13, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(14, 'Isabella', 'Perez', '21234567', '0022446688', 'isabella.perez@email.com', 14, 14, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(15, 'Diego', 'Rodriguez', '36789012', '1155223377', 'diego.rodriguez@email.com', 15, 15, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(16, 'Santiago', 'Gonzalez', '24567890', '2266884411', 'santiago.gonzalez@email.com', 16, 16, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(17, 'Julieta', 'Florez', '33456789', '3377114499', 'julieta.florez@email.com', 17, 17, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(18, 'Samuel', 'Quintero', '26789012', '4488223366', 'samuel.quintero@email.com', 18, 18, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(19, 'Dolores', 'Morales', '35678901', '5511993322', 'dolores.morales@email.com', 19, 19, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL),
-(20, 'Benjamín', 'Suarez', '27890123', '6622774433', 'benjamin.suarez@email.com', 20, 20, '2025-07-03 13:52:39', '2025-07-03 13:52:39', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -338,7 +283,7 @@ CREATE TABLE `provincias` (
   `nombre` varchar(255) NOT NULL,
   `createdAt` datetime NOT NULL,
   `updatedAt` datetime NOT NULL,
-  `deletedAt` date DEFAULT NULL
+  `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -380,18 +325,19 @@ CREATE TABLE `roles` (
   `id` int(11) NOT NULL,
   `nombre` varchar(255) NOT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
-  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `roles`
 --
 
-INSERT INTO `roles` (`id`, `nombre`, `createdAt`, `updatedAt`) VALUES
-(1, 'Administrador', '2025-07-08 13:01:54', '2025-07-08 13:01:54'),
-(2, 'Auditor', '2025-07-08 13:01:54', '2025-07-08 13:01:54'),
-(3, 'Enfermero', '2025-07-08 13:02:21', '2025-07-08 13:09:40'),
-(4, 'Administrativo', '2025-07-08 13:02:21', '2025-07-08 13:09:43');
+INSERT INTO `roles` (`id`, `nombre`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 'Administrador', '2025-07-08 13:01:54', '2025-07-08 13:01:54', NULL),
+(2, 'Auditor', '2025-07-08 13:01:54', '2025-07-08 13:01:54', NULL),
+(3, 'Enfermero', '2025-07-08 13:02:21', '2025-07-08 13:09:40', NULL),
+(4, 'Administrativo', '2025-07-08 13:02:21', '2025-07-08 13:09:43', NULL);
 
 -- --------------------------------------------------------
 
@@ -425,7 +371,22 @@ INSERT INTO `sequelizemeta` (`name`) VALUES
 ('20250520170000-add-triggers-vencimiento.js'),
 ('20250521140001-create-trigger-stock.js'),
 ('20250527190334-add-indexes-laboratorios.js'),
-('20250820155308-create-solicitudes-acceso.js');
+('20250820155308-create-solicitudes-acceso.js'),
+('20250827185529-create-sessions.js');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `sessions`
+--
+
+CREATE TABLE `sessions` (
+  `sid` varchar(36) NOT NULL,
+  `expires` datetime DEFAULT NULL,
+  `data` text DEFAULT NULL,
+  `createdAt` datetime NOT NULL,
+  `updatedAt` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -439,6 +400,7 @@ CREATE TABLE `solicitudesacceso` (
   `apellido` varchar(100) NOT NULL,
   `dni` varchar(20) NOT NULL,
   `correo` varchar(100) NOT NULL,
+  `telefono` varchar(20) DEFAULT NULL,
   `motivo` text NOT NULL,
   `estado` enum('Pendiente','Aprobado','Rechazado') NOT NULL DEFAULT 'Pendiente',
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
@@ -472,11 +434,11 @@ CREATE TABLE `ubicaciones` (
   `nombre` varchar(255) DEFAULT NULL,
   `direccion` varchar(255) DEFAULT NULL,
   `telefono` varchar(255) DEFAULT NULL,
-  `tipo` enum('Deposito Nacional','Distribucion','Deposito Provincial','Centro Vacunacion','Centro Descarte') NOT NULL,
+  `tipo` enum('Deposito Nacional','Distribucion','Deposito Provincial','Centro Vacunacion','Centro Descarte','Nivel Central') NOT NULL,
   `id_provincia` int(11) DEFAULT NULL,
   `createdAt` datetime NOT NULL,
   `updatedAt` datetime NOT NULL,
-  `deletedAt` date DEFAULT NULL
+  `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -484,7 +446,7 @@ CREATE TABLE `ubicaciones` (
 --
 
 INSERT INTO `ubicaciones` (`id`, `nombre`, `direccion`, `telefono`, `tipo`, `id_provincia`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(1, 'Hospital Posadas', 'Av. San Martín 123', '4455-6677', 'Deposito Provincial', 1, '2025-07-03 13:42:36', '2025-07-11 14:25:50', NULL),
+(1, 'Nivel Central', 'Av. San Martín 123', '4455-6677', 'Deposito Provincial', 1, '2025-07-03 13:42:36', '2025-07-11 14:25:50', NULL),
 (2, 'Hospital Garrahan', 'Av. Monroe 890', '11-3344-5566', 'Deposito Nacional', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (3, 'Hospital Italiano', 'Av. Córdoba 1234', '11-7788-9900', 'Centro Vacunacion', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (4, 'Hospital de San Isidro', 'Av. Maipú 567', '4567-8901', 'Centro Vacunacion', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
@@ -524,7 +486,6 @@ INSERT INTO `ubicaciones` (`id`, `nombre`, `direccion`, `telefono`, `tipo`, `id_
 
 CREATE TABLE `usuarios` (
   `id` int(11) NOT NULL,
-  `id_rol` int(11) NOT NULL,
   `nombre` varchar(255) NOT NULL,
   `apellido` varchar(255) NOT NULL,
   `dni` varchar(255) NOT NULL,
@@ -541,27 +502,8 @@ CREATE TABLE `usuarios` (
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`id`, `id_rol`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `usuario`, `password`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(1, 1, 'Admin', 'Super', '11111111', 'admin@ejemplo.com', '1234567890', 'admin', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(2, 2, 'Auditor', 'Uno', '22222222', 'auditor1@ejemplo.com', '1234567891', 'aud1', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(3, 2, 'Auditor', 'Dos', '22222223', 'auditor2@ejemplo.com', '1234567892', 'aud2', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(4, 2, 'Auditor', 'Tres', '22222224', 'auditor3@ejemplo.com', '1234567893', 'aud3', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(5, 2, 'Auditor', 'Cuatro', '22222225', 'auditor4@ejemplo.com', '1234567894', 'aud4', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(6, 2, 'Auditor', 'Cinco', '22222226', 'auditor5@ejemplo.com', '1234567895', 'aud5', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(7, 3, 'Enfermero', 'Uno', '33333333', 'enfermero1@ejemplo.com', '1234567896', 'enf1', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(8, 3, 'Enfermero', 'Dos', '33333334', 'enfermero2@ejemplo.com', '1234567897', 'enf2', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(9, 3, 'Enfermero', 'Tres', '33333335', 'enfermero3@ejemplo.com', '1234567898', 'enf3', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(10, 3, 'Enfermero', 'Cuatro', '33333336', 'enfermero4@ejemplo.com', '1234567899', 'enf4', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(11, 3, 'Enfermero', 'Cinco', '33333337', 'enfermero5@ejemplo.com', '1234567900', 'enf5', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(12, 3, 'Enfermero', 'Seis', '33333338', 'enfermero6@ejemplo.com', '1234567901', 'enf6', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(13, 3, 'Enfermero', 'Siete', '33333339', 'enfermero7@ejemplo.com', '1234567902', 'enf7', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(14, 3, 'Enfermero', 'Ocho', '33333340', 'enfermero8@ejemplo.com', '1234567903', 'enf8', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(15, 3, 'Enfermero', 'Nueve', '33333341', 'enfermero9@ejemplo.com', '1234567904', 'enf9', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(16, 3, 'Enfermero', 'Diez', '33333342', 'enfermero10@ejemplo.com', '1234567905', 'enf10', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(17, 4, 'Administrativo', 'Uno', '44444444', 'admin1@ejemplo.com', '1234567906', 'adm1', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(18, 4, 'Administrativo', 'Dos', '44444445', 'admin2@ejemplo.com', '1234567907', 'adm2', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(19, 4, 'Administrativo', 'Tres', '44444446', 'admin3@ejemplo.com', '1234567908', 'adm3', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL),
-(20, 4, 'Administrativo', 'Cuatro', '44444447', 'admin4@ejemplo.com', '1234567909', 'adm4', 'password123', '2025-07-08 13:09:55', '2025-07-08 13:09:55', NULL);
+INSERT INTO `usuarios` (`id`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `usuario`, `password`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(6, 'Edder', 'Santibañez', '93962239', 'edder709@gmail.com', '02664271316', 'edder709@gmail.com', '$2b$10$.sxRspeV0oNWrfX/PGy8kO1.BgMBmtWVvZ7.9Jj1LWAP9/GoCbq16', '2025-09-12 14:59:14', '2025-09-12 14:59:14', NULL);
 
 -- --------------------------------------------------------
 
@@ -572,25 +514,10 @@ INSERT INTO `usuarios` (`id`, `id_rol`, `nombre`, `apellido`, `dni`, `correo`, `
 CREATE TABLE `usuarioubicaciones` (
   `id_usuario` int(11) NOT NULL,
   `id_ubicacion` int(11) NOT NULL,
+  `id_rol` int(11) NOT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `usuarioubicaciones`
---
-
-INSERT INTO `usuarioubicaciones` (`id_usuario`, `id_ubicacion`, `createdAt`, `updatedAt`) VALUES
-(7, 1, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(8, 2, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(9, 3, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(10, 4, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(11, 5, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(12, 6, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(13, 7, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(14, 8, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(15, 9, '2025-07-08 13:10:49', '2025-07-08 13:10:49'),
-(16, 10, '2025-07-08 13:10:49', '2025-07-08 13:10:49');
 
 -- --------------------------------------------------------
 
@@ -608,57 +535,6 @@ CREATE TABLE `vacunas` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `vacunas`
---
-
-INSERT INTO `vacunas` (`id`, `id_lote`, `id_estado`, `tipo`, `nombre_comercial`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(33, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-06-26 15:11:42', '2025-07-01 18:26:33', NULL),
-(34, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-06-26 15:11:42', '2025-07-01 18:26:33', NULL),
-(35, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-06-26 15:11:42', '2025-07-01 18:26:33', NULL),
-(36, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-06-26 15:11:42', '2025-07-01 18:26:33', NULL),
-(37, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-06-26 15:11:42', '2025-07-01 18:26:33', NULL),
-(48, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(49, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(50, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(51, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(52, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(53, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(54, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(55, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(56, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(57, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(58, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(59, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(60, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(61, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(62, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(63, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(64, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(65, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(66, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(67, 18, 1, 'BCG', 'Super Vacuna BCG', '2025-07-01 17:53:44', '2025-07-01 17:54:27', NULL),
-(68, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(69, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(70, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(71, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(72, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(73, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(74, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(75, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(76, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(77, 17, 1, 'BCG', 'Super BCG Vacuna', '2025-07-01 18:26:33', '2025-07-01 18:26:33', NULL),
-(78, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(79, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(80, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(81, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(82, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(83, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(84, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(85, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(86, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL),
-(87, 19, 1, 'Covid', 'Covid Prueba', '2025-07-23 14:29:46', '2025-07-23 14:29:57', NULL);
 
 --
 -- Índices para tablas volcadas
@@ -759,6 +635,12 @@ ALTER TABLE `sequelizemeta`
   ADD UNIQUE KEY `name` (`name`);
 
 --
+-- Indices de la tabla `sessions`
+--
+ALTER TABLE `sessions`
+  ADD PRIMARY KEY (`sid`);
+
+--
 -- Indices de la tabla `solicitudesacceso`
 --
 ALTER TABLE `solicitudesacceso`
@@ -789,7 +671,6 @@ ALTER TABLE `usuarios`
   ADD UNIQUE KEY `dni` (`dni`),
   ADD UNIQUE KEY `correo` (`correo`),
   ADD UNIQUE KEY `usuario` (`usuario`),
-  ADD KEY `id_rol` (`id_rol`),
   ADD KEY `usuarios_dni` (`dni`),
   ADD KEY `usuarios_correo` (`correo`);
 
@@ -798,7 +679,8 @@ ALTER TABLE `usuarios`
 --
 ALTER TABLE `usuarioubicaciones`
   ADD PRIMARY KEY (`id_usuario`,`id_ubicacion`),
-  ADD KEY `usuario_ubicaciones_id_ubicacion_id_usuario` (`id_ubicacion`,`id_usuario`);
+  ADD KEY `usuario_ubicaciones_id_ubicacion_id_usuario` (`id_ubicacion`,`id_usuario`),
+  ADD KEY `usuario_ubicaciones_id_rol` (`id_rol`);
 
 --
 -- Indices de la tabla `vacunas`
@@ -818,7 +700,7 @@ ALTER TABLE `vacunas`
 -- AUTO_INCREMENT de la tabla `aplicaciones`
 --
 ALTER TABLE `aplicaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `descartes`
@@ -830,19 +712,19 @@ ALTER TABLE `descartes`
 -- AUTO_INCREMENT de la tabla `estados`
 --
 ALTER TABLE `estados`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `laboratorios`
 --
 ALTER TABLE `laboratorios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `lotes`
 --
 ALTER TABLE `lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientolotes`
@@ -854,7 +736,7 @@ ALTER TABLE `movimientolotes`
 -- AUTO_INCREMENT de la tabla `pacientes`
 --
 ALTER TABLE `pacientes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `provincias`
@@ -866,7 +748,7 @@ ALTER TABLE `provincias`
 -- AUTO_INCREMENT de la tabla `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `solicitudesacceso`
@@ -890,13 +772,13 @@ ALTER TABLE `ubicaciones`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `vacunas`
 --
 ALTER TABLE `vacunas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Restricciones para tablas volcadas
@@ -958,17 +840,12 @@ ALTER TABLE `ubicaciones`
   ADD CONSTRAINT `ubicaciones_ibfk_1` FOREIGN KEY (`id_provincia`) REFERENCES `provincias` (`id`) ON DELETE SET NULL;
 
 --
--- Filtros para la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id`) ON UPDATE CASCADE;
-
---
 -- Filtros para la tabla `usuarioubicaciones`
 --
 ALTER TABLE `usuarioubicaciones`
   ADD CONSTRAINT `usuarioubicaciones_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `usuarioubicaciones_ibfk_2` FOREIGN KEY (`id_ubicacion`) REFERENCES `ubicaciones` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `usuarioubicaciones_ibfk_2` FOREIGN KEY (`id_ubicacion`) REFERENCES `ubicaciones` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `usuarioubicaciones_ibfk_3` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `vacunas`

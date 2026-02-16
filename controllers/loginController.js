@@ -31,8 +31,8 @@ loginController.dashboard = (req, res) => {
   if (!req.session.usuario) {
     return res.redirect('/');
   }  
-  res.render('dashboard', { usuario: req.user });
-};
+  res.render('dashboard', { usuario: req.user }); 
+}; 
 
 loginController.solicitud = (req, res) => {
   res.render('solicitud');

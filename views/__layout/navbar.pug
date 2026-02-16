@@ -1,0 +1,38 @@
+section#content
+  nav(aria-label="Top navigation")
+    button#sidebarToggle.icon-btn(aria-controls="sidebar" aria-expanded="false" title="Toggle sidebar")
+      i.bx.bx-menu.bx-sm(aria-hidden="true")
+      span.sr-only Mostrar/ocultar barra lateral
+    p Busqueda
+    form.search-form(action="#" role="search")
+      .form-input
+        input(type="search" placeholder="Search..." aria-label="Buscar")
+        button.search-btn(type="submit" title="Buscar")
+          i.bx.bx-search(aria-hidden="true")
+    input.checkbox(type="checkbox" id="switch-mode" hidden)
+    label.switch-lm(for="switch-mode" title="Modo claro/oscuro" aria-hidden="false")
+      i.bx.bxs-moon(aria-hidden="true")
+      i.bx.bx-sun(aria-hidden="true")
+      .ball(aria-hidden="true")
+    // Notification Bell
+    button.notification#notificationIcon(aria-haspopup="true" aria-expanded="false" aria-controls="notificationMenu" title="Notificaciones")
+      i.bx.bxs-bell.bx-tada-hover(aria-hidden="true")
+      span.num(aria-hidden="true") 8
+    .notification-menu#notificationMenu(role="menu" aria-hidden="true")
+      ul
+        li(role="none") New message from John
+        li(role="none") Your order has been shipped
+        li(role="none") New comment on your post
+        li(role="none") Update available for your app
+        li(role="none") Reminder: Meeting at 3PM
+    // Profile Menu
+    button.profile#profileIcon(aria-haspopup="true" aria-expanded="false" aria-controls="profileMenu" title="Perfil")
+      img(src="https://placehold.co/600x400/png" alt="Profile")
+    .profile-menu#profileMenu(role="menu" aria-hidden="true")
+      ul
+        li(role="none")
+          a(role="menuitem" href="#") My Profile
+        li(role="none")
+          a(role="menuitem" href="#") Settings
+        li(role="none")
+          a(role="menuitem" href="#") Log Out
