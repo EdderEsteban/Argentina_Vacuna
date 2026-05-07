@@ -1,3 +1,163 @@
+/* ── Layout sidebar + navbar ─────────────────────────────────────────────── */
+
+.app-body {
+  margin-top: 56px;
+  min-height: calc(100vh - 56px);
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #1e2d3d;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  transition: width 0.25s ease, min-width 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.sidebar-collapsed {
+  width: 0;
+  min-width: 0;
+}
+
+/* Marca dentro del sidebar */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1rem 1.25rem;
+  color: #fff;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sidebar-brand i {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  color: #6ea8fe;
+}
+
+.sidebar-brand:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Lista de navegación */
+.sidebar-nav {
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+/* Encabezados de sección */
+.sidebar-section {
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4a5568;
+  padding: 0.9rem 1.25rem 0.3rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Links de navegación */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.58rem 1.25rem;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-link i {
+  font-size: 1rem;
+  min-width: 1.15rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #e2e8f0;
+}
+
+.sidebar-link.active {
+  background: rgba(13, 110, 253, 0.18);
+  color: #6ea8fe;
+  border-right: 3px solid #0d6efd;
+  font-weight: 500;
+}
+
+/* Área de contenido */
+.content-wrapper {
+  min-width: 0;
+  background: #f4f6f9;
+  min-height: calc(100vh - 56px);
+}
+
+/* Backdrop mobile */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 56px 0 0 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1035;
+}
+
+.sidebar-backdrop.show {
+  display: block;
+}
+
+/* Mobile: sidebar como overlay deslizante */
+@media (max-width: 767.98px) {
+  .sidebar {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    height: calc(100vh - 56px);
+    z-index: 1040;
+    width: 0;
+    min-width: 0;
+  }
+
+  .sidebar.sidebar-show {
+    width: 240px;
+    min-width: 240px;
+  }
+}
+
+/* ── Banner de filtro activo en listados (desde KPI del dashboard) ────────── */
+.filtro-banner {
+  border-left: 4px solid #0d6efd;
+  border-radius: 0 6px 6px 0;
+  background: rgba(13, 110, 253, 0.07);
+}
+.filtro-banner.filtro-warning {
+  border-left-color: #ffc107;
+  background: rgba(255, 193, 7, 0.1);
+}
+.filtro-banner.filtro-success {
+  border-left-color: #198754;
+  background: rgba(25, 135, 84, 0.07);
+}
+
 /* Paginacion */
 .pagination {
   margin-bottom: 0;
@@ -60,9 +220,11 @@
     max-height: 300px !important;
     border-radius: 0.40rem !important;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-    width: 100% !important;
-    left: 0 !important;
-    top: 100% !important;
+}
+
+/* Select2 dentro de modales Bootstrap — aparece por encima del backdrop (z-index 1050) y del modal (1055) */
+.select2-container--open {
+    z-index: 1056 !important;
 }
 
 textarea {
@@ -104,3 +266,5 @@ textarea {
     background-color: #e9ecef !important;
     border: 1px solid #ced4da !important;
 }
+
+

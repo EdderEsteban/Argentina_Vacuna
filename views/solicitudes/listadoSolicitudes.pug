@@ -14,6 +14,7 @@ block content
             thead.table-dark
               tr
                 th Nombre
+                th Usuario
                 th DNI
                 th Correo
                 th Teléfono
@@ -24,16 +25,18 @@ block content
             tbody
               if solicitudes.length === 0
                 tr
-                  td.text-center.text-muted(colspan='8') No hay solicitudes registradas
+                  td.text-center.text-muted(colspan='9') No hay solicitudes registradas
               each s in solicitudes
                 tr
                   td= `${s.apellido}, ${s.nombre}`
+                  td
+                    code= s.usuario || '—'
                   td
                     code= s.dni
                   td= s.correo
                   td= s.telefono || '—'
                   td
-                    small.text-truncate(style='max-width:220px;display:block' title=s.motivo)= s.motivo
+                    small.text-truncate(style='max-width:200px;display:block' title=s.motivo)= s.motivo
                   td.text-muted.small= new Date(s.createdAt).toLocaleDateString('es-AR')
                   td.text-center
                     if s.estado === 'Pendiente'
@@ -45,7 +48,13 @@ block content
                   td.text-center
                     if s.estado === 'Pendiente'
                       .d-flex.gap-1.justify-content-center
-                        button.btn.btn-sm.btn-success.btn-aprobar(data-id=s.id title='Aprobar')
+                        button.btn.btn-sm.btn-success.btn-aprobar(
+                          data-id=s.id
+                          data-nombre=`${s.nombre} ${s.apellido}`
+                          data-usuario=s.usuario || ''
+                          data-motivo=s.motivo
+                          title='Aprobar'
+                        )
                           i.bi.bi-check-lg
                         button.btn.btn-sm.btn-danger.btn-rechazar(data-id=s.id title='Rechazar')
                           i.bi.bi-x-lg
@@ -62,5 +71,44 @@ block content
               a.page-link(href=`/solicitudes?page=${i}`)= i
           li.page-item(class=pagination.hasNextPage ? '' : 'disabled')
             a.page-link(href=`/solicitudes?page=${pagination.currentPage + 1}`) &raquo;
+
+  //- ── Modal de aprobación ────────────────────────────────────────────────────
+  .modal.fade#modalAprobar(tabindex='-1' aria-hidden='true')
+    .modal-dialog
+      .modal-content
+        .modal-header.bg-success.text-white
+          h5.modal-title
+            i.bi.bi-person-check.me-2
+            | Aprobar Solicitud
+          button.btn-close.btn-close-white(type='button' data-bs-dismiss='modal')
+        .modal-body
+          .mb-3.p-3.bg-light.rounded
+            p.mb-1
+              strong Usuario:&#32;
+              code#modalUsuario
+            p.mb-0
+              strong Motivo:&#32;
+              span#modalMotivo.text-muted.small
+          hr
+          p.text-muted.small.mb-3
+            i.bi.bi-info-circle.me-1
+            | Seleccioná la ubicación de trabajo y el rol que tendrá este usuario.
+          .form-floating.mb-3
+            select.form-select#selectUbicacion
+              option(value='') Seleccionar ubicación...
+              each u in ubicaciones
+                option(value=u.id)= u.nombre
+            label(for='selectUbicacion') Ubicación de trabajo
+          .form-floating
+            select.form-select#selectRol
+              option(value='') Seleccionar rol...
+              each r in roles
+                option(value=r.id)= r.nombre
+            label(for='selectRol') Rol asignado
+        .modal-footer
+          button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Cancelar
+          button.btn.btn-success#btnConfirmarAprobar(type='button')
+            i.bi.bi-check-circle.me-2
+            | Aprobar y crear usuario
 
   script(src='/js/solicitudes/listadoSolicitudes.js')

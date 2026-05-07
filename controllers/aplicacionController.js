@@ -21,15 +21,35 @@ function formatearFecha(fecha) {
   return `${dia}/${mes}/${anio}`;
 }
 
-// Listar aplicaciones con paginación
+// Listar aplicaciones con paginación, con soporte de filtro desde el dashboard
 aplicacion.listar = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
+    const filtro = req.query.filtro || null;
     const limit = 10;
     const offset = (page - 1) * limit;
 
+    const where = wherePorRol(req.session.usuario);
+    let filtroLabel = null;
+    let filtroVariante = 'info';
+
+    if (filtro === 'hoy') {
+      const hoy = new Date();
+      const inicio = new Date(hoy); inicio.setHours(0, 0, 0, 0);
+      const fin    = new Date(hoy); fin.setHours(23, 59, 59, 999);
+      where.fecha_aplicacion = { [Op.between]: [inicio, fin] };
+      filtroLabel = 'aplicaciones de hoy';
+    } else if (filtro === 'mes') {
+      const ahora = new Date();
+      const inicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+      const fin    = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999);
+      where.fecha_aplicacion = { [Op.between]: [inicio, fin] };
+      filtroLabel = `aplicaciones de ${ahora.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}`;
+      filtroVariante = 'success';
+    }
+
     const { count, rows } = await Aplicacion.findAndCountAll({
-      where: wherePorRol(req.session.usuario),
+      where,
       include: [
         { model: Paciente, as: 'paciente', attributes: ['id', 'nombre', 'apellido', 'dni'] },
         { model: Ubicacion, as: 'ubicacion', attributes: ['id', 'nombre'] },
@@ -51,6 +71,10 @@ aplicacion.listar = async (req, res) => {
 
     res.render('aplicacion/listadoAplicacion', {
       aplicaciones,
+      filtro,
+      filtroLabel,
+      filtroVariante,
+      filtroParam: filtro ? `&filtro=${filtro}` : '',
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(count / limit),

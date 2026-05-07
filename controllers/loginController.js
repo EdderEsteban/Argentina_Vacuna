@@ -1,4 +1,5 @@
 const passport = require('passport');
+const bcryptjs = require('bcryptjs');
 const { SolicitudesAcceso } = require('../models');
 
 const loginController = {};
@@ -65,12 +66,6 @@ loginController.logout = (req, res, next) => {
   });
 };
 
-// Redirigir al dashboard si hay sesión activa (fallback, hoy se usa dashboardController)
-loginController.dashboard = (req, res) => {
-  if (!req.session?.usuario) return res.redirect('/');
-  res.render('dashboard', { usuario: req.session.usuario });
-};
-
 // Mostrar formulario público para solicitar acceso al sistema
 loginController.solicitud = (req, res) => {
   res.render('solicitud');
@@ -79,8 +74,12 @@ loginController.solicitud = (req, res) => {
 // Registrar una nueva solicitud de acceso pendiente en la base de datos
 loginController.nuevaSolicitud = async (req, res) => {
   try {
-    const { nombre, apellido, dni, correo, telefono, motivo } = req.body;
-    await SolicitudesAcceso.create({ nombre, apellido, dni, correo, telefono, motivo });
+    const { nombre, apellido, dni, correo, telefono, motivo, usuario, password } = req.body;
+    if (!usuario || !password) {
+      return res.status(400).json({ success: false, message: 'Usuario y contraseña son obligatorios.' });
+    }
+    const hashed = await bcryptjs.hash(password, 10);
+    await SolicitudesAcceso.create({ nombre, apellido, dni, correo, telefono, motivo, usuario, password: hashed });
     res.status(201).json({ success: true });
   } catch (error) {
     console.error('Error al crear la solicitud:', error);

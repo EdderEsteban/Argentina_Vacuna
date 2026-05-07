@@ -1,4 +1,4 @@
-const { Aplicacion, Descarte, Lote, Vacuna, Ubicacion, Stock, Paciente } = require('../models');
+const { Aplicacion, Descarte, Lote, Vacuna, Ubicacion, Stock, Paciente, SolicitudesAcceso } = require('../models');
 const { Op } = require('sequelize');
 
 // Formatea una fecha/hora a DD/MM/YYYY HH:MM para mostrar en el dashboard
@@ -67,14 +67,16 @@ async function kpisAdmin() {
     stockNacional,
     lotesProximosVencer,
     descartesDelMes,
-    totalPacientes
+    totalPacientes,
+    solicitudesPendientes
   ] = await Promise.all([
     Aplicacion.count({ where: { fecha_aplicacion: { [Op.between]: [inicioHoy, finHoy] } } }),
     Aplicacion.count({ where: { fecha_aplicacion: { [Op.between]: [inicioMes, finMes] } } }),
     Stock.sum('cantidad', { where: { id_ubicacion: { [Op.in]: idsDepNac } } }),
     Lote.count({ where: { fecha_venc: { [Op.lte]: en30DiasStr() }, deletedAt: null } }),
     Descarte.count({ where: { fecha_descarte: { [Op.between]: [hoyStr().slice(0, 7) + '-01', en30DiasStr()] } } }),
-    Paciente.count({ where: { deletedAt: null } })
+    Paciente.count({ where: { deletedAt: null } }),
+    SolicitudesAcceso.count({ where: { estado: 'Pendiente' } })
   ]);
 
   // Descartes del mes (uso strings para campo DATE)
@@ -86,12 +88,13 @@ async function kpisAdmin() {
   });
 
   return {
-    aplicacionesHoy:     aplicacionesHoy     || 0,
-    aplicacionesDelMes:  aplicacionesDelMes  || 0,
-    stockNacional:       stockNacional        || 0,
-    lotesProximosVencer: lotesProximosVencer  || 0,
-    descartesDelMes:     descartesDelMesReal  || 0,
-    totalPacientes:      totalPacientes       || 0
+    aplicacionesHoy:       aplicacionesHoy       || 0,
+    aplicacionesDelMes:    aplicacionesDelMes     || 0,
+    stockNacional:         stockNacional          || 0,
+    lotesProximosVencer:   lotesProximosVencer    || 0,
+    descartesDelMes:       descartesDelMesReal    || 0,
+    totalPacientes:        totalPacientes         || 0,
+    solicitudesPendientes: solicitudesPendientes  || 0
   };
 }
 
@@ -152,11 +155,23 @@ dashboard.index = async (req, res) => {
     if (rol === 'Administrador') {
       kpis = await kpisAdmin();
 
+      const ubicacionActual = req.session.usuario.ubicacionActual;
+      const whereAplic = ubicacionActual ? { id_ubicacion: ubicacionActual.id } : {};
+
       const [aplic, lotes] = await Promise.all([
-        Aplicacion.findAll({ include: includeUltimasAplic, order: [['fecha_aplicacion', 'DESC']], limit: 5 }),
+        Aplicacion.findAll({ where: whereAplic, include: includeUltimasAplic, order: [['fecha_aplicacion', 'DESC']], limit: 5 }),
         Lote.findAll({
           where: { fecha_venc: { [Op.lte]: en30DiasStr() }, deletedAt: null },
-          include: [{ model: Vacuna, as: 'vacunas', attributes: ['tipo', 'nombre_comercial'] }],
+          include: [
+            { model: Vacuna, as: 'vacunas', attributes: ['tipo', 'nombre_comercial'] },
+            {
+              model: Stock, as: 'stocks',
+              attributes: ['cantidad'],
+              where: { cantidad: { [Op.gt]: 0 } },
+              required: false,
+              include: [{ model: Ubicacion, as: 'ubicacion', attributes: ['nombre'] }]
+            }
+          ],
           order: [['fecha_venc', 'ASC']],
           limit: 8
         })

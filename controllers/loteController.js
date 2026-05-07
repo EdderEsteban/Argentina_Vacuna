@@ -10,64 +10,59 @@ function formatearFecha(fecha) {
     return `${dia}/${mes}/${anio}`;
 }
 
-// Listar lotes con sus laboratorios y vacunas asociadas
+// Listar lotes con sus laboratorios y vacunas asociadas, con soporte de filtro desde el dashboard
 lote.listar = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
+        const filtro = req.query.filtro || null;
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        // Obtener todos los lotes con sus laboratorios y vacunas asociadas
+        const whereLote = { deletedAt: null };
+        let filtroLabel = null;
+
+        if (filtro === 'alerta') {
+            const en30 = new Date();
+            en30.setDate(en30.getDate() + 30);
+            whereLote.fecha_venc = { [Op.lte]: en30.toISOString().split('T')[0] };
+            filtroLabel = 'lotes próximos a vencer o ya vencidos (dentro de los próximos 30 días)';
+        }
+
         const { count, rows: lotes } = await Lote.findAndCountAll({
-            where: { deletedAt: null },
+            where: whereLote,
             include: [
+                { model: Laboratorio, as: 'laboratorio' },
                 {
-                    model: Laboratorio,
-                    as: 'laboratorio'
-                },
-                {
-                    model: Vacuna,
-                    as: 'vacunas',
-                    include: [
-                        {
-                            model: Estado,
-                            as: 'estado'
-                        }
-                    ]
+                    model: Vacuna, as: 'vacunas',
+                    include: [{ model: Estado, as: 'estado' }]
                 }
             ],
-            order: [['id', 'ASC']],
+            order: filtro === 'alerta' ? [['fecha_venc', 'ASC']] : [['id', 'ASC']],
             limit,
             offset
         });
 
-        // Formatear fechas de los lotes y preparar los datos de las vacunas
         const lotesFormateados = lotes.map(lote => {
             const fechasFormateadas = {
-                fecha_fab: formatearFecha(lote.fecha_fab),
-                fecha_venc: formatearFecha(lote.fecha_venc),
+                fecha_fab:    formatearFecha(lote.fecha_fab),
+                fecha_venc:   formatearFecha(lote.fecha_venc),
                 fecha_compra: formatearFecha(lote.fecha_compra)
             };
 
-            // Agrupar vacunas por tipo y nombre_comercial para evitar duplicados
             const vacunasAgrupadas = [];
             const vacunasVistas = new Set();
-
             lote.vacunas.forEach(vacuna => {
                 const clave = `${vacuna.tipo}-${vacuna.nombre_comercial}`;
                 if (!vacunasVistas.has(clave)) {
                     vacunasVistas.add(clave);
-                    vacunasAgrupadas.push({
-                        id: vacuna.id,
-                        tipo: vacuna.tipo,
-                        nombre_comercial: vacuna.nombre_comercial
-                    });
+                    vacunasAgrupadas.push({ id: vacuna.id, tipo: vacuna.tipo, nombre_comercial: vacuna.nombre_comercial });
                 }
             });
 
             return {
                 ...lote.dataValues,
                 ...fechasFormateadas,
+                fecha_venc_raw: lote.dataValues.fecha_venc,
                 vacunas: vacunasAgrupadas
             };
         });
@@ -76,6 +71,9 @@ lote.listar = async (req, res) => {
 
         res.render('lote/listadoLote', {
             lotes: lotesFormateados,
+            filtro,
+            filtroLabel,
+            filtroParam: filtro ? `&filtro=${filtro}` : '',
             pagination: {
                 currentPage: page,
                 totalPages,

@@ -86,6 +86,14 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    usuario: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    password: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
     estado: {
       type: DataTypes.ENUM('Pendiente', 'Aprobado', 'Rechazado'),
       allowNull: false,

@@ -20,6 +20,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'id_lote',
         as: 'vacunas'
       });
+
+      // Relación con Stock
+      Lote.hasMany(models.Stock, {
+        foreignKey: 'id_lote',
+        as: 'stocks'
+      });
     }
   }
 

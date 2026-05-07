@@ -30,15 +30,27 @@ const FORMAS_DESCARTE = [
   { valor: 'devolucion_proveedor', etiqueta: 'Devolución al proveedor' }
 ];
 
-// Listar descartes con paginación
+// Listar descartes con paginación, con soporte de filtro desde el dashboard
 descarte.listar = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
+    const filtro = req.query.filtro || null;
     const limit = 10;
     const offset = (page - 1) * limit;
 
+    const where = wherePorRol(req.session.usuario);
+    let filtroLabel = null;
+
+    if (filtro === 'mes') {
+      const ahora = new Date();
+      const anoMes  = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+      const diasMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
+      where.fecha_descarte = { [Op.between]: [`${anoMes}-01`, `${anoMes}-${String(diasMes).padStart(2, '0')}`] };
+      filtroLabel = `descartes de ${ahora.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}`;
+    }
+
     const { count, rows } = await Descarte.findAndCountAll({
-      where: wherePorRol(req.session.usuario),
+      where,
       include: [
         {
           model: Lote, as: 'lote', attributes: ['id', 'num_lote'],
@@ -61,6 +73,9 @@ descarte.listar = async (req, res) => {
 
     res.render('descarte/listadoDescarte', {
       descartes,
+      filtro,
+      filtroLabel,
+      filtroParam: filtro ? `&filtro=${filtro}` : '',
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(count / limit),

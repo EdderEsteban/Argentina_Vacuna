@@ -12,6 +12,15 @@ block content
         i.bi.bi-search.me-2
         | Buscar
 
+    if filtroLabel
+      .filtro-banner.p-3.mb-3.d-flex.align-items-center.justify-content-between.gap-3(class=`filtro-${filtroVariante}`)
+        span
+          i.bi.bi-funnel-fill.me-2
+          | Mostrando solo: #[strong= filtroLabel]
+        a.btn.btn-sm.btn-outline-secondary(href='/aplicaciones')
+          i.bi.bi-x-circle.me-1
+          | Ver todas
+
     .table-responsive
       table.table.table-striped.table-hover.align-middle
         thead.table-dark
@@ -41,23 +50,23 @@ block content
       nav(aria-label='Paginación')
         ul.pagination.justify-content-center
           li.page-item(class=pagination.currentPage === 1 ? 'disabled' : '')
-            a.page-link(href=`/aplicaciones?page=${pagination.currentPage - 1}`) &laquo;
+            a.page-link(href=`/aplicaciones?page=${pagination.currentPage - 1}${filtroParam}`) &laquo;
 
           - let startPage = Math.max(1, pagination.currentPage - 2)
           - let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2)
 
           if startPage > 1
             li.page-item
-              a.page-link(href='/aplicaciones?page=1') 1
+              a.page-link(href=`/aplicaciones?page=1${filtroParam}`) 1
             li.page-item.disabled
               span.page-link ...
           each pageNum in Array(endPage - startPage + 1).fill().map((_, i) => startPage + i)
             li.page-item(class=pageNum === pagination.currentPage ? 'active' : '')
-              a.page-link(href=`/aplicaciones?page=${pageNum}`)= pageNum
+              a.page-link(href=`/aplicaciones?page=${pageNum}${filtroParam}`)= pageNum
           if endPage < pagination.totalPages
             li.page-item.disabled
               span.page-link ...
             li.page-item
-              a.page-link(href=`/aplicaciones?page=${pagination.totalPages}`)= pagination.totalPages
+              a.page-link(href=`/aplicaciones?page=${pagination.totalPages}${filtroParam}`)= pagination.totalPages
           li.page-item(class=pagination.currentPage === pagination.totalPages ? 'disabled' : '')
-            a.page-link(href=`/aplicaciones?page=${pagination.currentPage + 1}`) &raquo;
+            a.page-link(href=`/aplicaciones?page=${pagination.currentPage + 1}${filtroParam}`) &raquo;
