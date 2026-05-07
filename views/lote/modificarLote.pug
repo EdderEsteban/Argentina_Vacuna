@@ -33,14 +33,15 @@ block content
                             option(value=laboratorio.id)= laboratorio.nombre
                 label.form-label(for="id_laboratorio") Seleccione un Laboratorio
                 
-            .form-floating.mb-3 
+            .form-floating.mb-3
                 input.form-control(
-                    type="text"
+                    type="number"
                     id="cantidad"
                     name="cantidad"
                     value=lote.cantidad
+                    min="1"
                     required
-                    placeholder = ""
+                    placeholder = "0"
                 )
                 label.form-label(for="cantidad") Cantidad
 
@@ -88,7 +89,7 @@ block content
                 )
                 label.form-label(for="fecha_venc") Fecha de Vencimiento 
                 
-            .form-floating.mb-3 
+            .form-floating.mb-3
                 input.form-control(
                     type="date"
                     id="fecha_compra"
@@ -99,6 +100,27 @@ block content
                 )
                 label.form-label(for="fecha_compra") Fecha de Compra
 
+            .form-floating.mb-3
+                input.form-control(
+                    type="date"
+                    id="fecha_adquisicion"
+                    name="fecha_adquisicion"
+                    value=lote.fecha_adquisicion || ''
+                    placeholder = ""
+                )
+                label.form-label(for="fecha_adquisicion") Fecha de Adquisición (llegada al país)
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="text"
+                    id="pais_origen"
+                    name="pais_origen"
+                    value=lote.pais_origen || ''
+                    placeholder=""
+                    maxlength="100"
+                )
+                label.form-label(for="pais_origen") País de Origen
+
             .d-flex.gap-2
                 button.btn.btn-primary.mb-3(type="button" id="btnGuardarCambios")
                     i.bi.bi-save.me-2
@@ -108,3 +130,12 @@ block content
                     | Cancelar
 
     script(src="/js/lote/modificarLote.js")
+    script.
+        $(document).ready(function() {
+            $('#id_laboratorio').select2({
+                placeholder: '',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#id_laboratorio').parent()
+            });
+        });

@@ -1,0 +1,105 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 💉 Registrar Aplicación de Vacuna
+
+    form#formNuevaAplicacion
+      input(type='hidden' name='_csrf' value=csrfToken)
+      input(type='hidden' id='id_paciente' name='id_paciente')
+
+      //- Datos del paciente
+      .card.mb-4
+        .card-header.bg-primary.text-white
+          i.bi.bi-person-fill.me-2
+          | Búsqueda de Paciente
+        .card-body
+          .input-group.mb-3
+            input.form-control(
+              type='text'
+              id='dniBusqueda'
+              placeholder='Ingrese DNI del paciente'
+              maxlength='8'
+            )
+            button.btn.btn-outline-primary(type='button' id='btnBuscarPaciente')
+              i.bi.bi-search.me-1
+              | Buscar
+          #infoPaciente.alert.alert-info.d-none(role='alert')
+            strong#nombrePaciente
+            span#datosPaciente
+
+      //- Datos de la vacuna
+      .card.mb-4
+        .card-header.bg-success.text-white
+          i.bi.bi-capsule.me-2
+          | Datos de la Vacuna
+        .card-body
+          .form-floating.mb-3
+            select.form-select#id_lote(name='id_lote' required)
+              option(value='' disabled selected) -- Seleccione un lote --
+              each lote in lotes
+                - const nombreComercial = (lote.vacunas && lote.vacunas.length > 0) ? lote.vacunas[0].nombre_comercial : '—'
+                - const nombreLab = lote.laboratorio ? lote.laboratorio.nombre : '—'
+                option(
+                  value=lote.id
+                  data-tipo=(lote.vacunas && lote.vacunas.length > 0) ? lote.vacunas[0].tipo : ''
+                  data-comercial=nombreComercial
+                )= `${lote.num_lote} — ${nombreComercial} (${nombreLab})`
+            label(for='id_lote') Lote / Vacuna
+
+          //- Info de la vacuna (auto-completado)
+          #infoVacuna.row.g-2.mb-3.d-none
+            .col-md-6
+              .form-floating
+                input.form-control(type='text' id='tipoVacuna' readonly placeholder='')
+                label Tipo de Vacuna
+            .col-md-6
+              .form-floating
+                input.form-control(type='text' id='nombreComercial' readonly placeholder='')
+                label Nombre Comercial
+
+          .mb-3
+            if ubicacionUsuario
+              input(type='hidden' id='id_ubicacion' name='id_ubicacion' value=ubicacionUsuario.id)
+              .alert.alert-secondary.py-2.mb-0.d-flex.align-items-center
+                i.bi.bi-geo-alt-fill.me-2.text-primary
+                | Centro de Vacunación:&nbsp;
+                strong= ubicacionUsuario.nombre
+            else
+              .alert.alert-warning.py-2.mb-0
+                i.bi.bi-exclamation-triangle.me-2
+                | No tiene un centro de vacunación asignado. Contacte al administrador.
+
+          .form-floating.mb-3
+            input.form-control(
+              type='date'
+              id='fecha_aplicacion'
+              name='fecha_aplicacion'
+              value=fechaHoy
+              required
+              placeholder=''
+            )
+            label(for='fecha_aplicacion') Fecha de Aplicación
+
+      .d-flex.gap-2
+        button.btn.btn-primary(type='button' id='btnRegistrarAplicacion')
+          i.bi.bi-save.me-2
+          | Registrar Aplicación
+        a.btn.btn-secondary(href='/aplicaciones')
+          i.bi.bi-x-circle.me-2
+          | Cancelar
+
+  script(src='/js/aplicacion/nuevoAplicacion.js')
+  script.
+      $(document).ready(function() {
+          $('#id_lote').select2({
+              placeholder: '-- Seleccione un lote --',
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $('#id_lote').parent()
+          });
+          // Re-trigger change on select2 selection
+          $('#id_lote').on('select2:select select2:unselect', function() {
+              $(this).trigger('change');
+          });
+      });

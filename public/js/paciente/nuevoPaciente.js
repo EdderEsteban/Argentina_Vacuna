@@ -50,6 +50,22 @@ function validarNuevoPaciente(formData) {
         });
         return false;
     }
+    if (!formData.fecha_nacimiento) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'La fecha de nacimiento es obligatoria.' });
+        return false;
+    }
+    if (new Date(formData.fecha_nacimiento) >= new Date()) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'La fecha de nacimiento no puede ser futura.' });
+        return false;
+    }
+    if (!formData.genero) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'El género es obligatorio.' });
+        return false;
+    }
+    if (!formData.localidad) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'La localidad es obligatoria.' });
+        return false;
+    }
     return true;
 }
 
@@ -67,6 +83,9 @@ function enviarFormularioNuevoPaciente() {
         nombre: formNuevoPaciente.nombrePaciente.value.trim(),
         apellido: formNuevoPaciente.apellidoPaciente.value.trim(),
         dni: formNuevoPaciente.dniPaciente.value.trim(),
+        fecha_nacimiento: formNuevoPaciente.fecha_nacimiento.value || null,
+        genero: formNuevoPaciente.genero.value || null,
+        localidad: formNuevoPaciente.localidad.value.trim() || null,
         telefono: formNuevoPaciente.telefonoPaciente.value.trim() || null,
         correo: formNuevoPaciente.correoPaciente.value.trim() || null,
         id_provincia: parseInt(formNuevoPaciente.id_provincia.value),

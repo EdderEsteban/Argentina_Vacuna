@@ -1,0 +1,90 @@
+extends __layout/main
+
+block content
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-6.col-lg-5
+
+        .card.shadow-lg
+          .card-header.bg-primary.text-white.text-center.py-3
+            i.bi.bi-geo-alt-fill.me-2(style='font-size:1.5rem')
+            strong Seleccionar Ubicación de Trabajo
+
+          .card-body.p-4
+            p.text-muted.mb-4 Estás asignado a más de una ubicación. Seleccioná en cuál vas a trabajar hoy:
+
+            .d-flex.flex-column.gap-3#listaUbicaciones
+              each ubi in ubicaciones
+                .card.border.rounded-3.ubicacion-card(
+                  data-id=ubi.id
+                  style='cursor:pointer; transition: all 0.15s;'
+                )
+                  .card-body.py-3.d-flex.align-items-center
+                    input.form-check-input.me-3.flex-shrink-0(
+                      type='radio'
+                      name='id_ubicacion'
+                      value=ubi.id
+                      id=`ubi_${ubi.id}`
+                    )
+                    label.form-check-label.mb-0(
+                      for=`ubi_${ubi.id}`
+                      style='cursor:pointer'
+                    )
+                      i.bi.bi-hospital.me-2.text-primary
+                      = ubi.nombre
+
+            .d-grid.mt-4
+              button.btn.btn-primary.btn-lg(type='button' id='btnConfirmar' disabled)
+                i.bi.bi-check-circle.me-2
+                | Confirmar Ubicación
+
+  script.
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const btn = document.getElementById('btnConfirmar');
+
+    // Selección al hacer click en la card o en el radio
+    document.querySelectorAll('.ubicacion-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const radio = card.querySelector('input[type="radio"]');
+        radio.checked = true;
+        resaltarSeleccion(card);
+        btn.disabled = false;
+      });
+    });
+
+    function resaltarSeleccion(cardActiva) {
+      document.querySelectorAll('.ubicacion-card').forEach(c => {
+        c.classList.remove('border-primary', 'bg-primary', 'text-white');
+        c.style.borderWidth = '';
+      });
+      cardActiva.classList.add('border-primary');
+      cardActiva.style.borderWidth = '2px';
+    }
+
+    btn.addEventListener('click', async () => {
+      const selected = document.querySelector('input[name="id_ubicacion"]:checked');
+      if (!selected) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Confirmando...';
+
+      try {
+        const res = await fetch('/seleccionar-ubicacion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+          body: JSON.stringify({ id_ubicacion: selected.value })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = data.redirectTo || '/dashboard';
+        } else {
+          Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Confirmar Ubicación';
+        }
+      } catch {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo conectar con el servidor.' });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Confirmar Ubicación';
+      }
+    });

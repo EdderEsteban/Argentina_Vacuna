@@ -20,6 +20,10 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'id_ubicacion',
         as: 'ubicaciones'
       });
+      Usuario.hasMany(models.UsuarioUbicacion, {
+        foreignKey: 'id_usuario',
+        as: 'usuariosUbicacion'
+      });
     }
 
   }

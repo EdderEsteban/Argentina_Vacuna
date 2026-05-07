@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+// Confirma con SweetAlert2 y ejecuta el borrado soft de un paciente
 async function borrarPaciente(id, csrfToken) {
     const confirmacion = await Swal.fire({
         title: '¿Borrar Paciente?',

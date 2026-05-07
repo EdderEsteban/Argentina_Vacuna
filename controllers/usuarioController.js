@@ -1,4 +1,5 @@
 const { Usuario, Rol, Ubicacion, UsuarioUbicacion } = require('../models');
+const { Op } = require('sequelize');
 const bcryptjs = require('bcryptjs');
 
 const usuario = {};
@@ -162,40 +163,28 @@ usuario.editarUsuario = async (req, res) => {
   }
 };  
 
-// Actualizar usuario
+// Actualizar usuario (solo los campos enviados)
 usuario.actualizarUsuario = async (req, res) => {
   try {
     const id = req.params.id;
-    const { nombre, apellido, dni, correo, telefono, usuario: usuarioNombre, id_rol } = req.body;
-
     const user = await Usuario.findByPk(id);
+    if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    const updates = {};
+    const campos = ['nombre', 'apellido', 'dni', 'correo', 'telefono'];
+    campos.forEach(c => { if (req.body[c] !== undefined) updates[c] = req.body[c]; });
+    if (req.body.usuario !== undefined) updates.usuario = req.body.usuario;
+
+    if (updates.dni) {
+      const dniExistente = await Usuario.findOne({ where: { dni: updates.dni, id: { [Op.ne]: id } } });
+      if (dniExistente) return res.status(400).json({ success: false, message: 'El DNI ya está registrado' });
+    }
+    if (updates.usuario) {
+      const usuarioExistente = await Usuario.findOne({ where: { usuario: updates.usuario, id: { [Op.ne]: id } } });
+      if (usuarioExistente) return res.status(400).json({ success: false, message: 'El nombre de usuario ya está en uso' });
     }
 
-    // Validar DNI único
-    const dniExistente = await Usuario.findOne({ where: { dni, id: { [Op.ne]: user.id } } });
-    if (dniExistente) {
-      return res.status(400).json({ success: false, message: 'El DNI ya está registrado' });
-    }
-
-    // Validar usuario único
-    const usuarioExistente = await Usuario.findOne({ where: { usuario: usuarioNombre, id: { [Op.ne]: user.id } } });
-    if (usuarioExistente) {
-      return res.status(400).json({ success: false, message: 'El nombre de usuario ya está en uso' });
-    }
-
-    await user.update({
-      nombre,
-      apellido,
-      dni,
-      correo,
-      telefono,
-      usuario: usuarioNombre,
-      id_rol
-    });
-
+    await user.update(updates);
     res.json({ success: true, message: 'Usuario actualizado correctamente' });
   } catch (err) {
     console.error(err);

@@ -1,0 +1,33 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .d-flex.align-items-center.mb-4.gap-3
+      a.btn.btn-outline-secondary(href='/reportes')
+        i.bi.bi-arrow-left.me-1
+        | Volver
+      h1.mb-0 📊 Reporte 6 — Personas Vacunadas
+
+    if resultados.length === 0
+      .alert.alert-warning
+        i.bi.bi-exclamation-circle.me-2
+        | No hay aplicaciones registradas.
+    else
+      .card
+        .table-responsive
+          table.table.table-striped.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th Tipo de Vacuna
+                th Provincia
+                th Localidad
+                th.text-center Personas Vacunadas
+            tbody
+              each r in resultados
+                tr
+                  td
+                    strong= r.tipo_vacuna
+                  td= r.provincia
+                  td= r.localidad
+                  td.text-center
+                    span.badge.bg-primary.fs-6= r.cantidad_vacunados

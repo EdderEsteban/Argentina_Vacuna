@@ -1,0 +1,115 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 🗑️ Registrar Descarte de Vacunas
+
+    form#formNuevoDescarte
+      input(type='hidden' name='_csrf' value=csrfToken)
+
+      //- Selección del lote
+      .card.mb-4
+        .card-header.bg-danger.text-white
+          i.bi.bi-capsule.me-2
+          | Lote a Descartar
+        .card-body
+          .form-floating.mb-3
+            select.form-select#id_lote(name='id_lote' required)
+              option(value='' disabled selected) -- Seleccione un lote --
+              each lote in lotes
+                option(
+                  value=lote.id
+                  data-tipo=(lote.vacunas && lote.vacunas.length > 0) ? lote.vacunas[0].tipo : ''
+                  data-comercial=(lote.vacunas && lote.vacunas.length > 0) ? lote.vacunas[0].nombre_comercial : ''
+                )= lote.num_lote
+            label(for='id_lote') Lote-Proveedor
+
+          //- Info vacuna (auto-completado al seleccionar lote)
+          #infoVacuna.row.g-2.mb-3.d-none
+            .col-md-6
+              .form-floating
+                input.form-control#tipoVacuna(type='text' readonly placeholder='')
+                label Tipo de Vacuna
+            .col-md-6
+              .form-floating
+                input.form-control#nombreComercial(type='text' readonly placeholder='')
+                label Nombre Comercial
+
+          .form-floating.mb-3
+            select.form-select#id_ubicacion(name='id_ubicacion' disabled)
+              option(value='' disabled selected) -- Primero seleccione un lote --
+            label(for='id_ubicacion') Ubicación (donde está el stock)
+
+          .row.g-2
+            .col-md-4
+              .form-floating
+                input.form-control#cantidad(
+                  type='number'
+                  name='cantidad'
+                  min='1'
+                  required
+                  placeholder=''
+                  disabled
+                )
+                label(for='cantidad') Cantidad a descartar
+                small#stockDisponible.form-text.text-muted
+
+            .col-md-4
+              .form-floating
+                input.form-control(
+                  type='date'
+                  id='fecha_descarte'
+                  name='fecha_descarte'
+                  value=fechaHoy
+                  required
+                  placeholder=''
+                )
+                label(for='fecha_descarte') Fecha de Descarte
+
+            .col-md-4
+              .form-floating
+                select.form-select#forma_descarte(name='forma_descarte' required)
+                  option(value='' disabled selected) -- Seleccione --
+                  each forma in formas
+                    option(value=forma.valor)= forma.etiqueta
+                label(for='forma_descarte') Forma de Descarte
+
+      //- Motivo
+      .card.mb-4
+        .card-header.bg-secondary.text-white
+          i.bi.bi-chat-text.me-2
+          | Motivo del Descarte
+        .card-body
+          .form-floating
+            textarea.form-control#motivo(
+              name='motivo'
+              required
+              minlength='10'
+              maxlength='500'
+              placeholder=''
+              style='height: 120px'
+            )
+            label(for='motivo') Describa el motivo del descarte (mín. 10 caracteres)
+
+      .d-flex.gap-2
+        button.btn.btn-danger(type='button' id='btnRegistrarDescarte')
+          i.bi.bi-trash.me-2
+          | Registrar Descarte
+        a.btn.btn-secondary(href='/descartes')
+          i.bi.bi-x-circle.me-2
+          | Cancelar
+
+  script(src='/js/descarte/nuevoDescarte.js')
+  script.
+    $(document).ready(function() {
+      $('#id_lote').select2({
+        placeholder: '',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#id_lote').parent()
+      });
+      $('#id_lote').on('change', function() {
+        const event = new Event('change', { bubbles: true });
+        document.getElementById('id_lote').dispatchEvent(event);
+      });
+    });

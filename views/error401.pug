@@ -1,0 +1,19 @@
+extends __layout/main
+
+block content
+  .container.mt-5.text-center
+    .row.justify-content-center
+      .col-md-6
+        .card.border-secondary.shadow
+          .card-body.py-5
+            i.bi.bi-lock.text-secondary(style='font-size: 4rem')
+            h1.display-4.mt-3 401
+            h4.text-secondary.mb-3 No autenticado
+            p.text-muted
+              | Tu sesión expiró o no iniciaste sesión.
+              br
+              | Iniciá sesión para continuar.
+            hr
+            a.btn.btn-primary(href='/')
+              i.bi.bi-box-arrow-in-right.me-2
+              | Ir al inicio de sesión

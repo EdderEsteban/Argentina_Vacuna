@@ -55,6 +55,26 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
+    fecha_nacimiento: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      validate: {
+        isDate: { msg: 'Fecha de nacimiento inválida' },
+        noEsFutura(value) {
+          if (value && new Date(value) > new Date()) {
+            throw new Error('La fecha de nacimiento no puede ser futura');
+          }
+        }
+      }
+    },
+    genero: {
+      type: DataTypes.ENUM('Masculino', 'Femenino', 'No binario', 'Prefiero no decir'),
+      allowNull: true
+    },
+    localidad: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
     telefono: {
       type: DataTypes.STRING,
       validate: {

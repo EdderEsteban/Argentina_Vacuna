@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 04-05-2026 a las 03:55:16
+-- Tiempo de generación: 04-05-2026 a las 16:39:35
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -20,6 +20,127 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `argentina_vacuna`
 --
+
+DELIMITER $$
+--
+-- Procedimientos
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte1_compras_por_laboratorio` (IN `p_desde` DATE, IN `p_hasta` DATE)   BEGIN
+        SELECT
+          lab.nombre        AS laboratorio,
+          lab.nacionalidad,
+          COUNT(l.id)       AS num_lotes,
+          SUM(l.cantidad)   AS total_dosis,
+          MIN(l.fecha_compra) AS primera_compra,
+          MAX(l.fecha_compra) AS ultima_compra
+        FROM lotes l
+        JOIN laboratorios lab ON l.id_laboratorio = lab.id
+        WHERE l.fecha_compra BETWEEN p_desde AND p_hasta
+          AND l.deletedAt IS NULL
+        GROUP BY lab.id, lab.nombre, lab.nacionalidad
+        ORDER BY total_dosis DESC;
+      END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte2_lotes_por_tipo` ()   BEGIN
+        SELECT
+          v.tipo,
+          COALESCE(SUM(CASE WHEN u.tipo = 'Deposito Nacional'   THEN s.cantidad ELSE 0 END), 0) AS en_nacion,
+          COALESCE(SUM(CASE WHEN u.tipo = 'Distribucion'        THEN s.cantidad ELSE 0 END), 0) AS en_distribucion,
+          COALESCE(SUM(CASE WHEN u.tipo = 'Deposito Provincial' THEN s.cantidad ELSE 0 END), 0) AS en_provincia,
+          COALESCE(SUM(CASE WHEN u.tipo = 'Centro Vacunacion'   THEN s.cantidad ELSE 0 END), 0) AS en_centros,
+          (SELECT COUNT(*) FROM aplicaciones a
+           JOIN vacunas av ON a.id_vacuna = av.id
+           WHERE av.tipo = v.tipo AND a.deletedAt IS NULL) AS aplicadas,
+          (SELECT COALESCE(SUM(d.cantidad), 0) FROM descartes d
+           JOIN lotes dl ON d.id_lote = dl.id
+           JOIN vacunas dv ON dv.id_lote = dl.id
+           WHERE dv.tipo = v.tipo AND d.deletedAt IS NULL) AS descartadas,
+          (SELECT COUNT(*) FROM vacunas vv
+           WHERE vv.tipo = v.tipo
+             AND vv.id_estado = (SELECT id FROM estados WHERE codigo = 'VENC' LIMIT 1)) AS vencidas
+        FROM vacunas v
+        LEFT JOIN stocks s  ON s.id_lote     = v.id_lote
+        LEFT JOIN ubicaciones u ON s.id_ubicacion = u.id
+        GROUP BY v.tipo
+        ORDER BY v.tipo;
+      END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte3_stock_por_provincia` ()   BEGIN
+        SELECT
+          v.tipo          AS tipo_vacuna,
+          p.nombre        AS provincia,
+          u.tipo          AS tipo_ubicacion,
+          SUM(s.cantidad) AS stock_disponible
+        FROM stocks s
+        JOIN lotes l      ON s.id_lote      = l.id
+        JOIN vacunas v    ON v.id_lote       = l.id
+        JOIN ubicaciones u ON s.id_ubicacion = u.id
+        JOIN provincias p  ON u.id_provincia  = p.id
+        WHERE u.tipo NOT IN ('Deposito Nacional', 'Distribucion')
+          AND s.cantidad > 0
+          AND l.deletedAt IS NULL
+        GROUP BY v.tipo, p.id, p.nombre, u.tipo
+        ORDER BY v.tipo, p.nombre, u.tipo;
+      END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte4_vacunados_vencidas` ()   BEGIN
+        SELECT
+          pac.nombre                                          AS nombre_paciente,
+          pac.apellido                                        AS apellido_paciente,
+          pac.dni,
+          prov.nombre                                         AS provincia,
+          u.nombre                                            AS centro,
+          vac.tipo                                            AS tipo_vacuna,
+          DATE_FORMAT(a.fecha_aplicacion, '%d/%m/%Y %H:%i')  AS fecha_aplicacion,
+          DATE_FORMAT(l.fecha_venc, '%d/%m/%Y')               AS fecha_vencimiento_lote
+        FROM aplicaciones a
+        JOIN pacientes pac   ON a.id_paciente  = pac.id
+        JOIN lotes l         ON a.id_lote      = l.id
+        JOIN vacunas vac     ON a.id_vacuna    = vac.id
+        JOIN ubicaciones u   ON a.id_ubicacion = u.id
+        LEFT JOIN provincias prov ON u.id_provincia = prov.id
+        WHERE DATE(a.fecha_aplicacion) > l.fecha_venc
+          AND a.deletedAt IS NULL
+        ORDER BY a.fecha_aplicacion DESC;
+      END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte5_vencidas_no_descartadas` ()   BEGIN
+        SELECT
+          l.num_lote,
+          vac.tipo                                AS tipo_vacuna,
+          DATE_FORMAT(l.fecha_venc, '%d/%m/%Y')   AS fecha_vencimiento,
+          p.nombre                                AS provincia,
+          u.nombre                                AS ubicacion,
+          u.tipo                                  AS tipo_ubicacion,
+          s.cantidad                              AS stock_vencido
+        FROM stocks s
+        JOIN lotes l       ON s.id_lote      = l.id
+        JOIN vacunas vac   ON vac.id_lote     = l.id
+        JOIN ubicaciones u ON s.id_ubicacion  = u.id
+        LEFT JOIN provincias p ON u.id_provincia = p.id
+        WHERE l.fecha_venc < CURDATE()
+          AND s.cantidad > 0
+          AND l.deletedAt IS NULL
+        ORDER BY l.fecha_venc ASC, p.nombre, u.nombre;
+      END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte6_personas_vacunadas` ()   BEGIN
+        SELECT
+          vac.tipo                                      AS tipo_vacuna,
+          COALESCE(prov.nombre, 'Sin provincia')        AS provincia,
+          COALESCE(pac.localidad, 'Sin localidad')      AS localidad,
+          COUNT(a.id)                                   AS cantidad_vacunados
+        FROM aplicaciones a
+        JOIN pacientes pac ON a.id_paciente = pac.id
+        JOIN lotes l       ON a.id_lote     = l.id
+        JOIN vacunas vac   ON vac.id_lote   = l.id
+        LEFT JOIN provincias prov ON pac.id_provincia = prov.id
+        WHERE a.deletedAt IS NULL
+        GROUP BY vac.tipo, prov.id, prov.nombre, pac.localidad
+        ORDER BY vac.tipo, prov.nombre, pac.localidad;
+      END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -77,6 +198,7 @@ CREATE TABLE `descartes` (
   `id` int(11) NOT NULL,
   `id_lote` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
+  `id_ubicacion` int(11) DEFAULT NULL,
   `cantidad` int(11) NOT NULL,
   `fecha_descarte` date NOT NULL DEFAULT curdate(),
   `forma_descarte` enum('incineracion','autoclave','reciclaje','vertido_controlado','devolucion_proveedor') NOT NULL,
@@ -169,10 +291,12 @@ CREATE TABLE `lotes` (
   `id` int(11) NOT NULL,
   `num_lote` varchar(255) NOT NULL,
   `id_laboratorio` int(11) NOT NULL,
+  `pais_origen` varchar(100) DEFAULT NULL,
   `cantidad` int(11) NOT NULL,
   `fecha_fab` date NOT NULL,
   `fecha_venc` date NOT NULL,
   `fecha_compra` date NOT NULL,
+  `fecha_adquisicion` date DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
@@ -263,6 +387,9 @@ CREATE TABLE `pacientes` (
   `nombre` varchar(255) NOT NULL,
   `apellido` varchar(255) NOT NULL,
   `dni` varchar(255) NOT NULL,
+  `fecha_nacimiento` date DEFAULT NULL,
+  `genero` enum('Masculino','Femenino','No binario','Prefiero no decir') DEFAULT NULL,
+  `localidad` varchar(255) DEFAULT NULL,
   `telefono` varchar(255) DEFAULT NULL,
   `correo` varchar(255) DEFAULT NULL,
   `id_provincia` int(11) DEFAULT NULL,
@@ -372,7 +499,11 @@ INSERT INTO `sequelizemeta` (`name`) VALUES
 ('20250521140001-create-trigger-stock.js'),
 ('20250527190334-add-indexes-laboratorios.js'),
 ('20250820155308-create-solicitudes-acceso.js'),
-('20250827185529-create-sessions.js');
+('20250827185529-create-sessions.js'),
+('20260504100000-add-fields-lotes.js'),
+('20260504100001-add-fields-pacientes.js'),
+('20260504110000-add-ubicacion-to-descartes.js'),
+('20260504120000-create-stored-procedures.js');
 
 -- --------------------------------------------------------
 
@@ -503,7 +634,7 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `usuario`, `password`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(6, 'Edder', 'Santibañez', '93962239', 'edder709@gmail.com', '02664271316', 'edder709@gmail.com', '$2b$10$.sxRspeV0oNWrfX/PGy8kO1.BgMBmtWVvZ7.9Jj1LWAP9/GoCbq16', '2025-09-12 14:59:14', '2025-09-12 14:59:14', NULL);
+(9, 'Edder', 'Santibañez', '93962239', 'edder709@gmail.com', '02664271316', 'Administrador', '$2b$10$9E.d3IscxjzO682zL7HRQO6.IQH1jTIXoIciYqz/o3GPkNHpDeB.i', '2026-05-04 05:05:21', '2026-05-04 05:05:21', NULL);
 
 -- --------------------------------------------------------
 
@@ -518,6 +649,43 @@ CREATE TABLE `usuarioubicaciones` (
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `usuarioubicaciones`
+--
+
+INSERT INTO `usuarioubicaciones` (`id_usuario`, `id_ubicacion`, `id_rol`, `createdAt`, `updatedAt`) VALUES
+(9, 1, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 2, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 3, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 4, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 5, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 6, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 7, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 8, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 9, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 10, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 11, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 12, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 13, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 14, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 15, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 16, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 17, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 18, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 19, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 20, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 21, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 22, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 23, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 24, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 25, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 26, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 27, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 28, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 29, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 31, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(9, 32, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21');
 
 -- --------------------------------------------------------
 
@@ -561,7 +729,8 @@ ALTER TABLE `descartes`
   ADD KEY `descartes_id_lote` (`id_lote`),
   ADD KEY `descartes_id_usuario` (`id_usuario`),
   ADD KEY `descartes_fecha_descarte` (`fecha_descarte`),
-  ADD KEY `descartes_forma_descarte` (`forma_descarte`);
+  ADD KEY `descartes_forma_descarte` (`forma_descarte`),
+  ADD KEY `Descartes_id_ubicacion_foreign_idx` (`id_ubicacion`);
 
 --
 -- Indices de la tabla `estados`
@@ -772,7 +941,7 @@ ALTER TABLE `ubicaciones`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `vacunas`
@@ -798,6 +967,7 @@ ALTER TABLE `aplicaciones`
 -- Filtros para la tabla `descartes`
 --
 ALTER TABLE `descartes`
+  ADD CONSTRAINT `Descartes_id_ubicacion_foreign_idx` FOREIGN KEY (`id_ubicacion`) REFERENCES `ubicaciones` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `descartes_ibfk_1` FOREIGN KEY (`id_lote`) REFERENCES `lotes` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `descartes_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `descartes_ibfk_3` FOREIGN KEY (`id_estado`) REFERENCES `estados` (`id`);
@@ -853,6 +1023,169 @@ ALTER TABLE `usuarioubicaciones`
 ALTER TABLE `vacunas`
   ADD CONSTRAINT `vacunas_ibfk_1` FOREIGN KEY (`id_lote`) REFERENCES `lotes` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `vacunas_ibfk_2` FOREIGN KEY (`id_estado`) REFERENCES `estados` (`id`) ON UPDATE CASCADE;
+
+DELIMITER $$
+--
+-- Eventos
+--
+CREATE DEFINER=`root`@`localhost` EVENT `ev_marcar_vencimientos` ON SCHEDULE EVERY 1 DAY STARTS '2026-05-04 00:00:00' ON COMPLETION NOT PRESERVE ENABLE COMMENT 'Marca vacunas como vencidas automáticamente cada día' DO UPDATE vacunas
+        SET id_estado = (SELECT id FROM estados WHERE codigo = 'VENC' LIMIT 1)
+        WHERE id_lote IN (
+          SELECT id FROM lotes WHERE fecha_venc < CURDATE() AND deletedAt IS NULL
+        )
+        AND id_estado = (SELECT id FROM estados WHERE codigo = 'DISP' LIMIT 1)$$
+
+DELIMITER ;
+
+-- ============================================================
+-- SEED DATA — datos de prueba para todos los módulos
+-- ============================================================
+
+-- 1. Estados (DISP=1, APLIC=2, VENC=3, DESC=4)
+INSERT INTO `estados` (`id`, `nombre`, `codigo`, `createdAt`, `updatedAt`) VALUES
+(1, 'Disponible',  'DISP', NOW(), NOW()),
+(2, 'Aplicada',    'APLIC', NOW(), NOW()),
+(3, 'Vencida',     'VENC', NOW(), NOW()),
+(4, 'Descartada',  'DESC', NOW(), NOW());
+
+-- 2. Laboratorios
+INSERT INTO `laboratorios` (`id`, `nombre`, `nacionalidad`, `createdAt`, `updatedAt`) VALUES
+(1, 'Pfizer-BioNTech', 'Estadounidense', NOW(), NOW()),
+(2, 'AstraZeneca',     'Británica',      NOW(), NOW()),
+(3, 'Sputnik',         'Rusa',           NOW(), NOW()),
+(4, 'Sinopharm',       'China',          NOW(), NOW()),
+(5, 'Moderna',         'Estadounidense', NOW(), NOW());
+
+-- 3. Lotes (lotes 1-4 activos, 5-6 próximos a vencer, 7-8 vencidos)
+INSERT INTO `lotes` (`id`, `num_lote`, `id_laboratorio`, `pais_origen`, `cantidad`, `fecha_fab`, `fecha_venc`, `fecha_compra`, `fecha_adquisicion`, `createdAt`, `updatedAt`) VALUES
+(1, 'LOT-2025-001', 1, 'Argentina', 1000, '2024-01-01', '2027-06-30', '2025-01-15', '2025-01-20', NOW(), NOW()),
+(2, 'LOT-2025-002', 2, 'India',      500, '2024-03-01', '2027-09-30', '2025-03-10', '2025-03-15', NOW(), NOW()),
+(3, 'LOT-2025-003', 3, 'Rusia',      800, '2024-06-01', '2027-12-31', '2025-06-20', '2025-06-25', NOW(), NOW()),
+(4, 'LOT-2025-004', 4, 'China',      600, '2024-09-01', '2027-08-31', '2025-09-05', '2025-09-10', NOW(), NOW()),
+(5, 'LOT-2026-001', 5, 'Argentina',  400, '2025-01-15', '2026-05-15', '2026-01-20', '2026-01-25', NOW(), NOW()),
+(6, 'LOT-2026-002', 1, 'Argentina',  300, '2025-02-01', '2026-05-25', '2026-02-10', '2026-02-15', NOW(), NOW()),
+(7, 'LOT-2024-001', 2, 'India',      200, '2023-10-01', '2026-01-01', '2024-10-15', '2024-10-20', NOW(), NOW()),
+(8, 'LOT-2024-002', 3, 'Rusia',      150, '2023-06-01', '2026-03-01', '2024-06-10', '2024-06-15', NOW(), NOW());
+
+-- 4. Vacunas (1 por lote; lotes 7-8 en estado VENC=3)
+INSERT INTO `vacunas` (`id`, `id_lote`, `id_estado`, `tipo`, `nombre_comercial`, `createdAt`, `updatedAt`) VALUES
+(1, 1, 1, 'COVID-19',        'Comirnaty',     NOW(), NOW()),
+(2, 2, 1, 'COVID-19',        'Vaxzevria',     NOW(), NOW()),
+(3, 3, 1, 'COVID-19',        'Sputnik V',     NOW(), NOW()),
+(4, 4, 1, 'Influenza',       'Sinopharm Flu', NOW(), NOW()),
+(5, 5, 1, 'Fiebre Amarilla', 'Stamaril',      NOW(), NOW()),
+(6, 6, 1, 'Hepatitis B',     'Engerix-B',     NOW(), NOW()),
+(7, 7, 3, 'COVID-19',        'Vaxzevria',     NOW(), NOW()),
+(8, 8, 3, 'COVID-19',        'Sputnik V',     NOW(), NOW());
+
+-- 5. Usuarios adicionales (misma contraseña que el Administrador id=9)
+INSERT INTO `usuarios` (`id`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `usuario`, `password`, `createdAt`, `updatedAt`) VALUES
+(10, 'Ana',    'García',     '28765432', 'ana.garcia@argentina.gob.ar',    '01112345678', 'Auditor',         '$2b$10$9E.d3IscxjzO682zL7HRQO6.IQH1jTIXoIciYqz/o3GPkNHpDeB.i', NOW(), NOW()),
+(11, 'Carlos', 'López',      '35123456', 'carlos.lopez@argentina.gob.ar',  '01198765432', 'Enfermero',       '$2b$10$9E.d3IscxjzO682zL7HRQO6.IQH1jTIXoIciYqz/o3GPkNHpDeB.i', NOW(), NOW()),
+(12, 'María',  'Rodríguez',  '42654321', 'maria.rodriguez@argentina.gob.ar','01187654321','Administrativo',  '$2b$10$9E.d3IscxjzO682zL7HRQO6.IQH1jTIXoIciYqz/o3GPkNHpDeB.i', NOW(), NOW());
+
+-- 6. Ubicaciones para los nuevos usuarios
+INSERT INTO `usuarioubicaciones` (`id_usuario`, `id_ubicacion`, `id_rol`, `createdAt`, `updatedAt`) VALUES
+(10,  3, 2, NOW(), NOW()),  -- Auditor → Hospital Italiano (CV prov 1)
+(10,  4, 2, NOW(), NOW()),  -- Auditor → Hospital San Isidro
+(10, 12, 2, NOW(), NOW()),  -- Auditor → Hospital de Córdoba (CV prov 5)
+(10, 13, 2, NOW(), NOW()),  -- Auditor → Hospital Italiano Córdoba
+(11,  3, 3, NOW(), NOW()),  -- Enfermero → Hospital Italiano
+(11, 12, 3, NOW(), NOW()),  -- Enfermero → Hospital de Córdoba
+(12,  2, 4, NOW(), NOW());  -- Administrativo → Hospital Garrahan (Dep. Nacional)
+
+-- 7. Pacientes
+INSERT INTO `pacientes` (`id`, `nombre`, `apellido`, `dni`, `fecha_nacimiento`, `genero`, `localidad`, `telefono`, `correo`, `id_provincia`, `id_ubicacion_registro`, `createdAt`, `updatedAt`) VALUES
+(1,  'Juan',     'Pérez',     '28567890', '1985-03-15', 'Masculino',        'Buenos Aires',      '1156781234', 'juan.perez@mail.com',      1,  3,  NOW(), NOW()),
+(2,  'María',    'González',  '35123789', '1990-07-22', 'Femenino',         'Córdoba',           '3515678901', 'maria.gonzalez@mail.com',  5,  12, NOW(), NOW()),
+(3,  'Carlos',   'López',     '42678901', '2000-11-30', 'Masculino',        'Rosario',           '3415678901', 'carlos.lopez@mail.com',    20, 27, NOW(), NOW()),
+(4,  'Ana',      'Martínez',  '31456123', '1978-05-10', 'Femenino',         'Mendoza',           '2614567890', 'ana.martinez@mail.com',    12, 23, NOW(), NOW()),
+(5,  'Luis',     'Ramírez',   '25987654', '1962-09-18', 'Masculino',        'Tucumán',           '3815123456', 'luis.ramirez@mail.com',    23, 28, NOW(), NOW()),
+(6,  'Laura',    'Sánchez',   '38765432', '1995-02-28', 'Femenino',         'Salta',             '3874123456', 'laura.sanchez@mail.com',   16, 29, NOW(), NOW()),
+(7,  'Diego',    'Torres',    '40234567', '2002-06-15', 'Masculino',        'San Isidro',        '1156781235', 'diego.torres@mail.com',    1,  4,  NOW(), NOW()),
+(8,  'Patricia', 'Fernández', '22345678', '1955-12-03', 'Femenino',         'Buenos Aires',      '1156781236', 'patricia.fern@mail.com',   1,  5,  NOW(), NOW()),
+(9,  'Roberto',  'Díaz',      '29876543', '1988-04-25', 'Masculino',        'Villa Carlos Paz',  '3516789012', 'roberto.diaz@mail.com',    5,  13, NOW(), NOW()),
+(10, 'Mónica',   'Ruiz',      '44123456', '2005-08-11', 'Femenino',         'Santa Fe',          '3456789012', 'monica.ruiz@mail.com',     20, 26, NOW(), NOW());
+
+-- 8. Stocks (inserción directa sin trigger)
+INSERT INTO `stocks` (`id_lote`, `id_ubicacion`, `cantidad`, `createdAt`, `updatedAt`) VALUES
+-- Lote 1 COVID-19 activo
+(1,  2, 400, NOW(), NOW()),   -- Dep. Nacional (id=2)
+(1,  3, 200, NOW(), NOW()),   -- Hospital Italiano prov.BA
+(1,  4, 150, NOW(), NOW()),   -- Hospital San Isidro prov.BA
+(1,  5, 100, NOW(), NOW()),   -- Hospital San Nicolás prov.BA
+-- Lote 2 COVID-19 activo
+(2,  2, 200, NOW(), NOW()),
+(2, 12, 100, NOW(), NOW()),   -- Hospital de Córdoba
+(2, 13,  80, NOW(), NOW()),   -- Hospital Italiano Córdoba
+-- Lote 3 COVID-19 activo
+(3,  2, 350, NOW(), NOW()),
+(3, 29,  80, NOW(), NOW()),   -- Hospital de Salta
+-- Lote 4 Influenza activo
+(4,  2, 250, NOW(), NOW()),
+(4, 23, 150, NOW(), NOW()),   -- Hospital de Mendoza
+(4, 26, 100, NOW(), NOW()),   -- Hospital de Santa Fe
+-- Lote 5 Fiebre Amarilla vence 2026-05-15
+(5,  2, 200, NOW(), NOW()),
+(5, 28, 100, NOW(), NOW()),   -- Hospital de Tucumán
+-- Lote 6 Hepatitis B vence 2026-05-25
+(6,  2, 150, NOW(), NOW()),
+(6, 27,  80, NOW(), NOW()),   -- Hospital de Rosario
+-- Lote 7 COVID-19 VENCIDO 2026-01-01 → Reporte 5
+(7,  3,  80, NOW(), NOW()),   -- Hospital Italiano
+(7, 12,  60, NOW(), NOW()),   -- Hospital de Córdoba
+-- Lote 8 COVID-19 VENCIDO 2026-03-01 → Reporte 5
+(8, 26,  70, NOW(), NOW()),   -- Hospital de Santa Fe
+(8, 28,  40, NOW(), NOW());   -- Hospital de Tucumán
+
+-- 9. Aplicaciones normales (vacunas NO vencidas al momento de la aplicación)
+INSERT INTO `aplicaciones` (`id`, `id_vacuna`, `id_paciente`, `id_ubicacion`, `id_usuario`, `id_lote`, `fecha_aplicacion`, `createdAt`, `updatedAt`) VALUES
+(1,  1, 1,  3, 9, 1, '2026-01-15 09:00:00', '2026-01-15 09:00:00', '2026-01-15 09:00:00'),
+(2,  1, 7,  4, 9, 1, '2026-01-20 10:00:00', '2026-01-20 10:00:00', '2026-01-20 10:00:00'),
+(3,  2, 2, 12, 9, 2, '2026-02-05 09:30:00', '2026-02-05 09:30:00', '2026-02-05 09:30:00'),
+(4,  3, 5, 29, 9, 3, '2026-02-15 11:00:00', '2026-02-15 11:00:00', '2026-02-15 11:00:00'),
+(5,  4, 4, 23, 9, 4, '2026-03-01 08:00:00', '2026-03-01 08:00:00', '2026-03-01 08:00:00'),
+(6,  5, 6, 28, 9, 5, '2026-03-10 09:00:00', '2026-03-10 09:00:00', '2026-03-10 09:00:00'),
+(7,  6, 3, 27, 9, 6, '2026-03-20 10:30:00', '2026-03-20 10:30:00', '2026-03-20 10:30:00'),
+(8,  1, 8,  5, 9, 1, '2026-04-01 09:00:00', '2026-04-01 09:00:00', '2026-04-01 09:00:00'),
+(9,  2, 9, 13, 9, 2, '2026-04-10 10:00:00', '2026-04-10 10:00:00', '2026-04-10 10:00:00'),
+(10, 4, 10,26, 9, 4, '2026-04-20 11:00:00', '2026-04-20 11:00:00', '2026-04-20 11:00:00');
+
+-- Aplicaciones de vacunas VENCIDAS (para Reporte 4: fecha_aplicacion > fecha_venc del lote)
+-- Se deshabilita el trigger temporalmente para poder insertar estos datos de prueba
+DROP TRIGGER IF EXISTS `prevenir_aplicacion_vencida`;
+
+INSERT INTO `aplicaciones` (`id`, `id_vacuna`, `id_paciente`, `id_ubicacion`, `id_usuario`, `id_lote`, `fecha_aplicacion`, `createdAt`, `updatedAt`) VALUES
+(11, 7, 1,  3, 9, 7, '2026-02-10 09:00:00', '2026-02-10 09:00:00', '2026-02-10 09:00:00'),
+(12, 8, 2, 12, 9, 8, '2026-04-01 10:00:00', '2026-04-01 10:00:00', '2026-04-01 10:00:00');
+
+-- Recrear trigger prevenir_aplicacion_vencida
+DELIMITER $$
+CREATE TRIGGER `prevenir_aplicacion_vencida` BEFORE INSERT ON `aplicaciones` FOR EACH ROW BEGIN
+  DECLARE fecha_vencimiento DATE;
+  DECLARE estado_vacuna INT;
+  SELECT fecha_venc INTO fecha_vencimiento FROM Lotes WHERE id = NEW.id_lote;
+  SELECT id_estado INTO estado_vacuna FROM Vacunas WHERE id = NEW.id_vacuna;
+  IF estado_vacuna = (SELECT id FROM Estados WHERE codigo = 'VENC') OR fecha_vencimiento < CURDATE() THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'No se puede aplicar una vacuna vencida';
+  END IF;
+END
+$$
+DELIMITER ;
+
+-- 10. Descartes (el trigger actualizar_stock_descarte reducirá el stock del lote mayor)
+INSERT INTO `descartes` (`id`, `id_lote`, `id_usuario`, `id_ubicacion`, `cantidad`, `fecha_descarte`, `forma_descarte`, `motivo`, `id_estado`, `createdAt`, `updatedAt`) VALUES
+(1, 7, 9,  3, 50, '2026-02-20', 'incineracion', 'Lote vencido detectado en depósito, descarte por vencimiento',        3, NOW(), NOW()),
+(2, 8, 9, 26, 40, '2026-04-05', 'autoclave',    'Lote vencido verificado en almacén, descarte obligatorio',            3, NOW(), NOW()),
+(3, 5, 9, 28, 30, '2026-03-15', 'reciclaje',    'Vacunas próximas a vencer, descarte preventivo antes del vencimiento', 3, NOW(), NOW());
+
+-- 11. Solicitudes de acceso
+INSERT INTO `solicitudesacceso` (`id`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `motivo`, `estado`, `createdAt`, `updatedAt`) VALUES
+(1, 'Pedro',  'Alvarado',   '33445566', 'pedro.alvarado@gmail.com',    NULL,         'Solicito acceso como enfermero para registrar aplicaciones de vacunas en el Hospital Italiano', 'Pendiente', NOW(), NOW()),
+(2, 'Lucía',  'Morales',    '41789012', 'lucia.morales@gmail.com',     '01155556666','Solicito acceso para realizar auditoría del sistema de trazabilidad',                             'Aprobado',  NOW(), NOW()),
+(3, 'Héctor', 'Villanueva', '27654321', 'hector.villanueva@gmail.com', NULL,         'Acceso para gestión administrativa y generación de reportes mensuales',                           'Rechazado', NOW(), NOW());
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

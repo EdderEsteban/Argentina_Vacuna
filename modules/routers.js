@@ -1,141 +1,145 @@
-const router = require("express").Router();
-const handler = require("./handler.js");
-const laboratorio = require("../controllers/laboratorioController")
-const lote = require("../controllers/loteController");
-const paciente = require("../controllers/pacienteController");
-const ubicacion = require("../controllers/ubicacionController");
-const movimientoLote = require("../controllers/movimientoLoteController");
-const loginController = require("../controllers/loginController");
-const usuarios = require("../controllers/usuarioController");
-const csrf = require('csurf');
-const csrfProtection = csrf({ cookie: true });
+const router = require('express').Router();
+const handler = require('./handler.js');
+const { isAuthenticated: auth, hasRole, ROLES, requireUbicacion } = require('./auth');
+const laboratorio = require('../controllers/laboratorioController');
+const lote = require('../controllers/loteController');
+const paciente = require('../controllers/pacienteController');
+const ubicacion = require('../controllers/ubicacionController');
+const movimientoLote = require('../controllers/movimientoLoteController');
+const loginController = require('../controllers/loginController');
+const dashboardCtrl = require('../controllers/dashboardController');
+const usuarios = require('../controllers/usuarioController');
+const aplicacion = require('../controllers/aplicacionController');
+const descarteCtrl = require('../controllers/descarteController');
+const reporteCtrl = require('../controllers/reporteController');
+const solicitudesCtrl = require('../controllers/solicitudesController');
+const { ADMIN, AUDITOR, ENFERMERO, ADMINISTRATIVO } = ROLES;
 
+// ─── Accesos por grupo de roles ──────────────────────────────────────────────
+const soloAdmin        = [auth, hasRole(ADMIN)];
+const soloEnfermero    = [auth, hasRole(ENFERMERO)];
+const adminAuditor     = [auth, hasRole(ADMIN, AUDITOR)];
+const adminEnfermero   = [auth, hasRole(ADMIN, ENFERMERO)];
+const adminAuditorEnf  = [auth, hasRole(ADMIN, AUDITOR, ENFERMERO)];
+const reportes         = [auth, hasRole(ADMIN, AUDITOR, ADMINISTRATIVO)];
+const todoAutenticado  = [auth, hasRole(ADMIN, AUDITOR, ENFERMERO, ADMINISTRATIVO)];
 
-// Rutas estaticas
-router.get("/", csrfProtection,handler.index);
+// ─── Middleware global: fuerza selección de ubicación si corresponde ──────────
+const RUTAS_PUBLICAS = ['/', '/login', '/solicitud', '/nuevaSolicitud', '/logout', '/seleccionar-ubicacion'];
+router.use((req, res, next) => {
+  if (RUTAS_PUBLICAS.includes(req.path)) return next();
+  return requireUbicacion(req, res, next);
+});
 
+// ─── Rutas públicas ───────────────────────────────────────────────────────────
+router.get('/', handler.index);
+router.post('/login', loginController.login);
+router.get('/solicitud', loginController.solicitud);
+router.post('/nuevaSolicitud', loginController.nuevaSolicitud);
 
-// ---------------------------------------- Rutas de Login --------------------------------------------
-router.get("/dashboard", csrfProtection,loginController.dashboard)
-router.post("/login", csrfProtection, loginController.login);
-router.get("/solicitud", csrfProtection, loginController.solicitud);
-router.post("/nuevaSolicitud", csrfProtection, loginController.nuevaSolicitud);
+// ─── Logout ───────────────────────────────────────────────────────────────────
+router.get('/logout', auth, loginController.logout);
 
-// ---------------------------------------- Rutas de Usuarios ---------------------------------------
-// Listar usuarios
-router.get("/usuarios", csrfProtection, usuarios.listar);
-// Formulario nuevo usuario
-router.get('/nuevoUsuario', csrfProtection, usuarios.mostrarNuevo);
-// Crear usuario
-router.post('/crearUsuario', csrfProtection, usuarios.crearUsuario);
-// Formulario edición usuario
-router.get('/editarUsuario/:id', csrfProtection, usuarios.editarUsuario);
-// Obtener ubicaciones actuales del usuario
-router.get('/usuarios/:id/ubicaciones', usuarios.obtenerUbicaciones);
-// Actualizar ubicaciones y roles del usuario
-router.put('/usuarios/:id/ubicaciones', csrfProtection, usuarios.actualizarUbicaciones);
-// Blanquear password
-router.post('/usuarios/:id/blanquear', csrfProtection, usuarios.blanquearPassword);
-// Consulta de roles para el modal
-router.get('/roles', csrfProtection, usuarios.consultarRoles);
-// Endpoint de Actualizar usuario
-router.put('/actualizarUsuario/:id', csrfProtection, usuarios.actualizarUsuario);
-//Eliminar usuario
-router.delete('/borrarUsuario/:id', csrfProtection, usuarios.borrarUsuario);
-/* Formulario de búsqueda de usuarios
-router.get('/buscadorUsuario', csrfProtection, usuarios.mostrarBuscar); 
-// Endpoint de búsqueda de usuarios
-router.get('/buscarUsuario', csrfProtection, usuarios.buscarUsuarios); */
+// ─── Selección de ubicación ───────────────────────────────────────────────────
+router.get('/seleccionar-ubicacion', auth, loginController.seleccionarUbicacion);
+router.post('/seleccionar-ubicacion', auth, loginController.guardarUbicacion);
 
-// --------------------------------------- Rutas de Laboratorio ---------------------------------------
-// Listar laboratorios
-router.get("/laboratorios", laboratorio.listar);
-// Formulario nuevo
-router.get('/nuevolaboratorio', csrfProtection, laboratorio.mostrarNuevo);
-// Crear
-router.post('/crearlaboratorio', csrfProtection, laboratorio.crearLaboratorio);
-// Formulario edición
-router.get('/editarlaboratorio/:id', csrfProtection, laboratorio.editarLaboratorio);
-// Endpoint de Actualizar
-router.put('/actualizarlaboratorio/:id', csrfProtection, laboratorio.actualizarLaboratorio);
-// Eliminar
-router.delete('/borrarlaboratorio/:id', csrfProtection, laboratorio.borrarLaboratorio);
-// Formulario de búsqueda
-router.get('/buscadorlaboratorio', csrfProtection, laboratorio.mostrarBuscar);
-// Endpoint de Busqueda Automatica 
-router.get('/buscarlaboratorio', csrfProtection, laboratorio.buscarLaboratorio);
+// ─── Dashboard ───────────────────────────────────────────────────────────────
+router.get('/dashboard', ...todoAutenticado, dashboardCtrl.index);
 
-// ---------------------------------------- Rutas de Lote ---------------------------------------
-// Listar lotes
-router.get("/lotes", lote.listar);
-// Formulario nuevo
-router.get('/nuevolote', csrfProtection, lote.mostrarNuevo);
-// Crear
-router.post('/crearlote', csrfProtection, lote.crearLote);
-// Formulario edición
-router.get('/editarlote/:id', csrfProtection, lote.editarLote);
-// Endpoint de Actualizar
-router.put('/actualizarlote/:id', csrfProtection, lote.actualizarLote);
-// Eliminar
-router.delete('/borrarlote/:id', csrfProtection, lote.borrarLote);
-// Formulario de búsqueda de lotes
-router.get('/buscardorlote', csrfProtection, lote.mostrarBuscar);
-// Endpoint de búsqueda
-router.get('/buscarlote', csrfProtection, lote.buscarLotes);
+// ─── Usuarios (solo Admin) ───────────────────────────────────────────────────
+router.get('/usuarios',                   ...soloAdmin, usuarios.listar);
+router.get('/nuevoUsuario',               ...soloAdmin, usuarios.mostrarNuevo);
+router.post('/crearUsuario',              ...soloAdmin, usuarios.crearUsuario);
+router.get('/editarUsuario/:id',          ...soloAdmin, usuarios.editarUsuario);
+router.get('/usuarios/:id/ubicaciones',   ...soloAdmin, usuarios.obtenerUbicaciones);
+router.put('/usuarios/:id/ubicaciones',   ...soloAdmin, usuarios.actualizarUbicaciones);
+router.post('/usuarios/:id/blanquear',    ...soloAdmin, usuarios.blanquearPassword);
+router.get('/roles',                      ...soloAdmin, usuarios.consultarRoles);
+router.put('/actualizarUsuario/:id',      ...soloAdmin, usuarios.actualizarUsuario);
+router.delete('/borrarUsuario/:id',       ...soloAdmin, usuarios.borrarUsuario);
 
-// ---------------------------------------- Rutas de Pacientes ---------------------------------------
-// Listar pacientes
-router.get("/pacientes", paciente.listar);
-// Formulario nuevo paciente
-router.get('/nuevopaciente', csrfProtection, paciente.mostrarNuevo);
-// Crear paciente   
-router.post('/crearpaciente', csrfProtection, paciente.crearPaciente);
-// Formulario edición paciente
-router.get('/editarpaciente/:id', csrfProtection, paciente.editarPaciente);
-// Endpoint de Actualizar
-router.put('/actualizarpaciente/:id', csrfProtection, paciente.actualizarPaciente);
-// Eliminar
-router.delete('/borrarpaciente/:id', csrfProtection, paciente.borrarPaciente);
-// Formulario de búsqueda de pacientes
-router.get('/buscadorpaciente', csrfProtection, paciente.mostrarBuscar);
-// Endpoint de búsqueda
-router.get('/buscarpaciente', csrfProtection, paciente.buscarPacientes);
-// Endpoint de detalles de paciente
-router.get('/detallespaciente/:id', csrfProtection, paciente.detallePaciente);
+// ─── Laboratorios ─────────────────────────────────────────────────────────────
+router.get('/laboratorios',               ...adminAuditor, laboratorio.listar);
+router.get('/nuevolaboratorio',           ...soloAdmin, laboratorio.mostrarNuevo);
+router.post('/crearlaboratorio',          ...soloAdmin, laboratorio.crearLaboratorio);
+router.get('/editarlaboratorio/:id',      ...soloAdmin, laboratorio.editarLaboratorio);
+router.put('/actualizarlaboratorio/:id',  ...soloAdmin, laboratorio.actualizarLaboratorio);
+router.delete('/borrarlaboratorio/:id',   ...soloAdmin, laboratorio.borrarLaboratorio);
+router.get('/buscadorlaboratorio',        ...adminAuditor, laboratorio.mostrarBuscar);
+router.get('/buscarlaboratorio',          ...adminAuditor, laboratorio.buscarLaboratorio);
 
-// ---------------------------------------- Rutas de Ubicaciones ---------------------------------------
+// ─── Lotes ────────────────────────────────────────────────────────────────────
+router.get('/lotes',                      ...adminAuditorEnf, lote.listar);
+router.get('/nuevolote',                  ...soloAdmin, lote.mostrarNuevo);
+router.post('/crearlote',                 ...soloAdmin, lote.crearLote);
+router.get('/editarlote/:id',             ...soloAdmin, lote.editarLote);
+router.put('/actualizarlote/:id',         ...soloAdmin, lote.actualizarLote);
+router.delete('/borrarlote/:id',          ...soloAdmin, lote.borrarLote);
+router.get('/buscardorlote',              ...adminAuditorEnf, lote.mostrarBuscar);
+router.get('/buscarlote',                 ...adminAuditorEnf, lote.buscarLotes);
 
-// Listar ubicaciones
-router.get("/ubicaciones", ubicacion.listar);
-// Formulario nueva ubicación
-router.get('/nuevoubicacion', csrfProtection, ubicacion.mostrarNuevo);
-// Crear ubicación
-router.post('/crearubicacion', csrfProtection, ubicacion.crearUbicacion);
-// Formulario edición ubicación
-router.get('/editarubicacion/:id', csrfProtection, ubicacion.editarUbicacion);
-// Endpoint de Actualizar
-router.put('/actualizarubicacion/:id', csrfProtection, ubicacion.actualizarUbicacion);
-// Eliminar ubicación
-router.delete('/borrarubicacion/:id', csrfProtection, ubicacion.borrarUbicacion);
-// Formulario de búsqueda de ubicaciones
-router.get('/buscadorubicacion', csrfProtection, ubicacion.mostrarBuscar);
-// Endpoint de búsqueda de ubicaciones
-router.get('/buscarubicacion', csrfProtection, ubicacion.buscarUbicacion);
+// ─── Pacientes ────────────────────────────────────────────────────────────────
+router.get('/pacientes',                  ...adminAuditorEnf, paciente.listar);
+router.get('/nuevopaciente',              ...adminEnfermero, paciente.mostrarNuevo);
+router.post('/crearpaciente',             ...adminEnfermero, paciente.crearPaciente);
+router.get('/editarpaciente/:id',         ...adminEnfermero, paciente.editarPaciente);
+router.put('/actualizarpaciente/:id',     ...adminEnfermero, paciente.actualizarPaciente);
+router.delete('/borrarpaciente/:id',      ...soloAdmin, paciente.borrarPaciente);
+router.get('/buscadorpaciente',           ...adminAuditorEnf, paciente.mostrarBuscar);
+router.get('/buscarpaciente',             ...adminAuditorEnf, paciente.buscarPacientes);
+router.get('/detallespaciente/:id',       ...adminAuditorEnf, paciente.detallePaciente);
 
-// ---------------------------------------- Rutas de Movimientos ---------------------------------------
+// ─── Ubicaciones ──────────────────────────────────────────────────────────────
+router.get('/ubicaciones',                ...adminAuditor, ubicacion.listar);
+router.get('/nuevoubicacion',             ...soloAdmin, ubicacion.mostrarNuevo);
+router.post('/crearubicacion',            ...soloAdmin, ubicacion.crearUbicacion);
+router.get('/editarubicacion/:id',        ...soloAdmin, ubicacion.editarUbicacion);
+router.put('/actualizarubicacion/:id',    ...soloAdmin, ubicacion.actualizarUbicacion);
+router.delete('/borrarubicacion/:id',     ...soloAdmin, ubicacion.borrarUbicacion);
+router.get('/buscadorubicacion',          ...adminAuditor, ubicacion.mostrarBuscar);
+router.get('/buscarubicacion',            ...adminAuditor, ubicacion.buscarUbicacion);
 
-// Listar movimientos de lotes
-router.get("/movimientos", movimientoLote.listar);
-// Mostrar formulario de nuevo movimiento
-router.get('/nuevomovimiento', csrfProtection, movimientoLote.mostrarNuevo);
-// Crear movimiento
-router.post('/crearmovimiento', csrfProtection, movimientoLote.crearMovimiento);
+// ─── Movimientos ──────────────────────────────────────────────────────────────
+router.get('/movimientos',                ...adminAuditor, movimientoLote.listar);
+router.get('/nuevomovimiento',            ...soloAdmin, movimientoLote.mostrarNuevo);
+router.post('/crearmovimiento',           ...soloAdmin, movimientoLote.crearMovimiento);
 
-// ---------------------------------------- Rutas no encontradas y errores ---------------------------------------
+// ─── Aplicaciones ─────────────────────────────────────────────────────────────
+router.get('/aplicaciones',               ...adminAuditorEnf, aplicacion.listar);
+router.get('/nuevaaplicacion',            ...soloEnfermero, aplicacion.mostrarNuevo);
+router.post('/crearaplicacion',           ...soloEnfermero, aplicacion.crearAplicacion);
+router.get('/aplicaciones/ubicaciones/:id_lote',   ...soloEnfermero, aplicacion.ubicacionesPorLote);
+router.get('/aplicaciones/buscar-paciente',        ...soloEnfermero, aplicacion.buscarPacientePorDni);
+router.get('/buscadoraplicacion',         ...adminAuditorEnf, aplicacion.mostrarBuscar);
+router.get('/buscaraplicacion',           ...adminAuditorEnf, aplicacion.buscarAplicaciones);
 
-// Manejo de rutas no encontradas
+// ─── Descartes ────────────────────────────────────────────────────────────────
+router.get('/descartes',                  ...adminAuditor, descarteCtrl.listar);
+router.get('/nuevodescarte',              ...soloAdmin, descarteCtrl.mostrarNuevo);
+router.post('/creardescarte',             ...soloAdmin, descarteCtrl.crearDescarte);
+router.get('/descartes/ubicaciones/:id_lote',      ...soloAdmin, descarteCtrl.ubicacionesPorLote);
+
+// ─── Solicitudes de Acceso ────────────────────────────────────────────────────
+router.get('/solicitudes',             ...soloAdmin, solicitudesCtrl.listar);
+router.put('/solicitudes/:id/estado',  ...soloAdmin, solicitudesCtrl.actualizarEstado);
+
+// ─── Reportes ─────────────────────────────────────────────────────────────────
+router.get('/reportes',   ...reportes, reporteCtrl.index);
+router.get('/reportes/1', ...reportes, reporteCtrl.reporte1);
+router.get('/reportes/2', ...reportes, reporteCtrl.reporte2);
+router.get('/reportes/3', ...reportes, reporteCtrl.reporte3);
+router.get('/reportes/4', ...reportes, reporteCtrl.reporte4);
+router.get('/reportes/5', ...reportes, reporteCtrl.reporte5);
+router.get('/reportes/6', ...reportes, reporteCtrl.reporte6);
+
+// ─── Páginas de error explícitas ─────────────────────────────────────────────
+router.get('/400', handler.error400);
+router.get('/401', handler.error401);
+router.get('/403', handler.error403);
+router.get('/500', (req, res) => res.status(500).render('error500'));
+
+// ─── Rutas no encontradas y errores ──────────────────────────────────────────
 router.use(handler.error404);
-// Manejo de errores
-router.use(handler.error500);
 
 module.exports = router;

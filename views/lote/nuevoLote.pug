@@ -29,13 +29,14 @@ block content
                         option(value=laboratorio.id)= laboratorio.nombre
                 label.form-label(for="id_laboratorio") Seleccione un Laboratorio
                 
-            .form-floating.mb-3 
+            .form-floating.mb-3
                 input.form-control(
-                    type="text"
+                    type="number"
                     id="cantidad"
                     name="cantidad"
+                    min="1"
                     required
-                    placeholder = ""
+                    placeholder = "0"
                 )
                 label.form-label(for="cantidad") Cantidad
 
@@ -79,7 +80,7 @@ block content
                 )
                 label.form-label(for="fecha_venc") Fecha de Vencimiento 
                 
-            .form-floating.mb-3 
+            .form-floating.mb-3
                 input.form-control(
                     type="date"
                     id="fecha_compra"
@@ -88,6 +89,27 @@ block content
                     placeholder = ""
                 )
                 label.form-label(for="fecha_compra") Fecha de Compra
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="date"
+                    id="fecha_adquisicion"
+                    name="fecha_adquisicion"
+                    required
+                    placeholder = ""
+                )
+                label.form-label(for="fecha_adquisicion") Fecha de Adquisición (llegada al país)
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="text"
+                    id="pais_origen"
+                    name="pais_origen"
+                    required
+                    placeholder=""
+                    maxlength="100"
+                )
+                label.form-label(for="pais_origen") País de Origen
 
             .d-flex.gap-2
                 button.btn.btn-primary.mb-3(type="button" id="guardarNuevoLote")

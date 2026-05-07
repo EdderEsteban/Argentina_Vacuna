@@ -74,3 +74,12 @@ block content
           | Cancelar
 
     script(src="/js/ubicacion/modificarUbicacion.js")
+    script.
+        $(document).ready(function() {
+            $('#id_provincia').select2({
+                placeholder: '',
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#id_provincia').parent()
+            });
+        });

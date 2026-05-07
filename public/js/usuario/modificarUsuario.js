@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tablaAsignadas = document.getElementById('tablaUbicacionesAsignadas').querySelector('tbody');
 
   // Cargar ubicaciones y roles
+  // Carga las ubicaciones asignadas y los roles desde la API para poblar el modal
   async function cargarDatos() {
     try {
       // a) ubicaciones asignadas
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --------------------------
   // 3.  Pintar tabla de asignadas
   // --------------------------
+  // Renderiza las filas de la tabla de ubicaciones asignadas con su selector de rol
   function pintarAsignadas(lista, roles) {
     tablaAsignadas.innerHTML = '';
     lista.forEach(u => {
@@ -133,4 +135,66 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7.  Cargar al abrir el modal
   // --------------------------
   document.getElementById('modalUbicaciones').addEventListener('shown.bs.modal', cargarDatos);
+
+  // --------------------------
+  // 8.  Guardar correo y teléfono
+  // --------------------------
+  document.getElementById('btnGuardar').addEventListener('click', async () => {
+    const correo   = document.getElementById('correo').value.trim();
+    const telefono = document.getElementById('telefono').value.trim();
+
+    if (!correo) {
+      return Swal.fire('Campo requerido', 'El correo electrónico es obligatorio.', 'warning');
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      return Swal.fire('Correo inválido', 'Ingresá una dirección de correo electrónico válida.', 'warning');
+    }
+
+    try {
+      const res = await fetch(`/actualizarUsuario/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ correo, telefono })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Swal.fire('Guardado', data.message || 'Datos actualizados correctamente.', 'success')
+          .then(() => window.location.href = '/usuarios');
+      } else {
+        Swal.fire('Error', data.message || 'No se pudieron guardar los cambios.', 'error');
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Falló la conexión.', 'error');
+    }
+  });
+
+  // --------------------------
+  // 9.  Blanquear contraseña
+  // --------------------------
+  document.getElementById('btnBlanquear').addEventListener('click', async () => {
+    const confirm = await Swal.fire({
+      title: '¿Blanquear contraseña?',
+      text: 'Se generará una contraseña temporal aleatoria.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, blanquear',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/usuarios/${userId}/blanquear`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Swal.fire('Contraseña blanqueada', data.message, 'success');
+      } else {
+        Swal.fire('Error', data.message || 'No se pudo blanquear la contraseña.', 'error');
+      }
+    } catch (err) {
+      Swal.fire('Error', 'Falló la conexión.', 'error');
+    }
+  });
 });

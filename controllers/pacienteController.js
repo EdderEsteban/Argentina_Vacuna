@@ -106,6 +106,9 @@ paciente.crearPaciente = async (req, res) => {
             nombre: req.body.nombre,
             apellido: req.body.apellido,
             dni: req.body.dni,
+            fecha_nacimiento: req.body.fecha_nacimiento || null,
+            genero: req.body.genero || null,
+            localidad: req.body.localidad ? req.body.localidad.trim() : null,
             telefono: req.body.telefono,
             correo: req.body.correo,
             id_provincia: req.body.id_provincia,
@@ -202,13 +205,16 @@ paciente.actualizarPaciente = async (req, res) => {
             nombre: req.body.nombre,
             apellido: req.body.apellido,
             dni: req.body.dni,
+            fecha_nacimiento: req.body.fecha_nacimiento || null,
+            genero: req.body.genero || null,
+            localidad: req.body.localidad ? req.body.localidad.trim() : null,
             telefono: req.body.telefono,
             correo: req.body.correo,
             id_provincia: req.body.id_provincia,
             id_ubicacion_registro: req.body.id_ubicacion_registro
         });
 
-        res.redirect('/pacientes');
+        res.json({ success: true, message: 'Paciente actualizado correctamente' });
 
     } catch (error) {
         console.error('Error al actualizar paciente:', error);

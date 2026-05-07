@@ -1,5 +1,292 @@
-extend __layout/main
+extends __layout/main
 
 block content
-    .container.my-5.pt-4
-        h3 Bienvenido #{ usuario.nombre} #{ usuario.apellido} al Dashboard de Registro de Vacunas Nacional
+  .container-fluid.px-4.mt-4
+
+    //- ── Banner de bienvenida ────────────────────────────────────────────────
+    .card.border-0.bg-primary.text-white.shadow-sm.mb-4
+      .card-body.py-3.px-4
+        .d-flex.justify-content-between.align-items-center.flex-wrap.gap-2
+          div
+            h5.mb-1.fw-bold
+              i.bi.bi-shield-check.me-2
+              | Bienvenido, #{usuario.nombre} #{usuario.apellido}
+            div
+              span.badge.bg-light.text-primary.me-2= usuario.rol
+              if usuario.ubicaciones && usuario.ubicaciones.length > 0
+                each ub in usuario.ubicaciones
+                  span.badge.bg-white.text-primary.border.border-light.me-1
+                    i.bi.bi-geo-alt.me-1
+                    = ub.nombre
+          p.mb-0.small.opacity-75.text-capitalize= fechaHoy
+
+    //- ── KPIs Administrador ──────────────────────────────────────────────────
+    if usuario.rol === 'Administrador'
+      .row.g-3.mb-4
+
+        .col-6.col-md-4.col-xl-2
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(13,110,253,0.12)')
+                  i.bi.bi-capsule.text-primary(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Aplicaciones hoy
+                  h4.mb-0.fw-bold= kpis.aplicacionesHoy
+
+        .col-6.col-md-4.col-xl-2
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(25,135,84,0.12)')
+                  i.bi.bi-graph-up-arrow.text-success(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Aplicaciones del mes
+                  h4.mb-0.fw-bold= kpis.aplicacionesDelMes
+
+        .col-6.col-md-4.col-xl-2
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(13,202,240,0.12)')
+                  i.bi.bi-box-seam.text-info(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Stock depósito nac.
+                  h4.mb-0.fw-bold= kpis.stockNacional
+
+        .col-6.col-md-4.col-xl-2
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(255,193,7,0.15)')
+                  i.bi.bi-clock-history(style='font-size:1.3rem;color:#ffc107')
+                div
+                  p.text-muted.small.mb-0 Lotes en alerta
+                  h4.mb-0.fw-bold(class=kpis.lotesProximosVencer > 0 ? 'text-warning' : '')= kpis.lotesProximosVencer
+
+        .col-6.col-md-4.col-xl-2
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(220,53,69,0.12)')
+                  i.bi.bi-trash.text-danger(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Descartes del mes
+                  h4.mb-0.fw-bold= kpis.descartesDelMes
+
+        .col-6.col-md-4.col-xl-2
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(108,117,125,0.12)')
+                  i.bi.bi-people.text-secondary(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Pacientes registrados
+                  h4.mb-0.fw-bold= kpis.totalPacientes
+
+    //- ── KPIs Auditor ────────────────────────────────────────────────────────
+    else if usuario.rol === 'Auditor'
+      .row.g-3.mb-4
+
+        .col-sm-6.col-lg-3
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(13,110,253,0.12)')
+                  i.bi.bi-capsule.text-primary(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Aplicaciones hoy
+                  h4.mb-0.fw-bold= kpis.aplicacionesHoy
+
+        .col-sm-6.col-lg-3
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(25,135,84,0.12)')
+                  i.bi.bi-graph-up-arrow.text-success(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Aplicaciones del mes
+                  h4.mb-0.fw-bold= kpis.aplicacionesDelMes
+
+        .col-sm-6.col-lg-3
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(13,202,240,0.12)')
+                  i.bi.bi-box-seam.text-info(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Stock en mis ubicaciones
+                  h4.mb-0.fw-bold= kpis.stockUbicaciones
+
+        .col-sm-6.col-lg-3
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(220,53,69,0.12)')
+                  i.bi.bi-trash.text-danger(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Descartes del mes
+                  h4.mb-0.fw-bold= kpis.descartesDelMes
+
+    //- ── KPIs Enfermero ──────────────────────────────────────────────────────
+    else if usuario.rol === 'Enfermero'
+      .row.g-3.mb-4
+
+        .col-sm-4
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(13,110,253,0.12)')
+                  i.bi.bi-capsule.text-primary(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Mis aplicaciones hoy
+                  h4.mb-0.fw-bold= kpis.misAplicacionesHoy
+
+        .col-sm-4
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(25,135,84,0.12)')
+                  i.bi.bi-graph-up-arrow.text-success(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Mis aplicaciones del mes
+                  h4.mb-0.fw-bold= kpis.misAplicacionesDelMes
+
+        .col-sm-4
+          .card.border-0.shadow-sm.h-100
+            .card-body.p-3
+              .d-flex.align-items-center.gap-3
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:48px;height:48px;background:rgba(108,117,125,0.12)')
+                  i.bi.bi-clipboard2-check.text-secondary(style='font-size:1.3rem')
+                div
+                  p.text-muted.small.mb-0 Total mis aplicaciones
+                  h4.mb-0.fw-bold= kpis.totalMisAplicaciones
+
+    //- ── Acciones rápidas ────────────────────────────────────────────────────
+    .row.g-3.mb-4
+      .col-12
+        h6.text-muted.text-uppercase.small.mb-3
+          i.bi.bi-lightning-charge.me-1
+          | Acciones rápidas
+
+      if usuario.rol === 'Administrador' || usuario.rol === 'Enfermero'
+        .col-6.col-md-3
+          a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevaaplicacion')
+            .card-body.text-center.py-3
+              i.bi.bi-capsule.text-primary(style='font-size:1.8rem')
+              p.mt-2.mb-0.small.fw-semibold Registrar Aplicación
+
+        .col-6.col-md-3
+          a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/buscadorpaciente')
+            .card-body.text-center.py-3
+              i.bi.bi-search.text-success(style='font-size:1.8rem')
+              p.mt-2.mb-0.small.fw-semibold Buscar Paciente
+
+      if usuario.rol === 'Administrador' || usuario.rol === 'Enfermero'
+        .col-6.col-md-3
+          a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevopaciente')
+            .card-body.text-center.py-3
+              i.bi.bi-person-plus.text-success(style='font-size:1.8rem')
+              p.mt-2.mb-0.small.fw-semibold Nuevo Paciente
+
+      if usuario.rol === 'Administrador'
+        .col-6.col-md-3
+          a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevomovimiento')
+            .card-body.text-center.py-3
+              i.bi.bi-arrow-left-right.text-info(style='font-size:1.8rem')
+              p.mt-2.mb-0.small.fw-semibold Nuevo Movimiento
+
+        .col-6.col-md-3
+          a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevolote')
+            .card-body.text-center.py-3
+              i.bi.bi-box-seam.text-warning(style='font-size:1.8rem')
+              p.mt-2.mb-0.small.fw-semibold Registrar Lote
+
+        .col-6.col-md-3
+          a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevodescarte')
+            .card-body.text-center.py-3
+              i.bi.bi-trash.text-danger(style='font-size:1.8rem')
+              p.mt-2.mb-0.small.fw-semibold Registrar Descarte
+
+      if usuario.rol !== 'Enfermero'
+        .col-6.col-md-3
+          a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/reportes')
+            .card-body.text-center.py-3
+              i.bi.bi-bar-chart-line.text-secondary(style='font-size:1.8rem')
+              p.mt-2.mb-0.small.fw-semibold Ver Reportes
+
+    //- ── Contenido inferior (alertas + actividad reciente) ───────────────────
+    .row.g-4
+
+      //- Alertas de lotes (solo Admin)
+      if usuario.rol === 'Administrador' && lotesAlerta && lotesAlerta.length > 0
+        .col-lg-5
+          .card.border-0.shadow-sm.h-100
+            .card-header.bg-warning.text-dark.fw-semibold.border-0
+              i.bi.bi-exclamation-triangle-fill.me-2
+              | Lotes próximos a vencer
+            .card-body.p-0
+              .table-responsive
+                table.table.table-sm.table-hover.mb-0
+                  thead.table-light
+                    tr
+                      th.ps-3 Nº Lote
+                      th Vacuna
+                      th Vence
+                  tbody
+                    each l in lotesAlerta
+                      - const vencido = l.fecha_venc < new Date().toISOString().split('T')[0]
+                      tr(class=vencido ? 'table-danger' : 'table-warning')
+                        td.ps-3
+                          code= l.num_lote
+                        td= (l.vacunas && l.vacunas[0]) ? l.vacunas[0].tipo : '—'
+                        td
+                          span(class=vencido ? 'text-danger fw-bold' : 'text-warning fw-semibold')= l.fecha_venc
+            .card-footer.bg-transparent.border-0
+              a.btn.btn-sm.btn-outline-warning(href='/lotes') Ver todos los lotes
+
+      //- Actividad reciente (Admin, Auditor, Enfermero)
+      if ultimasAplicaciones && ultimasAplicaciones.length > 0
+        .col-lg-7
+          .card.border-0.shadow-sm.h-100
+            .card-header.bg-white.fw-semibold.border-bottom.d-flex.justify-content-between.align-items-center
+              span
+                i.bi.bi-clock-history.me-2.text-primary
+                | Últimas aplicaciones
+              a.btn.btn-sm.btn-outline-primary(href='/aplicaciones') Ver todas
+            .card-body.p-0
+              .table-responsive
+                table.table.table-sm.table-hover.mb-0
+                  thead.table-light
+                    tr
+                      th.ps-3 Paciente
+                      th DNI
+                      th Vacuna
+                      th Ubicación
+                      th Fecha
+                  tbody
+                    each a in ultimasAplicaciones
+                      tr
+                        td.ps-3= a.paciente ? `${a.paciente.apellido}, ${a.paciente.nombre}` : '—'
+                        td
+                          code= a.paciente ? a.paciente.dni : '—'
+                        td
+                          span.badge.bg-primary.bg-opacity-10.text-primary= (a.lote && a.lote.vacunas && a.lote.vacunas[0]) ? a.lote.vacunas[0].tipo : '—'
+                        td= a.ubicacion ? a.ubicacion.nombre : '—'
+                        td.text-muted.small= a.fecha_aplicacion
+
+      //- Mensaje Administrativo
+      if usuario.rol === 'Administrativo'
+        .col-12
+          .card.border-0.shadow-sm.text-center.py-5
+            .card-body
+              i.bi.bi-bar-chart-line.text-primary(style='font-size:3rem')
+              h5.mt-3 Tu área: Reportes
+              p.text-muted Accedé a los reportes del sistema desde el menú superior o el botón de abajo.
+              a.btn.btn-primary(href='/reportes')
+                i.bi.bi-arrow-right-circle.me-2
+                | Ir a Reportes
+
+  style.
+    .accion-rapida { transition: transform .15s, box-shadow .15s; cursor: pointer; }
+    .accion-rapida:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important; }

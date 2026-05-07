@@ -1,0 +1,78 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .d-flex.align-items-center.mb-4.gap-3
+      a.btn.btn-outline-secondary(href='/reportes')
+        i.bi.bi-arrow-left.me-1
+        | Volver
+      h1.mb-0 📊 Reporte 1 — Compras por Laboratorio
+
+    //- Filtros
+    .card.mb-4
+      .card-header.bg-primary.text-white
+        i.bi.bi-funnel.me-2
+        | Filtros
+      .card-body
+        form#formFiltro(method='GET' action='/reportes/1')
+          .row.g-3.align-items-end
+            .col-md-4
+              .form-floating
+                input.form-control(
+                  type='date'
+                  id='fecha_desde'
+                  name='fecha_desde'
+                  value=fecha_desde
+                  required
+                  placeholder=''
+                )
+                label(for='fecha_desde') Fecha desde
+            .col-md-4
+              .form-floating
+                input.form-control(
+                  type='date'
+                  id='fecha_hasta'
+                  name='fecha_hasta'
+                  value=fecha_hasta
+                  required
+                  placeholder=''
+                )
+                label(for='fecha_hasta') Fecha hasta
+            .col-md-4
+              button.btn.btn-primary.w-100(type='submit')
+                i.bi.bi-search.me-2
+                | Generar Reporte
+
+    //- Resultados
+    if resultados === null
+      .alert.alert-info
+        i.bi.bi-info-circle.me-2
+        | Seleccione un rango de fechas y presione "Generar Reporte".
+    else if resultados.length === 0
+      .alert.alert-warning
+        i.bi.bi-exclamation-circle.me-2
+        | No hay compras registradas en el período seleccionado.
+    else
+      .card
+        .card-header.bg-light
+          strong Total de laboratorios con compras: #{resultados.length}
+        .table-responsive
+          table.table.table-striped.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th Laboratorio
+                th Nacionalidad
+                th N° de Lotes
+                th Total Dosis
+                th Primera Compra
+                th Última Compra
+            tbody
+              each r in resultados
+                tr
+                  td= r.laboratorio
+                  td= r.nacionalidad
+                  td.text-center= r.num_lotes
+                  td.text-center
+                    span.badge.bg-primary.fs-6= r.total_dosis
+                  td= r.primera_compra
+                  td= r.ultima_compra

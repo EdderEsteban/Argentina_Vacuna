@@ -1,0 +1,47 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .d-flex.align-items-center.mb-4.gap-3
+      a.btn.btn-outline-secondary(href='/reportes')
+        i.bi.bi-arrow-left.me-1
+        | Volver
+      h1.mb-0 📊 Reporte 5 — Vacunas Vencidas No Descartadas
+
+    .alert.alert-warning.mb-4
+      i.bi.bi-clock-history.me-2
+      | Stock de vacunas cuyos lotes ya vencieron pero que aún no fueron descartadas. Requieren atención urgente.
+
+    if resultados.length === 0
+      .alert.alert-success
+        i.bi.bi-check-circle.me-2
+        | No hay vacunas vencidas pendientes de descarte.
+    else
+      .card
+        .card-header.bg-warning.text-dark
+          strong Total de registros: #{resultados.length}
+        .table-responsive
+          table.table.table-striped.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th Nº Lote
+                th Tipo Vacuna
+                th Fecha Vencimiento
+                th Provincia
+                th Ubicación
+                th Tipo Ubicación
+                th.text-center Stock Vencido
+            tbody
+              each r in resultados
+                tr.table-warning
+                  td= r.num_lote
+                  td
+                    strong= r.tipo_vacuna
+                  td
+                    span.text-danger.fw-bold= r.fecha_vencimiento
+                  td= r.provincia || '—'
+                  td= r.ubicacion
+                  td
+                    span.badge.bg-secondary= r.tipo_ubicacion
+                  td.text-center
+                    span.badge.bg-danger.fs-6= r.stock_vencido

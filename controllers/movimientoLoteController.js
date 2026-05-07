@@ -12,19 +12,15 @@ movimiento.listar = async (req, res) => {
 
     const { count, rows } = await MovimientoLote.findAndCountAll({
       include: [
-        { model: Lote, as: 'lote', attributes: ['id', 'num_lote'] },
-        { model: Ubicacion, as: 'origen', attributes: ['id', 'nombre', 'tipo'] },
-        { model: Ubicacion, as: 'destino', attributes: ['id', 'nombre', 'tipo'] },
         {
           model: Lote, as: 'lote', attributes: ['id', 'num_lote'],
-          include: [
-            {
-              model: Vacuna, as: 'vacunas', limit: 1,
-              include: [
-                { model: Estado, as: 'estado', attributes: ['nombre', 'codigo'] }
-              ]
-            }]
-        }
+          include: [{
+            model: Vacuna, as: 'vacunas',
+            include: [{ model: Estado, as: 'estado', attributes: ['nombre', 'codigo'] }]
+          }]
+        },
+        { model: Ubicacion, as: 'origen', attributes: ['id', 'nombre', 'tipo'] },
+        { model: Ubicacion, as: 'destino', attributes: ['id', 'nombre', 'tipo'] }
       ],
       order: [['createdAt', 'DESC']],
       limit,
@@ -72,23 +68,16 @@ movimiento.crearMovimiento = async (req, res) => {
   try {
     const { id_lote, id_ubicacion_origen, id_ubicacion_destino, cantidad, fecha_movimiento } = req.body;
 
-    // Validar stock
-    const stock = await Stock.findOne({
-      where: {
-        id_lote,
-        id_ubicacion: id_ubicacion_origen
+    // Validar stock (solo cuando hay origen explícito)
+    if (id_ubicacion_origen) {
+      const stock = await Stock.findOne({ where: { id_lote, id_ubicacion: id_ubicacion_origen } });
+      if (!stock || stock.cantidad < parseInt(cantidad)) {
+        return res.status(400).json({ success: false, message: 'Stock insuficiente en la ubicación de origen' });
       }
-    });
-
-    if (!stock || stock.cantidad < parseInt(cantidad)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Stock insuficiente en la ubicación de origen'
-      });
     }
 
     // Validar origen ≠ destino
-    if (id_ubicacion_origen === id_ubicacion_destino) {
+    if (id_ubicacion_origen && id_ubicacion_origen === id_ubicacion_destino) {
       return res.status(400).json({
         success: false,
         message: 'El origen y destino no pueden ser iguales'
@@ -99,6 +88,7 @@ movimiento.crearMovimiento = async (req, res) => {
       id_lote,
       id_ubicacion_origen: id_ubicacion_origen || null,
       id_ubicacion_destino,
+      id_usuario_origen: req.session.usuario.id,
       cantidad,
       fecha_movimiento
     });

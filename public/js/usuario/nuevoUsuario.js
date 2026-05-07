@@ -16,11 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = '/usuarios';
   });
 
+  // Obtiene todos los roles disponibles desde la API para los selectores del modal
   async function cargarRoles() {
     const res = await fetch('/roles');
     return res.json();
   }
 
+  // Actualiza el panel de resumen con las ubicaciones y roles asignados en la tabla del modal
   function actualizarResumen() {
     const rows = tablaAsignadas.querySelectorAll('tr');
     if (!rows.length) {
@@ -121,24 +123,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Validar que todos los campos estén llenos ANTES de enviar  
+  // Valida los campos del formulario (DNI, correo, password, ubicaciones) antes de crear el usuario
   function validarCampos() {
-    const campos = [
-      form.nombre.value.trim(),
-      form.apellido.value.trim(),
-      form.dni.value.trim(),
-      form.usuario.value.trim(),
-      form.password.value.trim(),
-      form.correo.value.trim(),
-      form.telefono.value.trim()
-    ];
+    const nombre   = form.nombre.value.trim();
+    const apellido = form.apellido.value.trim();
+    const dni      = form.dni.value.trim();
+    const usuario  = form.usuario.value.trim();
+    const password = form.password.value.trim();
+    const correo   = form.correo.value.trim();
+    const telefono = form.telefono.value.trim();
 
-    if (campos.some(c => c === '')) {
-      Swal.fire('Campos incompletos', 'Por favor complete todos los campos.', 'warning');
+    if (!nombre || !apellido || !dni || !usuario || !password || !correo || !telefono) {
+      Swal.fire('Campos incompletos', 'Por favor complete todos los campos obligatorios.', 'warning');
       return false;
     }
 
-    // Validar que haya al menos una ubicación asignada
+    if (!/^\d{7,8}$/.test(dni)) {
+      Swal.fire('DNI inválido', 'El DNI debe ser un número de 7 u 8 dígitos.', 'warning');
+      return false;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      Swal.fire('Correo inválido', 'Ingresá una dirección de correo electrónico válida.', 'warning');
+      return false;
+    }
+
+    if (password.length < 8) {
+      Swal.fire('Contraseña muy corta', 'La contraseña debe tener al menos 8 caracteres.', 'warning');
+      return false;
+    }
+
     const rows = [...tablaAsignadas.querySelectorAll('tr')];
     if (!rows.length) {
       Swal.fire('Sin ubicaciones', 'Debe asignar al menos una ubicación.', 'warning');

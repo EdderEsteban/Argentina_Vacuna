@@ -1,0 +1,65 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 🗑️ Listado de Descartes
+
+    .mb-3
+      a.btn.btn-danger(href='/nuevodescarte')
+        i.bi.bi-plus-circle.me-2
+        | Registrar Descarte
+
+    .table-responsive
+      table.table.table-striped.table-hover.align-middle
+        thead.table-dark
+          tr
+            th(scope='col') Fecha
+            th(scope='col') Lote
+            th(scope='col') Tipo de Vacuna
+            th(scope='col') Ubicación
+            th(scope='col') Cantidad
+            th(scope='col') Forma de Descarte
+            th(scope='col') Responsable
+            th(scope='col') Motivo
+
+        tbody
+          if descartes.length === 0
+            tr
+              td.text-center.text-muted(colspan='8') No hay descartes registrados
+          each d in descartes
+            tr
+              td= d.fecha_descarte
+              td= d.lote ? d.lote.num_lote : '—'
+              td= (d.lote && d.lote.vacunas && d.lote.vacunas.length > 0) ? d.lote.vacunas[0].tipo : '—'
+              td= d.ubicacion ? d.ubicacion.nombre : '—'
+              td
+                span.badge.bg-danger= d.cantidad
+              td= d.forma_descarte_label
+              td= d.responsable ? `${d.responsable.nombre} ${d.responsable.apellido}` : '—'
+              td
+                span.text-truncate(style='max-width:200px; display:inline-block;' title=d.motivo)= d.motivo
+
+    if pagination.totalPages > 1
+      nav(aria-label='Paginación')
+        ul.pagination.justify-content-center
+          li.page-item(class=pagination.currentPage === 1 ? 'disabled' : '')
+            a.page-link(href=`/descartes?page=${pagination.currentPage - 1}`) &laquo;
+
+          - let startPage = Math.max(1, pagination.currentPage - 2)
+          - let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2)
+
+          if startPage > 1
+            li.page-item
+              a.page-link(href='/descartes?page=1') 1
+            li.page-item.disabled
+              span.page-link ...
+          each pageNum in Array(endPage - startPage + 1).fill().map((_, i) => startPage + i)
+            li.page-item(class=pageNum === pagination.currentPage ? 'active' : '')
+              a.page-link(href=`/descartes?page=${pageNum}`)= pageNum
+          if endPage < pagination.totalPages
+            li.page-item.disabled
+              span.page-link ...
+            li.page-item
+              a.page-link(href=`/descartes?page=${pagination.totalPages}`)= pagination.totalPages
+          li.page-item(class=pagination.currentPage === pagination.totalPages ? 'disabled' : '')
+            a.page-link(href=`/descartes?page=${pagination.currentPage + 1}`) &raquo;

@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Valida los campos obligatorios del formulario de nueva ubicación
 function validarUbicacion(formData) {
     let isValid = true;
 
@@ -104,6 +105,7 @@ function validarUbicacion(formData) {
     return isValid;
 }
 
+// Muestra un mensaje de error con SweetAlert2
 function showError(message) {
     Swal.fire({
         icon: 'error',

@@ -1,7 +1,4 @@
-const { Lote } = require('../models');
-const { Laboratorio } = require('../models');
-const { Vacuna } = require('../models');
-const { Estado } = require('../models');
+const { Lote, Laboratorio, Vacuna, Estado, Stock, Ubicacion } = require('../models');
 const { Op } = require('sequelize');
 
 const lote = {};
@@ -31,7 +28,6 @@ lote.listar = async (req, res) => {
                 {
                     model: Vacuna,
                     as: 'vacunas',
-                    limit: 1,
                     include: [
                         {
                             model: Estado,
@@ -121,6 +117,8 @@ lote.crearLote = async (req, res) => {
       fecha_fab,
       fecha_venc,
       fecha_compra,
+      fecha_adquisicion,
+      pais_origen,
       tipo_vacuna,
       nombre_comercial
     } = req.body;
@@ -148,7 +146,9 @@ lote.crearLote = async (req, res) => {
       cantidad: parseInt(cantidad),
       fecha_fab,
       fecha_venc,
-      fecha_compra
+      fecha_compra,
+      fecha_adquisicion: fecha_adquisicion || null,
+      pais_origen: pais_origen ? pais_origen.trim() : null
     });
 
     // ✅ Crear solo 1 fila en Vacuna (tipo de vacuna dentro del lote)
@@ -159,10 +159,11 @@ lote.crearLote = async (req, res) => {
       id_estado: 1 // Disponible
     });
 
-    // ✅ Inicializar stock en depósito nacional
+    // Inicializar stock en depósito nacional (búsqueda dinámica)
+    const depositoNacional = await Ubicacion.findOne({ where: { tipo: 'Deposito Nacional' } });
     await Stock.create({
       id_lote: nuevoLote.id,
-      id_ubicacion: 1, // ID del depósito nacional
+      id_ubicacion: depositoNacional ? depositoNacional.id : 2,
       cantidad: parseInt(cantidad)
     });
 
@@ -256,7 +257,9 @@ lote.actualizarLote = async (req, res) => {
       cantidad: nuevaCantidad,
       fecha_fab: req.body.fecha_fab,
       fecha_venc: req.body.fecha_venc,
-      fecha_compra: req.body.fecha_compra
+      fecha_compra: req.body.fecha_compra,
+      fecha_adquisicion: req.body.fecha_adquisicion || null,
+      pais_origen: req.body.pais_origen ? req.body.pais_origen.trim() : null
     });
 
     //  Actualizar Vacuna asociada al lote
@@ -385,8 +388,7 @@ lote.buscarLotes = async (req, res) => {
                 {
                     model: Vacuna,
                     as: 'vacunas',
-                    attributes: ['id', 'tipo', 'nombre_comercial'],
-                    limit: 1 // Limitar a una vacuna por lote
+                    attributes: ['id', 'tipo', 'nombre_comercial']
                 }
             ]
         });

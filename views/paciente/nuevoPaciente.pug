@@ -49,6 +49,40 @@ block content
 
             .form-floating.mb-3
                 input.form-control(
+                    type="date"
+                    id="fecha_nacimiento"
+                    name="fecha_nacimiento"
+                    required
+                    placeholder=""
+                )
+                label.form-label(for="fecha_nacimiento") Fecha de Nacimiento
+
+            .form-floating.mb-3
+                select.form-select(
+                    id="genero"
+                    name="genero"
+                    required
+                )
+                    option(value="" disabled selected) -- Seleccionar Género --
+                    option(value="Masculino") Masculino
+                    option(value="Femenino") Femenino
+                    option(value="No binario") No binario
+                    option(value="Prefiero no decir") Prefiero no decir
+                label.form-label(for="genero") Género
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="text"
+                    id="localidad"
+                    name="localidad"
+                    required
+                    placeholder=""
+                    maxlength="255"
+                )
+                label.form-label(for="localidad") Localidad
+
+            .form-floating.mb-3
+                input.form-control(
                     type="tel"
                     id="telefonoPaciente"
                     name="telefonoPaciente"

@@ -86,6 +86,25 @@ module.exports = (sequelize, DataTypes) => {
           msg: 'Fecha de compra inválida'
         }
       }
+    },
+    fecha_adquisicion: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      validate: {
+        isDate: {
+          msg: 'Fecha de adquisición inválida'
+        }
+      }
+    },
+    pais_origen: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      validate: {
+        len: {
+          args: [2, 100],
+          msg: 'El país de origen debe tener entre 2 y 100 caracteres'
+        }
+      }
     }
   }, {
     sequelize,

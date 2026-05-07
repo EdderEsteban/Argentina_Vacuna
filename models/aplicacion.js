@@ -1,5 +1,5 @@
 'use strict';
-const { Model } = require('sequelize');
+const { Model, Op } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   class Aplicacion extends Model {
@@ -59,17 +59,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     id_usuario: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      validate: {
-        async esEnfermero(value) {
-          const usuario = await sequelize.models.Usuario.findByPk(value, {
-            include: { model: sequelize.models.Rol, as: 'rol' }
-          });
-          if (!usuario || usuario.rol.nombre !== 'Enfermero') {
-            throw new Error('Solo enfermeros pueden registrar aplicaciones');
-          }
-        }
-      }
+      allowNull: false
     },
     id_lote: {
       type: DataTypes.INTEGER,  
@@ -110,7 +100,7 @@ module.exports = (sequelize, DataTypes) => {
           where: {
             id_lote: aplicacion.id_lote,
             id_ubicacion: aplicacion.id_ubicacion,
-            cantidad: { [sequelize.Op.gt]: 0 }
+            cantidad: { [Op.gt]: 0 }
           }
         });
         

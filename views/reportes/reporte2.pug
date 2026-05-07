@@ -1,0 +1,43 @@
+extends ../__layout/main
+
+block content
+  .container-fluid.mt-4
+    .d-flex.align-items-center.mb-4.gap-3
+      a.btn.btn-outline-secondary(href='/reportes')
+        i.bi.bi-arrow-left.me-1
+        | Volver
+      h1.mb-0 📊 Reporte 2 — Dosis por Tipo de Vacuna
+
+    if resultados.length === 0
+      .alert.alert-warning
+        i.bi.bi-exclamation-circle.me-2
+        | No hay datos registrados.
+    else
+      .card
+        .table-responsive
+          table.table.table-striped.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th Tipo de Vacuna
+                th.text-center En Nación
+                th.text-center En Distribución
+                th.text-center En Provincia
+                th.text-center En Centros
+                th.text-center Aplicadas
+                th.text-center Descartadas
+                th.text-center Vencidas
+            tbody
+              each r in resultados
+                tr
+                  td
+                    strong= r.tipo
+                  td.text-center= r.en_nacion
+                  td.text-center= r.en_distribucion
+                  td.text-center= r.en_provincia
+                  td.text-center= r.en_centros
+                  td.text-center
+                    span.badge.bg-success= r.aplicadas
+                  td.text-center
+                    span.badge.bg-danger= r.descartadas
+                  td.text-center
+                    span.badge.bg-warning.text-dark= r.vencidas

@@ -48,9 +48,10 @@ app.use(passport.session());
 const csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
 
-// Pasar CSRF a todas las vistas
+// Pasar CSRF y usuario a todas las vistas
 app.use((req, res, next) => {
   res.locals.csrfToken = req.csrfToken();
+  res.locals.usuario = req.session?.usuario || null;
   next();
 });
 

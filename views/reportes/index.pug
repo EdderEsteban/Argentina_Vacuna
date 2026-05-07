@@ -1,0 +1,96 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 📊 Reportes del Sistema
+
+    .row.g-4
+      //- Reporte 1
+      .col-md-6.col-lg-4
+        .card.h-100.border-primary
+          .card-header.bg-primary.text-white
+            i.bi.bi-bar-chart-line.me-2
+            | Reporte 1
+          .card-body
+            h5.card-title Compras por Laboratorio
+            p.card-text.text-muted
+              | Cantidad de vacunas compradas a cada laboratorio filtradas por rango de fecha de compra.
+          .card-footer.bg-transparent
+            a.btn.btn-primary.w-100(href='/reportes/1')
+              i.bi.bi-arrow-right-circle.me-2
+              | Ver reporte
+
+      //- Reporte 2
+      .col-md-6.col-lg-4
+        .card.h-100.border-info
+          .card-header.bg-info.text-white
+            i.bi.bi-diagram-3.me-2
+            | Reporte 2
+          .card-body
+            h5.card-title Dosis por Tipo de Vacuna
+            p.card-text.text-muted
+              | Dosis distribuidas en nación, distribución, provincia, centros, aplicadas, descartadas y vencidas — agrupadas por tipo de vacuna.
+          .card-footer.bg-transparent
+            a.btn.btn-info.text-white.w-100(href='/reportes/2')
+              i.bi.bi-arrow-right-circle.me-2
+              | Ver reporte
+
+      //- Reporte 3
+      .col-md-6.col-lg-4
+        .card.h-100.border-success
+          .card-header.bg-success.text-white
+            i.bi.bi-geo-alt.me-2
+            | Reporte 3
+          .card-body
+            h5.card-title Stock por Provincia
+            p.card-text.text-muted
+              | Stock disponible por tipo de vacuna y provincia (excluye depósito nacional y distribución).
+          .card-footer.bg-transparent
+            a.btn.btn-success.w-100(href='/reportes/3')
+              i.bi.bi-arrow-right-circle.me-2
+              | Ver reporte
+
+      //- Reporte 4
+      .col-md-6.col-lg-4
+        .card.h-100.border-warning
+          .card-header.bg-warning.text-dark
+            i.bi.bi-exclamation-triangle.me-2
+            | Reporte 4
+          .card-body
+            h5.card-title Aplicaciones con Vacuna Vencida
+            p.card-text.text-muted
+              | Personas a las que se aplicó una vacuna cuyo lote ya estaba vencido al momento de la aplicación.
+          .card-footer.bg-transparent
+            a.btn.btn-warning.text-dark.w-100(href='/reportes/4')
+              i.bi.bi-arrow-right-circle.me-2
+              | Ver reporte
+
+      //- Reporte 5
+      .col-md-6.col-lg-4
+        .card.h-100.border-danger
+          .card-header.bg-danger.text-white
+            i.bi.bi-clock-history.me-2
+            | Reporte 5
+          .card-body
+            h5.card-title Vacunas Vencidas No Descartadas
+            p.card-text.text-muted
+              | Stock de vacunas con lote vencido que aún no fueron descartadas, agrupadas por lote, provincia y ubicación.
+          .card-footer.bg-transparent
+            a.btn.btn-danger.w-100(href='/reportes/5')
+              i.bi.bi-arrow-right-circle.me-2
+              | Ver reporte
+
+      //- Reporte 6
+      .col-md-6.col-lg-4
+        .card.h-100.border-secondary
+          .card-header.bg-secondary.text-white
+            i.bi.bi-people.me-2
+            | Reporte 6
+          .card-body
+            h5.card-title Personas Vacunadas
+            p.card-text.text-muted
+              | Cantidad de personas vacunadas agrupadas por tipo de vacuna, provincia y localidad.
+          .card-footer.bg-transparent
+            a.btn.btn-secondary.w-100(href='/reportes/6')
+              i.bi.bi-arrow-right-circle.me-2
+              | Ver reporte

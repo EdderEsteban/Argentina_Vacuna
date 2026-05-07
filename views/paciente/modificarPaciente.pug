@@ -49,6 +49,39 @@ block content
 
             .form-floating.mb-3
                 input.form-control(
+                    type="date"
+                    id="fecha_nacimiento"
+                    name="fecha_nacimiento"
+                    value=paciente.fecha_nacimiento || ''
+                    placeholder=""
+                )
+                label.form-label(for="fecha_nacimiento") Fecha de Nacimiento
+
+            .form-floating.mb-3
+                select.form-select(
+                    id="genero"
+                    name="genero"
+                )
+                    option(value="" disabled) -- Seleccionar Género --
+                    option(value="Masculino" selected=paciente.genero === 'Masculino') Masculino
+                    option(value="Femenino" selected=paciente.genero === 'Femenino') Femenino
+                    option(value="No binario" selected=paciente.genero === 'No binario') No binario
+                    option(value="Prefiero no decir" selected=paciente.genero === 'Prefiero no decir') Prefiero no decir
+                label.form-label(for="genero") Género
+
+            .form-floating.mb-3
+                input.form-control(
+                    type="text"
+                    id="localidad"
+                    name="localidad"
+                    value=paciente.localidad || ''
+                    placeholder=""
+                    maxlength="255"
+                )
+                label.form-label(for="localidad") Localidad
+
+            .form-floating.mb-3
+                input.form-control(
                     type="tel"
                     id="telefonoPaciente"
                     name="telefonoPaciente"
@@ -97,7 +130,7 @@ block content
                     i.bi.bi-x-circle.me-2
                     | Cancelar
 
-    script(src="/js/paciente/editarPaciente.js")
+    script(src="/js/paciente/modificarPaciente.js")
 
     script.
         $(document).ready(function() {

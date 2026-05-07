@@ -37,23 +37,23 @@ block content
       nav(aria-label='Paginación de usuarios')
         ul.pagination.justify-content-center
           li.page-item(class=pagination.currentPage === 1 ? 'disabled' : '')
-            a.page-link(href=`/usuario?page=${pagination.currentPage - 1}`) &laquo;
+            a.page-link(href=`/usuarios?page=${pagination.currentPage - 1}`) &laquo;
           - let startPage = Math.max(1, pagination.currentPage - 2)
           - let endPage = Math.min(pagination.totalPages, pagination.currentPage + 2)
           if startPage > 1
             li.page-item
-              a.page-link(href=`/usuario?page=1`) 1
+              a.page-link(href=`/usuarios?page=1`) 1
             li.page-item.disabled
               span.page-link ...
           each pageNum in Array(endPage - startPage + 1).fill().map((_, i) => startPage + i)
             li.page-item(class=pageNum === pagination.currentPage ? 'active' : '')
-              a.page-link(href=`/usuario?page=${pageNum}`)= pageNum
+              a.page-link(href=`/usuarios?page=${pageNum}`)= pageNum
           if endPage < pagination.totalPages
             li.page-item.disabled
               span.page-link ...
             li.page-item
-              a.page-link(href=`/usuario?page=${pagination.totalPages}`)= pagination.totalPages
+              a.page-link(href=`/usuarios?page=${pagination.totalPages}`)= pagination.totalPages
           li.page-item(class=pagination.currentPage === pagination.totalPages ? 'disabled' : '')
-            a.page-link(href=`/usuario?page=${pagination.currentPage + 1}`) &raquo;
+            a.page-link(href=`/usuarios?page=${pagination.currentPage + 1}`) &raquo;
 
   script(src="/js/usuario/listadoUsuario.js")

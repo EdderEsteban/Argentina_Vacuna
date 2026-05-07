@@ -21,7 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
             nombre_comercial: form.nombre_comercial.value.trim(),
             fecha_fab: form.fecha_fab.value.trim(),
             fecha_venc: form.fecha_venc.value.trim(),
-            fecha_compra: form.fecha_compra.value.trim()
+            fecha_compra: form.fecha_compra.value.trim(),
+            fecha_adquisicion: form.fecha_adquisicion.value.trim() || null,
+            pais_origen: form.pais_origen.value.trim() || null
         };
 
         btnGuardar.disabled = true;
@@ -75,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Valida todos los campos del formulario antes de enviar la actualización del lote
 function validarLote(formData) {
     let isValid = true;
 
@@ -126,6 +129,7 @@ function validarLote(formData) {
     return isValid;
 }
 
+// Muestra un mensaje de error con SweetAlert2
 function showError(message) {
     Swal.fire({
         icon: 'error',

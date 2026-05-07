@@ -1,0 +1,38 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .d-flex.align-items-center.mb-4.gap-3
+      a.btn.btn-outline-secondary(href='/reportes')
+        i.bi.bi-arrow-left.me-1
+        | Volver
+      h1.mb-0 📊 Reporte 3 — Stock por Provincia
+
+    .alert.alert-info.mb-4
+      i.bi.bi-info-circle.me-2
+      | Excluye depósito nacional y nodos de distribución. Muestra solo stock en depósitos provinciales y centros de vacunación.
+
+    if resultados.length === 0
+      .alert.alert-warning
+        i.bi.bi-exclamation-circle.me-2
+        | No hay stock disponible en provincias.
+    else
+      .card
+        .table-responsive
+          table.table.table-striped.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th Tipo de Vacuna
+                th Provincia
+                th Tipo de Ubicación
+                th.text-center Stock Disponible
+            tbody
+              each r in resultados
+                tr
+                  td
+                    strong= r.tipo_vacuna
+                  td= r.provincia
+                  td
+                    span.badge.bg-secondary= r.tipo_ubicacion
+                  td.text-center
+                    span.badge.bg-success.fs-6= r.stock_disponible

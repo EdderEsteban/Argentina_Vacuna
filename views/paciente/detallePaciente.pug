@@ -19,10 +19,13 @@ block content
               .tab-pane.fade.show.active(id="informacion")
                 p <strong>Nombre:</strong> #{paciente.nombre} #{paciente.apellido}
                 p <strong>DNI:</strong> #{paciente.dni}
-                p <strong>Provincia:</strong> #{paciente.provincia.nombre}
-                p <strong>Ubicación de Registro:</strong> #{paciente.ubicacionRegistro.nombre}
+                p <strong>Fecha de Nacimiento:</strong> #{paciente.fecha_nacimiento || 'No especificada'}
+                p <strong>Género:</strong> #{paciente.genero || 'No especificado'}
+                p <strong>Localidad:</strong> #{paciente.localidad || 'No especificada'}
+                p <strong>Provincia:</strong> #{paciente.provincia ? paciente.provincia.nombre : 'No especificada'}
                 p <strong>Teléfono:</strong> #{paciente.telefono || 'No especificado'}
                 p <strong>Correo Electrónico:</strong> #{paciente.correo || 'No especificado'}
+                p <strong>Centro de Registro:</strong> #{paciente.ubicacionRegistro ? paciente.ubicacionRegistro.nombre : 'No especificado'}
               
               .tab-pane.fade(id="vacunas")
                 .table-responsive

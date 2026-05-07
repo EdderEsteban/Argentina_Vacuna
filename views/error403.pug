@@ -1,0 +1,21 @@
+extends __layout/main
+
+block content
+  .container.mt-5.text-center
+    .row.justify-content-center
+      .col-md-6
+        .card.border-danger.shadow
+          .card-body.py-5
+            i.bi.bi-shield-exclamation.text-danger(style='font-size: 4rem')
+            h1.display-4.mt-3 403
+            h4.text-danger.mb-3 Acceso denegado
+            p.text-muted
+              | No tenés permisos para acceder a esta sección.
+              br
+              if usuario
+                | Tu rol actual es
+                strong.ms-1= usuario.rol
+            hr
+            a.btn.btn-primary(href='/dashboard')
+              i.bi.bi-house.me-2
+              | Volver al inicio

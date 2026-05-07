@@ -1,0 +1,66 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .d-flex.justify-content-between.align-items-center.mb-4
+      h2.fw-bold
+        i.bi.bi-person-check.me-2
+        | Solicitudes de Acceso
+
+    .card.shadow-sm
+      .card-body.p-0
+        .table-responsive
+          table.table.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th Nombre
+                th DNI
+                th Correo
+                th Teléfono
+                th Motivo
+                th Fecha
+                th.text-center Estado
+                th.text-center Acciones
+            tbody
+              if solicitudes.length === 0
+                tr
+                  td.text-center.text-muted(colspan='8') No hay solicitudes registradas
+              each s in solicitudes
+                tr
+                  td= `${s.apellido}, ${s.nombre}`
+                  td
+                    code= s.dni
+                  td= s.correo
+                  td= s.telefono || '—'
+                  td
+                    small.text-truncate(style='max-width:220px;display:block' title=s.motivo)= s.motivo
+                  td.text-muted.small= new Date(s.createdAt).toLocaleDateString('es-AR')
+                  td.text-center
+                    if s.estado === 'Pendiente'
+                      span.badge.bg-warning.text-dark Pendiente
+                    else if s.estado === 'Aprobado'
+                      span.badge.bg-success Aprobado
+                    else
+                      span.badge.bg-danger Rechazado
+                  td.text-center
+                    if s.estado === 'Pendiente'
+                      .d-flex.gap-1.justify-content-center
+                        button.btn.btn-sm.btn-success.btn-aprobar(data-id=s.id title='Aprobar')
+                          i.bi.bi-check-lg
+                        button.btn.btn-sm.btn-danger.btn-rechazar(data-id=s.id title='Rechazar')
+                          i.bi.bi-x-lg
+                    else
+                      span.text-muted —
+
+    if pagination.totalPages > 1
+      nav.mt-3(aria-label='Paginación')
+        ul.pagination.justify-content-center
+          li.page-item(class=pagination.hasPreviousPage ? '' : 'disabled')
+            a.page-link(href=`/solicitudes?page=${pagination.currentPage - 1}`) &laquo;
+          - for (let i = 1; i <= pagination.totalPages; i++)
+            li.page-item(class=i === pagination.currentPage ? 'active' : '')
+              a.page-link(href=`/solicitudes?page=${i}`)= i
+          li.page-item(class=pagination.hasNextPage ? '' : 'disabled')
+            a.page-link(href=`/solicitudes?page=${pagination.currentPage + 1}`) &raquo;
+
+  script(src='/js/solicitudes/listadoSolicitudes.js')

@@ -1,39 +1,40 @@
-extends __Layout/main
+extends __layout/main
 
 block content
-    .container.my-5.pt-4
-        h1 Bienvenido al Sistema de Registro de Vacunas Nacional
-        p Para comenzar, por favor inicie sesión con su usuario y contraseña
+  .container.mt-5
+    .row.justify-content-center
+      .col-md-5
+        .card.shadow
+          .card-header.bg-primary.text-white.text-center
+            i.bi.bi-shield-lock.me-2(style='font-size:1.4rem')
+            strong Iniciar Sesión
+          .card-body.p-4
+            form#loginForm
+              input(type="hidden" name="_csrf" value=csrfToken)
+              .form-floating.mb-3
+                input.form-control#usuario(
+                  type="text"
+                  name="usuario"
+                  autocomplete="username"
+                  placeholder="Usuario"
+                  required
+                )
+                label(for="usuario") Usuario
+              .form-floating.mb-3
+                input.form-control#password(
+                  type="password"
+                  name="password"
+                  autocomplete="current-password"
+                  placeholder="Contraseña"
+                  required
+                )
+                label(for="password") Contraseña
+              .d-grid
+                button#iniciarSesion.btn.btn-primary(type="button")
+                  i.bi.bi-box-arrow-in-right.me-2
+                  | Iniciar Sesión
+          .card-footer.text-center.text-muted.small
+            | ¿No tenés cuenta?
+            a#solicitud.btn.btn-link.btn-sm.p-0.ms-1(href="/solicitud") Solicitar Acceso
 
-    .container.mt-5
-     .row.justify-content-center
-       .col-md-6
-         .card.shadow
-           .card-body
-             h3.card-title.text-center.mb-4 🔐 Login
-             form#loginForm
-               .mb-3
-                 input.form-control(
-                   type="text"
-                   id="usuario"
-                   autocomplete="current-username"
-                   placeholder="Usuario"
-                   required
-                 )
-               .mb-3
-                 input.form-control(
-                   type="password"
-                   id="password"
-                   autocomplete="current-password"
-                   placeholder="Contraseña"
-                   required
-                 )
-               .d-grid
-                 button#iniciarSesion.btn.btn-primary Iniciar Sesión
-             hr
-             .text-center
-               small ¿No tenés cuenta?
-               br
-               a#solicitud.btn.btn-outline-secondary.btn-sm.mt-2 Solicitar Acceso
-
-    script(src="/js/login/index.js")
+  script(src="/js/login/index.js")

@@ -2,56 +2,54 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 📋 Listado de Movimientos de Lotes
+    .d-flex.justify-content-between.align-items-center.mb-4
+      h2.fw-bold
+        i.bi.bi-arrow-left-right.me-2
+        | Movimientos de Lotes
+      if usuario.rol === 'Administrador'
+        a.btn.btn-primary(href='/nuevomovimiento')
+          i.bi.bi-plus-circle.me-2
+          | Nuevo Movimiento
 
-    //- Botón de nuevo lote
-    a.btn.btn-primary.mb-3(href='/nuevomovimiento')
-      i.bi.bi-plus-circle.me-2
-      | Nuevo Movimiento
+    .card.shadow-sm
+      .card-body.p-0
+        .table-responsive
+          table.table.table-striped.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th Lote
+                th Origen
+                th Destino
+                th.text-center Cantidad
+                th Estado Vacuna
+                th Fecha
+            tbody
+              if movimientos.length === 0
+                tr
+                  td.text-center.text-muted(colspan='6') No hay movimientos registrados
+              each m in movimientos
+                tr
+                  td
+                    code= m.lote ? m.lote.num_lote : '—'
+                  td= m.origen ? `${m.origen.nombre} (${m.origen.tipo})` : 'Depósito Nacional'
+                  td= m.destino ? `${m.destino.nombre} (${m.destino.tipo})` : '—'
+                  td.text-center= m.cantidad
+                  td
+                    if m.lote && m.lote.vacunas && m.lote.vacunas[0] && m.lote.vacunas[0].estado
+                      - const cod = m.lote.vacunas[0].estado.codigo
+                      - const badgeClass = cod === 'DISP' ? 'bg-success' : cod === 'APLIC' ? 'bg-secondary' : cod === 'VENC' ? 'bg-danger' : cod === 'DESC' ? 'bg-dark' : 'bg-light text-dark'
+                      span.badge(class=badgeClass)= m.lote.vacunas[0].estado.nombre
+                    else
+                      span.badge.bg-light.text-dark Sin estado
+                  td= new Date(m.fecha_movimiento).toLocaleDateString('es-AR')
 
-    .table-responsive
-      table.table.table-striped
-        thead.table-dark
-          tr
-            th Lote
-            th Origen
-            th Destino
-            th Cantidad
-            th Estado
-            th Fecha
-        tbody
-          each m in movimientos
-            tr
-              td= m.lote.num_lote
-              td= m.origen ? `${m.origen.nombre} (${m.origen.tipo})` : 'Depósito Nacional'
-              td= `${m.destino.nombre} (${m.destino.tipo})`
-              td= m.cantidad
-              td
-                if mov.lote.vacunas && mov.lote.vacunas[0]
-                  span.badge(
-                    class={
-                      'bg-success': mov.lote.vacunas[0].estado.codigo === 'DNAC',
-                      'bg-warning': mov.lote.vacunas[0].estado.codigo === 'DPRO',
-                      'bg-info': mov.lote.vacunas[0].estado.codigo === 'TRANS',
-                      'bg-primary': mov.lote.vacunas[0].estado.codigo === 'VACU',
-                      'bg-secondary': mov.lote.vacunas[0].estado.codigo === 'APLI',
-                      'bg-danger': mov.lote.vacunas[0].estado.codigo === 'VENC',
-                      'bg-dark': mov.lote.vacunas[0].estado.codigo === 'DESC'
-                    }
-                  )= mov.lote.vacunas[0].estado.nombre
-                else
-                  span.badge.bg-light.text-dark Sin estado
-
-              td= new Date(m.fecha_movimiento).toLocaleDateString()
-
-    nav(aria-label='Paginación')
-      ul.pagination.justify-content-center
-        if pagination.hasPreviousPage
-          li.page-item
-            a.page-link(href=`/movimientos?page=${pagination.currentPage - 1}`) Anterior
-        - for (let i = 1; i <= pagination.totalPages; i++)
-          li.page-item(class=i === pagination.currentPage ? 'active' : '')
-            a.page-link(href=`/movimientos?page=${i}`)= i
-        if pagination.hasNextPage
-          li.page-item
-            a.page-link(href=`/movimientos?page=${pagination.currentPage + 1}`) Siguiente
+    if pagination.totalPages > 1
+      nav.mt-3(aria-label='Paginación')
+        ul.pagination.justify-content-center
+          li.page-item(class=pagination.hasPreviousPage ? '' : 'disabled')
+            a.page-link(href=`/movimientos?page=${pagination.currentPage - 1}`) &laquo;
+          - for (let i = 1; i <= pagination.totalPages; i++)
+            li.page-item(class=i === pagination.currentPage ? 'active' : '')
+              a.page-link(href=`/movimientos?page=${i}`)= i
+          li.page-item(class=pagination.hasNextPage ? '' : 'disabled')
+            a.page-link(href=`/movimientos?page=${pagination.currentPage + 1}`) &raquo;

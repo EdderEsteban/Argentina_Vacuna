@@ -11,11 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnBlanq  = document.getElementById('btnBlanquear');
 
   /* ---------- helpers ---------- */
+  // Obtiene todos los roles desde la API para usar en los selectores del modal
   const cargarRoles = async () => {
     const r = await fetch('/roles');
     return r.json();
   };
 
+  // Actualiza el panel de resumen con las ubicaciones y roles asignados actualmente
   const actualizarResumen = () => {
     const rows = [...tablaAsig.querySelectorAll('tr')];
     if (!rows.length) { resumenDiv.style.display = 'none'; return; }
@@ -32,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ---------- carga inicial (ubicaciones ya asignadas) ---------- */
+  // Carga desde la API las ubicaciones asignadas al usuario y las pinta en la tabla del modal
   const cargarAsignadas = async () => {
     const asign = await fetch(`/usuarios/${userId}/ubicaciones`).then(r => r.json());
     const roles = await cargarRoles();

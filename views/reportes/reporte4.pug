@@ -1,0 +1,45 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .d-flex.align-items-center.mb-4.gap-3
+      a.btn.btn-outline-secondary(href='/reportes')
+        i.bi.bi-arrow-left.me-1
+        | Volver
+      h1.mb-0 📊 Reporte 4 — Aplicaciones con Vacuna Vencida
+
+    .alert.alert-danger.mb-4
+      i.bi.bi-exclamation-triangle-fill.me-2
+      | Este reporte lista personas a las que se aplicó una vacuna cuyo lote ya había vencido al momento de la aplicación.
+
+    if resultados.length === 0
+      .alert.alert-success
+        i.bi.bi-check-circle.me-2
+        | No se registraron aplicaciones con vacunas vencidas.
+    else
+      .card
+        .card-header.bg-danger.text-white
+          strong Total de casos: #{resultados.length}
+        .table-responsive
+          table.table.table-striped.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th Paciente
+                th DNI
+                th Provincia
+                th Centro
+                th Tipo Vacuna
+                th Fecha Aplicación
+                th Fecha Vencimiento Lote
+            tbody
+              each r in resultados
+                tr.table-danger
+                  td= `${r.apellido_paciente}, ${r.nombre_paciente}`
+                  td= r.dni
+                  td= r.provincia || '—'
+                  td= r.centro
+                  td
+                    span.badge.bg-dark= r.tipo_vacuna
+                  td= r.fecha_aplicacion
+                  td
+                    span.text-danger.fw-bold= r.fecha_vencimiento_lote

@@ -1,0 +1,53 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h1.mb-4 🔍 Buscar Aplicaciones
+
+    form#formBuscarAplicacion.mb-4
+      .row.g-3
+        .col-md-3
+          .form-floating
+            input.form-control(
+              type='text'
+              id='dniBuscar'
+              name='dni'
+              placeholder=''
+              maxlength='8'
+            )
+            label(for='dniBuscar') DNI del Paciente
+
+        .col-md-4
+          .form-floating
+            select.form-select#id_ubicacion(name='id_ubicacion')
+              option(value='') -- Todos los centros --
+              each u in ubicaciones
+                option(value=u.id)= u.nombre
+            label(for='id_ubicacion') Centro de Vacunación
+
+        .col-md-2
+          .form-floating
+            input.form-control(type='date' id='fecha_desde' name='fecha_desde' placeholder='')
+            label(for='fecha_desde') Fecha Desde
+
+        .col-md-2
+          .form-floating
+            input.form-control(type='date' id='fecha_hasta' name='fecha_hasta' placeholder='')
+            label(for='fecha_hasta') Fecha Hasta
+
+        .col-md-1.d-flex.align-items-end
+          button.btn.btn-primary.w-100(type='submit')
+            i.bi.bi-search
+
+    #resultados
+
+  script(src='/js/aplicacion/buscarAplicacion.js')
+  script.
+    $(document).ready(function() {
+      $('#id_ubicacion').select2({
+        placeholder: '',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#id_ubicacion').parent()
+      });
+    });

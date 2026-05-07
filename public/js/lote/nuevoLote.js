@@ -90,6 +90,24 @@ function validarNuevoLote(formData) {
         return false;
     }
 
+    if (formData.fecha_adquisicion === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'La fecha de adquisición es obligatoria.'
+        });
+        return false;
+    }
+
+    if (formData.pais_origen === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'El país de origen es obligatorio.'
+        });
+        return false;
+    }
+
     // Validar que la fecha de vencimiento sea posterior a la fecha de fabricación
     if (new Date(formData.fecha_venc) <= new Date(formData.fecha_fab)) {
         Swal.fire({
@@ -121,7 +139,9 @@ async function enviarFormularioNuevoLote() {
         nombre_comercial: formNuevoLote.nombre_comercial.value.trim(),
         fecha_fab: formNuevoLote.fecha_fab.value.trim(),
         fecha_venc: formNuevoLote.fecha_venc.value.trim(),
-        fecha_compra: formNuevoLote.fecha_compra.value.trim()
+        fecha_compra: formNuevoLote.fecha_compra.value.trim(),
+        fecha_adquisicion: formNuevoLote.fecha_adquisicion.value.trim(),
+        pais_origen: formNuevoLote.pais_origen.value.trim()
     };
 
     // Validar los datos del formulario
