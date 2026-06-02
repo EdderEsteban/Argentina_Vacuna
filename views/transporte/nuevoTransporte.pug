@@ -1,0 +1,50 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .d-flex.justify-content-between.align-items-center.mb-4
+      h2.fw-bold
+        i.bi.bi-truck.me-2
+        | Nuevo Transporte
+      a.btn.btn-outline-secondary(href='/transportes')
+        i.bi.bi-arrow-left.me-1
+        | Volver
+
+    .card.shadow-sm
+      .card-body.p-4
+        form#formTransporte
+          input(type='hidden' name='_csrf' value=csrfToken)
+
+          .row.g-3
+            .col-md-6
+              .form-floating
+                input.form-control#nombre(
+                  type='text'
+                  name='nombre'
+                  placeholder='Empresa'
+                  required
+                  autofocus
+                )
+                label(for='nombre') Empresa *
+              small.form-text.text-muted Ej: OCA, Andreani, correo Argentino
+
+            .col-md-6
+              .form-floating
+                input.form-control#id_movil(
+                  type='text'
+                  name='id_movil'
+                  placeholder='Identificador del Móvil'
+                  required
+                )
+                label(for='id_movil') Identificador del Móvil *
+              small.form-text.text-muted Ej: 12-1412, AC 923 CG, CAMION-03
+
+          .d-flex.justify-content-end.gap-2.mt-4
+            a.btn.btn-outline-secondary(href='/transportes')
+              i.bi.bi-x-circle.me-1
+              | Cancelar
+            button.btn.btn-primary#btnRegistrar(type='button')
+              i.bi.bi-check-circle.me-1
+              | Registrar Transporte
+
+  script(src='/js/transporte/nuevoTransporte.js')

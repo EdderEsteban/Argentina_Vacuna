@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 🔍 Buscar Aplicaciones
+    h2.fw-bold.mb-4
+      i.bi.bi-search.me-2.text-primary
+      | Buscar Aplicaciones
 
     form#formBuscarAplicacion.mb-4
       .row.g-3
@@ -42,12 +44,3 @@ block content
     #resultados
 
   script(src='/js/aplicacion/buscarAplicacion.js')
-  script.
-    $(document).ready(function() {
-      $('#id_ubicacion').select2({
-        placeholder: '',
-        allowClear: true,
-        width: '100%',
-        dropdownParent: $('#id_ubicacion').parent()
-      });
-    });

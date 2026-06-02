@@ -1,3 +1,13 @@
+// Inicialización de Select2 sobre el select de laboratorio
+$(document).ready(function () {
+    $('#id_laboratorio').select2({
+        placeholder: '',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#id_laboratorio').parent()
+    });
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('formEditarLote');
     const btnGuardar = document.getElementById('btnGuardarCambios');

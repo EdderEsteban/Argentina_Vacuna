@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 🗑️ Registrar Descarte de Vacunas
+    h2.fw-bold.mb-4
+      i.bi.bi-trash.me-2.text-danger
+      | Registrar Descarte de Vacunas
 
     form#formNuevoDescarte
       input(type='hidden' name='_csrf' value=csrfToken)
@@ -100,16 +102,3 @@ block content
           | Cancelar
 
   script(src='/js/descarte/nuevoDescarte.js')
-  script.
-    $(document).ready(function() {
-      $('#id_lote').select2({
-        placeholder: '',
-        allowClear: true,
-        width: '100%',
-        dropdownParent: $('#id_lote').parent()
-      });
-      $('#id_lote').on('change', function() {
-        const event = new Event('change', { bubbles: true });
-        document.getElementById('id_lote').dispatchEvent(event);
-      });
-    });

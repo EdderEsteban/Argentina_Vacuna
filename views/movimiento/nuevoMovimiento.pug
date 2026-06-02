@@ -30,11 +30,11 @@ block content
 
             .col-md-6
               .form-floating
-                select.form-select#id_ubicacion_origen(name="id_ubicacion_origen")
-                  option(value="") Depósito Nacional (sin origen)
+                select.form-select#id_ubicacion_origen(name="id_ubicacion_origen" required)
+                  option(value="" disabled selected) Seleccione origen *
                   each u in ubicaciones
-                    option(value=u.id)= `${u.nombre} (${u.tipo})`
-                label(for="id_ubicacion_origen") Ubicación Origen
+                    option(value=u.id selected=(u.id === depositoNacionalId))= `${u.nombre} (${u.tipo})`
+                label(for="id_ubicacion_origen") Ubicación Origen *
 
             .col-md-6
               .form-floating
@@ -48,6 +48,15 @@ block content
               .form-floating
                 input.form-control#fecha_movimiento(type="date" name="fecha_movimiento" value=new Date().toISOString().split('T')[0] required)
                 label(for="fecha_movimiento") Fecha de Movimiento *
+
+            .col-md-6
+              .form-floating
+                select.form-select#id_transporte(name="id_transporte")
+                  option(value="") Sin transporte (movimiento interno)
+                  each t in transportes
+                    option(value=t.id)= `${t.nombre} — ${t.id_movil}`
+                label(for="id_transporte") Transporte
+              small.form-text.text-muted Completá este campo si el lote viaja con un tercero
 
           .d-flex.justify-content-end.gap-2.mt-4
             a.btn.btn-outline-secondary(href="/movimientos")

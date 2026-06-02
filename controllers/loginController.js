@@ -16,7 +16,7 @@ loginController.login = (req, res, next) => {
       if (err) return next(err);
 
       const ubicaciones = user.ubicaciones || [];
-      req.session.usuario = {
+      req.session.usuario = { 
         id: user.id,
         usuario: user.usuario,   
         nombre: user.nombre,
@@ -40,16 +40,20 @@ loginController.seleccionarUbicacion = (req, res) => {
     if (ubicaciones.length === 1) req.session.usuario.ubicacionActual = ubicaciones[0];
     return res.redirect('/dashboard');
   }
-  res.render('seleccionarUbicacion', { ubicaciones, ubicacionActual });
+  res.render('seleccionarUbicacion', { ubicaciones, ubicacionActual, sinSidebar: true });
 };
 
-// Guardar en sesión la ubicación elegida por el usuario y redirigir al dashboard
+// Guardar en sesión la ubicación elegida. Solo Admin puede cambiarla si ya hay una activa.
 loginController.guardarUbicacion = (req, res) => {
   if (!req.session?.usuario) {
     return res.status(401).json({ success: false, message: 'Sesión expirada.' });
   }
+  const { rol, ubicaciones = [], ubicacionActual } = req.session.usuario;
+  // Bloquear cambio mid-sesión para roles distintos de Administrador
+  if (ubicacionActual && rol !== 'Administrador') {
+    return res.status(403).json({ success: false, message: 'Solo el Administrador puede cambiar la ubicación activa.' });
+  }
   const { id_ubicacion } = req.body;
-  const { ubicaciones = [] } = req.session.usuario;
   const ubi = ubicaciones.find(u => u.id == id_ubicacion);
   if (!ubi) {
     return res.status(400).json({ success: false, message: 'Ubicación no válida.' });

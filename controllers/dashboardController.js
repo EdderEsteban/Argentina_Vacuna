@@ -1,4 +1,4 @@
-const { Aplicacion, Descarte, Lote, Vacuna, Ubicacion, Stock, Paciente, SolicitudesAcceso } = require('../models');
+const { Aplicacion, Descarte, Lote, Vacuna, Ubicacion, Stock, Paciente, SolicitudesAcceso, MovimientoLote } = require('../models');
 const { Op } = require('sequelize');
 
 // Formatea una fecha/hora a DD/MM/YYYY HH:MM para mostrar en el dashboard
@@ -120,6 +120,43 @@ async function kpisAuditor(idsUbicaciones) {
   };
 }
 
+// Calcula los KPIs del Administrativo: lotes registrados, stock en depósito, despachos y tránsitos
+async function kpisAdministrativo(idsUbicaciones) {
+  const ahora = new Date();
+  const anoMes  = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+  const diasMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
+
+  const [lotesRegistradosMes, stockEnDeposito, movimientosDespachados, movimientosEnTransito] = await Promise.all([
+    Lote.count({
+      where: {
+        createdAt: { [Op.between]: [new Date(`${anoMes}-01`), new Date(`${anoMes}-${diasMes}T23:59:59`)] },
+        deletedAt: null
+      }
+    }),
+    Stock.sum('cantidad', { where: { id_ubicacion: { [Op.in]: idsUbicaciones } } }),
+    MovimientoLote.count({
+      where: {
+        id_ubicacion_origen: { [Op.in]: idsUbicaciones },
+        fecha_movimiento: { [Op.between]: [`${anoMes}-01`, `${anoMes}-${diasMes}`] }
+      }
+    }),
+    MovimientoLote.count({
+      where: {
+        id_ubicacion_origen: { [Op.in]: idsUbicaciones },
+        id_transporte: { [Op.ne]: null },
+        fecha_recepcion: null
+      }
+    })
+  ]);
+
+  return {
+    lotesRegistradosMes:   lotesRegistradosMes   || 0,
+    stockEnDeposito:       stockEnDeposito        || 0,
+    movimientosDespachados: movimientosDespachados || 0,
+    movimientosEnTransito: movimientosEnTransito  || 0
+  };
+}
+
 // Calcula los KPIs del Enfermero: sus aplicaciones del día, del mes e históricas
 async function kpisEnfermero(id_usuario) {
   const { inicio: inicioHoy, fin: finHoy } = rangosDeHoy();
@@ -198,6 +235,9 @@ dashboard.index = async (req, res) => {
         order: [['fecha_aplicacion', 'DESC']],
         limit: 5
       })).map(a => ({ ...a.dataValues, fecha_aplicacion: formatearFechaHora(a.fecha_aplicacion) }));
+
+    } else if (rol === 'Administrativo') {
+      kpis = await kpisAdministrativo(idsUbicaciones);
     }
 
   } catch (error) {

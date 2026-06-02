@@ -1,131 +1,144 @@
 extends ../__layout/main
 
 block content
-    .container.mt-4
-        h1.mb-4 📦 Nuevo Lote
+  .container.mt-4
+    .row.justify-content-center
+      .col-lg-8
 
-        form#formNuevoLote
-            input(type="hidden" name="_csrf" value=csrfToken)
+        .card.form-card
+          .form-card-header
+            i.bi.bi-box-seam
+            h5 Nuevo Lote
 
-            .form-floating.mb-3 
-                input.form-control(
-                    type="text"
-                    id="numLote"
-                    name="numLote"
-                    required
-                    placeholder = ""
-                )
-                label.form-label(for="numLote") N° Lote
-                small.form-text.text-muted Mínimo 3 caracteres, máximo 100
+          .card-body.form-card-body
+            form#formNuevoLote
+              input(type="hidden" name="_csrf" value=csrfToken)
 
-            .form-floating.mb-3
-                select.form-select(
-                    id="id_laboratorio"
-                    name="id_laboratorio"
-                    required
-                )
-                    option(value="" disabled selected) -- Seleccione laboratorio --
-                    each laboratorio in laboratorios
+              p.form-section-label
+                i.bi.bi-hash.me-2
+                | Identificación del lote
+              .row.g-3.mb-4
+                .col-md-6
+                  .form-floating
+                    input.form-control(
+                      type="text"
+                      id="numLote"
+                      name="numLote"
+                      required
+                      placeholder=""
+                    )
+                    label(for="numLote") N° Lote
+                  small.form-text.text-muted Mínimo 3 caracteres, máximo 100
+                .col-md-6
+                  .form-floating
+                    select.form-select(
+                      id="id_laboratorio"
+                      name="id_laboratorio"
+                      required
+                    )
+                      option(value="" disabled selected) -- Seleccione --
+                      each laboratorio in laboratorios
                         option(value=laboratorio.id)= laboratorio.nombre
-                label.form-label(for="id_laboratorio") Seleccione un Laboratorio
-                
-            .form-floating.mb-3
-                input.form-control(
-                    type="number"
-                    id="cantidad"
-                    name="cantidad"
-                    min="1"
-                    required
-                    placeholder = "0"
-                )
-                label.form-label(for="cantidad") Cantidad
+                    label(for="id_laboratorio") Laboratorio
+                .col-md-6
+                  .form-floating
+                    input.form-control(
+                      type="number"
+                      id="cantidad"
+                      name="cantidad"
+                      min="1"
+                      required
+                      placeholder="0"
+                    )
+                    label(for="cantidad") Cantidad de dosis
+                .col-md-6
+                  .form-floating
+                    input.form-control(
+                      type="text"
+                      id="pais_origen"
+                      name="pais_origen"
+                      required
+                      placeholder=""
+                      maxlength="100"
+                    )
+                    label(for="pais_origen") País de Origen
 
-            .form-floating.mb-3 
-                input.form-control(
-                    type="text"
-                    id="tipo_vacuna"
-                    name="tipo_vacuna"
-                    required
-                    placeholder = ""
-                )
-                label.form-label(for="tipo_vacuna") Tipo de Vacuna
+              p.form-section-label
+                i.bi.bi-capsule.me-2
+                | Información de la vacuna
+              .row.g-3.mb-4
+                .col-md-6
+                  .form-floating
+                    input.form-control(
+                      type="text"
+                      id="tipo_vacuna"
+                      name="tipo_vacuna"
+                      required
+                      placeholder=""
+                    )
+                    label(for="tipo_vacuna") Tipo de Vacuna
+                .col-md-6
+                  .form-floating
+                    input.form-control(
+                      type="text"
+                      id="nombre_comercial"
+                      name="nombre_comercial"
+                      required
+                      placeholder=""
+                    )
+                    label(for="nombre_comercial") Nombre Comercial y Presentación
 
-            .form-floating.mb-3 
-                input.form-control(
-                    type="text"
-                    id="nombre_comercial"
-                    name="nombre_comercial"
-                    required
-                    placeholder = ""
-                )
-                label.form-label(for="nombre_comercial") Nombre Comercial y Presentación
+              p.form-section-label
+                i.bi.bi-calendar3.me-2
+                | Fechas
+              .row.g-3.mb-4
+                .col-md-3.col-sm-6
+                  .form-floating
+                    input.form-control(
+                      type="date"
+                      id="fecha_fab"
+                      name="fecha_fab"
+                      required
+                      placeholder=""
+                    )
+                    label(for="fecha_fab") Fabricación
+                .col-md-3.col-sm-6
+                  .form-floating
+                    input.form-control(
+                      type="date"
+                      id="fecha_venc"
+                      name="fecha_venc"
+                      required
+                      placeholder=""
+                    )
+                    label(for="fecha_venc") Vencimiento
+                .col-md-3.col-sm-6
+                  .form-floating
+                    input.form-control(
+                      type="date"
+                      id="fecha_compra"
+                      name="fecha_compra"
+                      required
+                      placeholder=""
+                    )
+                    label(for="fecha_compra") Compra
+                .col-md-3.col-sm-6
+                  .form-floating
+                    input.form-control(
+                      type="date"
+                      id="fecha_adquisicion"
+                      name="fecha_adquisicion"
+                      required
+                      placeholder=""
+                    )
+                    label(for="fecha_adquisicion") Adquisición
 
-            .form-floating.mb-3 
-                input.form-control(
-                    type="date"
-                    id="fecha_fab"
-                    name="fecha_fab"
-                    required
-                    placeholder = ""
-                )
-                label.form-label(for="fecha_fab") Fecha de Fabricación  
-                
-            .form-floating.mb-3 
-                input.form-control(
-                    type="date"
-                    id="fecha_venc"
-                    name="fecha_venc"
-                    required
-                    placeholder = ""
-                )
-                label.form-label(for="fecha_venc") Fecha de Vencimiento 
-                
-            .form-floating.mb-3
-                input.form-control(
-                    type="date"
-                    id="fecha_compra"
-                    name="fecha_compra"
-                    required
-                    placeholder = ""
-                )
-                label.form-label(for="fecha_compra") Fecha de Compra
+              .d-flex.gap-2.pt-2.border-top.mt-2
+                button.btn.btn-primary(type="button" id="guardarNuevoLote")
+                  i.bi.bi-save.me-2
+                  | Guardar Lote
+                a.btn.btn-outline-secondary(type="button" id="cancelarNuevoLote")
+                  i.bi.bi-x-circle.me-2
+                  | Cancelar
 
-            .form-floating.mb-3
-                input.form-control(
-                    type="date"
-                    id="fecha_adquisicion"
-                    name="fecha_adquisicion"
-                    required
-                    placeholder = ""
-                )
-                label.form-label(for="fecha_adquisicion") Fecha de Adquisición (llegada al país)
-
-            .form-floating.mb-3
-                input.form-control(
-                    type="text"
-                    id="pais_origen"
-                    name="pais_origen"
-                    required
-                    placeholder=""
-                    maxlength="100"
-                )
-                label.form-label(for="pais_origen") País de Origen
-
-            .d-flex.gap-2
-                button.btn.btn-primary.mb-3(type="button" id="guardarNuevoLote")
-                    i.bi.bi-save.me-2
-                    | Guardar Cambios
-                a.btn.btn-secondary.mb-3(type="button" id="cancelarNuevoLote")
-                    i.bi.bi-x-circle.me-2
-                    | Cancelar
-
-    script(src="/js/lote/nuevoLote.js")
-    script.
-        $(document).ready(function() {
-            $('#id_laboratorio').select2({
-                placeholder: '',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#id_laboratorio').parent()
-            });
-        });
+  script(src="/js/lote/nuevoLote.js")

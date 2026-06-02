@@ -1,3 +1,13 @@
+// -----------------------------------Inicialización de Select2--------------------------------
+$(document).ready(function () {
+    $('#id_laboratorio').select2({
+        placeholder: '',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#id_laboratorio').parent()
+    });
+});
+
 // -----------------------------------Variables-------------------------------------------------
 const formNuevoLote = document.getElementById('formNuevoLote');
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

@@ -1,3 +1,17 @@
+// Inicialización de Select2 sobre los filtros de búsqueda
+$(document).ready(function () {
+    function inicializarSelect2(selector) {
+        $(selector).select2({
+            placeholder: '',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $(selector).parent()
+        });
+    }
+    inicializarSelect2('#id_provincia');
+    inicializarSelect2('#id_ubicacion');
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // Obtener elementos DOM
     const inputDNI = document.getElementById('inputDNI');

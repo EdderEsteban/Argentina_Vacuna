@@ -1,4 +1,4 @@
-const { SolicitudesAcceso, Usuario, Rol, Ubicacion, UsuarioUbicacion } = require('../models');
+const { SolicitudesAcceso, Usuario, Rol, Ubicacion, UsuarioUbicacion, sequelize } = require('../models');
 
 const solicitudes = {};
 
@@ -58,23 +58,28 @@ solicitudes.actualizarEstado = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Esta solicitud no tiene credenciales registradas y no puede aprobarse.' });
       }
 
-      const user = await Usuario.create({
-        nombre:   sol.nombre,
-        apellido: sol.apellido,
-        dni:      sol.dni,
-        correo:   sol.correo,
-        telefono: sol.telefono || '',
-        usuario:  sol.usuario,
-        password: sol.password
-      });
+      // Aprobación atómica: si falla la asignación de ubicación/rol o el update
+      // del estado, se revierte la creación del usuario (evita usuarios huérfanos).
+      const result = await sequelize.transaction(async (t) => {
+        const user = await Usuario.create({
+          nombre:   sol.nombre,
+          apellido: sol.apellido,
+          dni:      sol.dni,
+          correo:   sol.correo,
+          telefono: sol.telefono || '',
+          usuario:  sol.usuario,
+          password: sol.password
+        }, { transaction: t });
 
-      await UsuarioUbicacion.create({ id_usuario: user.id, id_ubicacion, id_rol });
-      await sol.update({ estado: 'Aprobado' });
+        await UsuarioUbicacion.create({ id_usuario: user.id, id_ubicacion, id_rol }, { transaction: t });
+        await sol.update({ estado: 'Aprobado' }, { transaction: t });
+        return user;
+      });
 
       return res.json({
         success: true,
         message: 'Solicitud aprobada. El usuario fue creado correctamente.',
-        usuario: { id: user.id, usuario: user.usuario, nombre: `${user.nombre} ${user.apellido}` }
+        usuario: { id: result.id, usuario: result.usuario, nombre: `${result.nombre} ${result.apellido}` }
       });
     }
 
@@ -85,6 +90,13 @@ solicitudes.actualizarEstado = async (req, res) => {
     if (err.name === 'SequelizeUniqueConstraintError') {
       const campo = Object.keys(err.fields)[0];
       return res.status(409).json({ success: false, message: `El campo "${campo}" ya está registrado en el sistema.` });
+    }
+    if (err.name === 'SequelizeForeignKeyConstraintError') {
+      const fk = err.parent?.sqlMessage || '';
+      let msg = 'Referencia inválida.';
+      if (fk.includes('id_rol')) msg = 'El rol indicado no existe.';
+      else if (fk.includes('id_ubicacion')) msg = 'La ubicación indicada no existe.';
+      return res.status(400).json({ success: false, message: msg });
     }
     console.error(err);
     res.status(500).json({ success: false, message: 'Error al procesar la solicitud.' });

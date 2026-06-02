@@ -2,12 +2,15 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 🗑️ Listado de Descartes
+    h2.fw-bold.mb-4
+      i.bi.bi-trash.me-2.text-danger
+      | Listado de Descartes
 
-    .mb-3
-      a.btn.btn-danger(href='/nuevodescarte')
-        i.bi.bi-plus-circle.me-2
-        | Registrar Descarte
+    if usuario.rol === 'Administrador'
+      .mb-3
+        a.btn.btn-danger(href='/nuevodescarte')
+          i.bi.bi-plus-circle.me-2
+          | Registrar Descarte
 
     if filtroLabel
       .filtro-banner.p-3.mb-3.d-flex.align-items-center.justify-content-between.gap-3

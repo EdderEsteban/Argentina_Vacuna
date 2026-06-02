@@ -13,14 +13,18 @@ const aplicacion = require('../controllers/aplicacionController');
 const descarteCtrl = require('../controllers/descarteController');
 const reporteCtrl = require('../controllers/reporteController');
 const solicitudesCtrl = require('../controllers/solicitudesController');
+const transporteCtrl  = require('../controllers/transporteController');
 const { ADMIN, AUDITOR, ENFERMERO, ADMINISTRATIVO } = ROLES;
 
 // ─── Accesos por grupo de roles ──────────────────────────────────────────────
 const soloAdmin        = [auth, hasRole(ADMIN)];
 const soloEnfermero    = [auth, hasRole(ENFERMERO)];
+const adminAdm         = [auth, hasRole(ADMIN, ADMINISTRATIVO)];
 const adminAuditor     = [auth, hasRole(ADMIN, AUDITOR)];
 const adminEnfermero   = [auth, hasRole(ADMIN, ENFERMERO)];
 const adminAuditorEnf  = [auth, hasRole(ADMIN, AUDITOR, ENFERMERO)];
+const adminAuditorAdm  = [auth, hasRole(ADMIN, AUDITOR, ADMINISTRATIVO)];
+const adminAdmEnf      = [auth, hasRole(ADMIN, ADMINISTRATIVO, ENFERMERO)];
 const reportes         = [auth, hasRole(ADMIN, AUDITOR, ADMINISTRATIVO)];
 const todoAutenticado  = [auth, hasRole(ADMIN, AUDITOR, ENFERMERO, ADMINISTRATIVO)];
 
@@ -47,6 +51,11 @@ router.post('/seleccionar-ubicacion', auth, loginController.guardarUbicacion);
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 router.get('/dashboard', ...todoAutenticado, dashboardCtrl.index);
 
+// ─── Mi cuenta (autogestión: cualquier usuario autenticado sobre su propio id) ─
+router.get('/mi-cuenta',           ...todoAutenticado, usuarios.miCuenta);
+router.put('/mi-cuenta',           ...todoAutenticado, usuarios.actualizarMiCuenta);
+router.put('/mi-cuenta/password',  ...todoAutenticado, usuarios.cambiarMiPassword);
+
 // ─── Usuarios (solo Admin) ───────────────────────────────────────────────────
 router.get('/usuarios',                   ...soloAdmin, usuarios.listar);
 router.get('/nuevoUsuario',               ...soloAdmin, usuarios.mostrarNuevo);
@@ -60,24 +69,24 @@ router.put('/actualizarUsuario/:id',      ...soloAdmin, usuarios.actualizarUsuar
 router.delete('/borrarUsuario/:id',       ...soloAdmin, usuarios.borrarUsuario);
 
 // ─── Laboratorios ─────────────────────────────────────────────────────────────
-router.get('/laboratorios',               ...adminAuditor, laboratorio.listar);
+router.get('/laboratorios',               ...adminAuditorAdm, laboratorio.listar);
 router.get('/nuevolaboratorio',           ...soloAdmin, laboratorio.mostrarNuevo);
 router.post('/crearlaboratorio',          ...soloAdmin, laboratorio.crearLaboratorio);
 router.get('/editarlaboratorio/:id',      ...soloAdmin, laboratorio.editarLaboratorio);
 router.put('/actualizarlaboratorio/:id',  ...soloAdmin, laboratorio.actualizarLaboratorio);
 router.delete('/borrarlaboratorio/:id',   ...soloAdmin, laboratorio.borrarLaboratorio);
-router.get('/buscadorlaboratorio',        ...adminAuditor, laboratorio.mostrarBuscar);
-router.get('/buscarlaboratorio',          ...adminAuditor, laboratorio.buscarLaboratorio);
+router.get('/buscadorlaboratorio',        ...adminAuditorAdm, laboratorio.mostrarBuscar);
+router.get('/buscarlaboratorio',          ...adminAuditorAdm, laboratorio.buscarLaboratorio);
 
 // ─── Lotes ────────────────────────────────────────────────────────────────────
-router.get('/lotes',                      ...adminAuditorEnf, lote.listar);
-router.get('/nuevolote',                  ...soloAdmin, lote.mostrarNuevo);
-router.post('/crearlote',                 ...soloAdmin, lote.crearLote);
+router.get('/lotes',                      ...todoAutenticado, lote.listar);
+router.get('/nuevolote',                  ...adminAdm, lote.mostrarNuevo);
+router.post('/crearlote',                 ...adminAdm, lote.crearLote);
 router.get('/editarlote/:id',             ...soloAdmin, lote.editarLote);
 router.put('/actualizarlote/:id',         ...soloAdmin, lote.actualizarLote);
 router.delete('/borrarlote/:id',          ...soloAdmin, lote.borrarLote);
-router.get('/buscardorlote',              ...adminAuditorEnf, lote.mostrarBuscar);
-router.get('/buscarlote',                 ...adminAuditorEnf, lote.buscarLotes);
+router.get('/buscardorlote',              ...todoAutenticado, lote.mostrarBuscar);
+router.get('/buscarlote',                 ...todoAutenticado, lote.buscarLotes);
 
 // ─── Pacientes ────────────────────────────────────────────────────────────────
 router.get('/pacientes',                  ...adminAuditorEnf, paciente.listar);
@@ -101,9 +110,16 @@ router.get('/buscadorubicacion',          ...adminAuditor, ubicacion.mostrarBusc
 router.get('/buscarubicacion',            ...adminAuditor, ubicacion.buscarUbicacion);
 
 // ─── Movimientos ──────────────────────────────────────────────────────────────
-router.get('/movimientos',                ...adminAuditor, movimientoLote.listar);
-router.get('/nuevomovimiento',            ...soloAdmin, movimientoLote.mostrarNuevo);
-router.post('/crearmovimiento',           ...soloAdmin, movimientoLote.crearMovimiento);
+router.get('/movimientos',                ...todoAutenticado, movimientoLote.listar);
+router.get('/nuevomovimiento',            ...adminAdm, movimientoLote.mostrarNuevo);
+router.post('/crearmovimiento',           ...adminAdm, movimientoLote.crearMovimiento);
+router.put('/movimientos/:id/recepcion',  ...adminAdmEnf, movimientoLote.registrarRecepcion);
+
+// ─── Transportes ──────────────────────────────────────────────────────────────
+router.get('/transportes',                ...adminAuditorAdm, transporteCtrl.listar);
+router.get('/nuevotransporte',            ...adminAdm, transporteCtrl.mostrarNuevo);
+router.post('/creartransporte',           ...adminAdm, transporteCtrl.crearTransporte);
+router.delete('/borrartransporte/:id',    ...adminAdm, transporteCtrl.borrarTransporte);
 
 // ─── Aplicaciones ─────────────────────────────────────────────────────────────
 router.get('/aplicaciones',               ...adminAuditorEnf, aplicacion.listar);

@@ -4,10 +4,10 @@ block content
   .container.mt-4
     h1.mb-4 👥 Listado de Pacientes
 
-    //- Botón de nuevo paciente
-    a.btn.btn-primary.mb-3(href='/nuevopaciente')
-      i.bi.bi-plus-circle.me-2
-      | Nuevo Paciente
+    if usuario.rol === 'Administrador' || usuario.rol === 'Enfermero'
+      a.btn.btn-primary.mb-3(href='/nuevopaciente')
+        i.bi.bi-plus-circle.me-2
+        | Nuevo Paciente
 
     //- Tabla responsive
     .table-responsive
@@ -34,10 +34,12 @@ block content
               td= paciente.ubicacionRegistro.nombre
               td
                 .d-flex.gap-2
-                  a.btn.btn-sm.btn-outline-primary.editar-paciente(href=`/editarpaciente/${paciente.id}`)
-                    i.bi.bi-pencil
-                  button.btn.btn-sm.btn-outline-danger.borrar-paciente(data-id=paciente.id)
-                    i.bi.bi-trash
+                  if usuario.rol === 'Administrador' || usuario.rol === 'Enfermero'
+                    a.btn.btn-sm.btn-outline-primary.editar-paciente(href=`/editarpaciente/${paciente.id}`)
+                      i.bi.bi-pencil
+                  if usuario.rol === 'Administrador'
+                    button.btn.btn-sm.btn-outline-danger.borrar-paciente(data-id=paciente.id)
+                      i.bi.bi-trash
 
     //- Controles de paginación
     if pagination.totalPages > 1

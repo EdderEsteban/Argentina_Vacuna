@@ -6,7 +6,7 @@ block content
       h2.fw-bold
         i.bi.bi-arrow-left-right.me-2
         | Movimientos de Lotes
-      if usuario.rol === 'Administrador'
+      if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
         a.btn.btn-primary(href='/nuevomovimiento')
           i.bi.bi-plus-circle.me-2
           | Nuevo Movimiento
@@ -22,11 +22,13 @@ block content
                 th Destino
                 th.text-center Cantidad
                 th Estado Vacuna
+                th Transporte / Estado
                 th Fecha
+                th.text-center Acción
             tbody
               if movimientos.length === 0
                 tr
-                  td.text-center.text-muted(colspan='6') No hay movimientos registrados
+                  td.text-center.text-muted(colspan='8') No hay movimientos registrados
               each m in movimientos
                 tr
                   td
@@ -41,7 +43,31 @@ block content
                       span.badge(class=badgeClass)= m.lote.vacunas[0].estado.nombre
                     else
                       span.badge.bg-light.text-dark Sin estado
+                  td
+                    if m.transporte
+                      .d-flex.flex-column.gap-1
+                        if !m.fecha_recepcion
+                          span.badge.bg-warning.text-dark
+                            i.bi.bi-truck.me-1
+                            | En tránsito
+                        else
+                          span.badge.bg-success
+                            i.bi.bi-check-circle.me-1
+                            | Recibido
+                          small.text-muted.d-block= new Date(m.fecha_recepcion).toLocaleDateString('es-AR')
+                        small.text-muted= `${m.transporte.nombre} — ${m.transporte.id_movil}`
+                    else
+                      span.text-muted.small Interno
                   td= new Date(m.fecha_movimiento).toLocaleDateString('es-AR')
+                  td.text-center
+                    if m.transporte && !m.fecha_recepcion && (usuario.rol === 'Administrador' || usuario.rol === 'Administrativo' || usuario.rol === 'Enfermero')
+                      button.btn.btn-sm.btn-success.btn-recepcion(data-id=m.id data-lote=(m.lote ? m.lote.num_lote : '') data-origen=(m.origen ? m.origen.nombre : 'Depósito Nacional') data-destino=(m.destino ? m.destino.nombre : ''))
+                        i.bi.bi-check-circle-fill.me-1
+                        | Confirmar recepción
+                    else if m.transporte && m.fecha_recepcion
+                      span.text-muted.small —
+                    else if !m.transporte
+                      span.text-muted.small —
 
     if pagination.totalPages > 1
       nav.mt-3(aria-label='Paginación')
@@ -53,3 +79,5 @@ block content
               a.page-link(href=`/movimientos?page=${i}`)= i
           li.page-item(class=pagination.hasNextPage ? '' : 'disabled')
             a.page-link(href=`/movimientos?page=${pagination.currentPage + 1}`) &raquo;
+
+  script(src='/js/movimiento/listadoMovimiento.js')

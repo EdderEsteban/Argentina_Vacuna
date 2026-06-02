@@ -3,38 +3,64 @@ extends __layout/main
 block content
   .container
     .row.justify-content-center
-      .col-md-5
-        .card.shadow
-          .card-header.bg-primary.text-white.text-center
-            i.bi.bi-shield-lock.me-2(style='font-size:1.4rem')
-            strong Iniciar Sesión
-          .card-body.p-4
-            form#loginForm
-              input(type="hidden" name="_csrf" value=csrfToken)
-              .form-floating.mb-3
-                input.form-control#usuario(
-                  type="text"
-                  name="usuario"
-                  autocomplete="username"
-                  placeholder="Usuario"
-                  required
-                )
-                label(for="usuario") Usuario
-              .form-floating.mb-3
-                input.form-control#password(
-                  type="password"
-                  name="password"
-                  autocomplete="current-password"
-                  placeholder="Contraseña"
-                  required
-                )
-                label(for="password") Contraseña
-              .d-grid
-                button#iniciarSesion.btn.btn-primary(type="button")
-                  i.bi.bi-box-arrow-in-right.me-2
-                  | Iniciar Sesión
-          .card-footer.text-center.text-muted.small
-            | ¿No tenés cuenta?
-            a#solicitud.btn.btn-link.btn-sm.p-0.ms-1(href="/solicitud") Solicitar Acceso
+      .col-md-10.col-lg-9.col-xl-8
+        .login-split-card
+          .row.g-0
+
+            //- Panel izquierdo — marca + descripción
+            .col-md-5.login-panel-left.d-none.d-md-flex.flex-column.justify-content-between
+              div
+                .login-brand-icon
+                  i.bi.bi-shield-check
+                h4 Argentina Vacuna
+                p.login-desc Sistema nacional de trazabilidad de vacunas — desde la compra al Ministerio hasta la aplicación a cada paciente.
+                .login-features
+                  .login-feature
+                    i.bi.bi-box-seam
+                    span Gestión de lotes y distribución
+                  .login-feature
+                    i.bi.bi-arrow-left-right
+                    span Movimientos entre depósitos
+                  .login-feature
+                    i.bi.bi-people
+                    span Registro de pacientes y aplicaciones
+                  .login-feature
+                    i.bi.bi-bar-chart-line
+                    span Reportes y auditoría
+              p.text-white-50.small.mb-0 Laboratorio de Programación II
+
+            //- Panel derecho — formulario
+            .col-12.col-md-7.login-panel-right
+              p.login-form-title Iniciar Sesión
+              p.login-form-subtitle Ingresá tus credenciales para continuar.
+
+              form#loginForm
+                input(type="hidden" name="_csrf" value=csrfToken)
+                .form-floating.mb-3
+                  input.form-control#usuario(
+                    type="text"
+                    name="usuario"
+                    autocomplete="username"
+                    placeholder="Usuario"
+                    required
+                  )
+                  label(for="usuario") Usuario
+                .form-floating.mb-3
+                  input.form-control#password(
+                    type="password"
+                    name="password"
+                    autocomplete="current-password"
+                    placeholder="Contraseña"
+                    required
+                  )
+                  label(for="password") Contraseña
+                .d-grid.mt-4
+                  button#iniciarSesion.btn.btn-primary.btn-lg(type="button")
+                    i.bi.bi-box-arrow-in-right.me-2
+                    | Iniciar Sesión
+
+              .text-center.text-muted.small.mt-3
+                | ¿No tenés cuenta?
+                a#solicitud.btn.btn-link.btn-sm.p-0.ms-1(href="/solicitud") Solicitar Acceso
 
   script(src="/js/login/index.js")

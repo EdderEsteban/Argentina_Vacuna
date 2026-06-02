@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       this.belongsTo(models.Usuario, { foreignKey: 'id_usuario_origen', as: 'usuarioOrigen' });
       this.belongsTo(models.Usuario, { foreignKey: 'id_usuario_destino', as: 'usuarioDestino' });
       this.belongsTo(models.Estado, { foreignKey: 'id_estado', as: 'estado' });
+      this.belongsTo(models.Transporte, { foreignKey: 'id_transporte', as: 'transporte' });
     }
   }
 
@@ -67,6 +68,10 @@ module.exports = (sequelize, DataTypes) => {
           if (!estado) throw new Error('Estado no válido');
         }
       }
+    },
+    id_transporte: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }
   }, {
     sequelize,

@@ -9,7 +9,7 @@ document.querySelectorAll('.ubicacion-card').forEach(card => {
     resaltarSeleccion(card);
     btn.disabled = false;
   });
-});
+}); 
 
 function resaltarSeleccion(cardActiva) {
   document.querySelectorAll('.ubicacion-card').forEach(c => {

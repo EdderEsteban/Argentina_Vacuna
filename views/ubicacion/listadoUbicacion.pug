@@ -2,11 +2,14 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 📍 Listado de Ubicaciones
+    h2.fw-bold.mb-4
+      i.bi.bi-geo-alt.me-2.text-primary
+      | Listado de Ubicaciones
 
-    button#btnNuevaUbicacion.btn.btn-primary.mb-3    
-      i.bi.bi-plus-circle.me-2
-      | Nueva Ubicación
+    if usuario.rol === 'Administrador'
+      button#btnNuevaUbicacion.btn.btn-primary.mb-3
+        i.bi.bi-plus-circle.me-2
+        | Nueva Ubicación
 
     .table-responsive
       table.table.table-striped.table-hover.align-middle
@@ -17,7 +20,8 @@ block content
             th(scope='col') Teléfono
             th(scope='col') Tipo
             th(scope='col') Provincia
-            th(scope='col') Acciones
+            if usuario.rol === 'Administrador'
+              th(scope='col') Acciones
         tbody
           each ubicacion in ubicaciones
             tr
@@ -26,12 +30,13 @@ block content
               td= ubicacion.telefono
               td= ubicacion.tipo
               td= ubicacion.provincia.nombre
-              td
-                .d-flex.gap-2
-                  a.btn.btn-sm.btn-outline-primary(href=`/editarubicacion/${ubicacion.id}`)
-                    i.bi.bi-pencil
-                  button.btn.btn-sm.btn-outline-danger.borrar-ubicacion(data-id=ubicacion.id)
-                    i.bi.bi-trash
+              if usuario.rol === 'Administrador'
+                td
+                  .d-flex.gap-2
+                    a.btn.btn-sm.btn-outline-primary(href=`/editarubicacion/${ubicacion.id}`)
+                      i.bi.bi-pencil
+                    button.btn.btn-sm.btn-outline-danger.borrar-ubicacion(data-id=ubicacion.id)
+                      i.bi.bi-trash
 
     //- Controles de paginación
     if pagination.totalPages > 1

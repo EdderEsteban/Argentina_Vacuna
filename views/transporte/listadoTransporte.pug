@@ -1,0 +1,58 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    .d-flex.justify-content-between.align-items-center.mb-4
+      h2.fw-bold
+        i.bi.bi-truck.me-2
+        | Transportes
+      if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
+        a.btn.btn-primary(href='/nuevotransporte')
+          i.bi.bi-plus-circle.me-2
+          | Nuevo Transporte
+
+    .card.shadow-sm
+      .card-body.p-0
+        .table-responsive
+          table.table.table-striped.table-hover.align-middle.mb-0
+            thead.table-dark
+              tr
+                th #
+                th Empresa
+                th Identificador del Móvil
+                if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
+                  th.text-center Acciones
+            tbody
+              if transportes.length === 0
+                tr
+                  - const cols = (usuario.rol === 'Administrador' || usuario.rol === 'Administrativo') ? '4' : '3'
+                  td.text-center.text-muted(colspan=cols) No hay transportes registrados
+              each t in transportes
+                tr
+                  td= t.id
+                  td
+                    i.bi.bi-building.me-2.text-secondary
+                    = t.nombre
+                  td
+                    code= t.id_movil
+                  if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
+                    td.text-center
+                      button.btn.btn-sm.btn-outline-danger.btn-borrar(
+                        data-id=t.id
+                        data-nombre=t.nombre
+                        data-movil=t.id_movil
+                      )
+                        i.bi.bi-trash
+
+    if pagination.totalPages > 1
+      nav.mt-3(aria-label='Paginación')
+        ul.pagination.justify-content-center
+          li.page-item(class=pagination.hasPreviousPage ? '' : 'disabled')
+            a.page-link(href=`/transportes?page=${pagination.currentPage - 1}`) &laquo;
+          - for (let i = 1; i <= pagination.totalPages; i++)
+            li.page-item(class=i === pagination.currentPage ? 'active' : '')
+              a.page-link(href=`/transportes?page=${i}`)= i
+          li.page-item(class=pagination.hasNextPage ? '' : 'disabled')
+            a.page-link(href=`/transportes?page=${pagination.currentPage + 1}`) &raquo;
+
+  script(src='/js/transporte/listadoTransporte.js')

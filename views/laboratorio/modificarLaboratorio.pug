@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 ✏️ Editar Laboratorio
+    h2.fw-bold.mb-4
+      i.bi.bi-pencil-square.me-2.text-primary
+      | Editar Laboratorio
     
     form#formEditarLaboratorio(data-id=laboratorio.id)
       input(type="hidden" name="_csrf" value=csrfToken)

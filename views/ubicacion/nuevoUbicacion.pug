@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 📍 Nueva Ubicación
+    h2.fw-bold.mb-4
+      i.bi.bi-geo-alt.me-2.text-primary
+      | Nueva Ubicación
 
     form#formNuevaUbicacion
       input(type="hidden" name="_csrf" value=csrfToken)
@@ -71,12 +73,3 @@ block content
           | Cancelar
 
     script(src="/js/ubicacion/nuevoUbicacion.js")
-    script.
-        $(document).ready(function() {
-            $('#id_provincia').select2({
-                placeholder: '',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#id_provincia').parent()
-            });
-        });

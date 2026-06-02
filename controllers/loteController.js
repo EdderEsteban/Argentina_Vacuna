@@ -1,4 +1,4 @@
-const { Lote, Laboratorio, Vacuna, Estado, Stock, Ubicacion } = require('../models');
+const { Lote, Laboratorio, Vacuna, Estado, Stock, Ubicacion, MovimientoLote } = require('../models');
 const { Op } = require('sequelize');
 
 const lote = {};
@@ -37,6 +37,7 @@ lote.listar = async (req, res) => {
                     include: [{ model: Estado, as: 'estado' }]
                 }
             ],
+            distinct: true,
             order: filtro === 'alerta' ? [['fecha_venc', 'ASC']] : [['id', 'ASC']],
             limit,
             offset
@@ -88,26 +89,33 @@ lote.listar = async (req, res) => {
     }
 };
 
-// Mostrar formulario de creación de nuevo lote
+// Mostrar formulario de creación de nuevo lote (solo Depósito Nacional para Administrativo)
 lote.mostrarNuevo = async (req, res) => {
     try {
-        // Obtener todos los laboratorios activos
+        const { rol, ubicacionActual } = req.session.usuario;
+        if (rol === 'Administrativo' && ubicacionActual?.tipo !== 'Deposito Nacional') {
+            return res.redirect('/403');
+        }
+
         const laboratorios = await Laboratorio.findAll({
             where: { deletedAt: null },
             order: [['nombre', 'ASC']]
         });
 
-        res.render('lote/nuevoLote', {
-            laboratorios
-        });
+        res.render('lote/nuevoLote', { laboratorios });
     } catch (error) {
         res.redirect('/404');
     }
 }
 
-// POST Crear nuevo lote y sus vacunas
+// POST Crear nuevo lote y sus vacunas (solo Depósito Nacional para Administrativo)
 lote.crearLote = async (req, res) => {
   try {
+    const { rol, ubicacionActual } = req.session.usuario;
+    if (rol === 'Administrativo' && ubicacionActual?.tipo !== 'Deposito Nacional') {
+      return res.status(403).json({ success: false, message: 'Solo el Depósito Nacional puede registrar nuevas compras de vacunas.' });
+    }
+
     const {
       numLote,
       id_laboratorio,
@@ -248,6 +256,18 @@ lote.actualizarLote = async (req, res) => {
       });
     }
 
+    // Si la cantidad cambia y el lote ya tiene movimientos, rechazar:
+    // los stocks se manejan vía movimientos y descartes, no editando el lote.
+    if (nuevaCantidad !== lote.cantidad) {
+      const tieneMovimientos = await MovimientoLote.count({ where: { id_lote: loteId } });
+      if (tieneMovimientos > 0) {
+        return res.status(409).json({
+          success: false,
+          message: 'No se puede modificar la cantidad: el lote ya tiene movimientos. Si quiere descontar dosis, registre un descarte o un movimiento.'
+        });
+      }
+    }
+
     // Actualizar el lote
     await lote.update({
       num_lote: req.body.numLote.trim(),
@@ -260,7 +280,7 @@ lote.actualizarLote = async (req, res) => {
       pais_origen: req.body.pais_origen ? req.body.pais_origen.trim() : null
     });
 
-    //  Actualizar Vacuna asociada al lote
+    // Actualizar Vacuna asociada al lote
     await Vacuna.update(
       {
         tipo: req.body.tipo_vacuna.trim(),
@@ -269,19 +289,20 @@ lote.actualizarLote = async (req, res) => {
       { where: { id_lote: loteId } }
     );
 
-    //  Ajustar el stock total #REVISAR UBICACION#
-    const stock = await Stock.findOne({
-      where: { id_lote: loteId }
-    });
-
-    if (stock) {
-      stock.cantidad = nuevaCantidad;
-      await stock.save();
+    // Si NO hay movimientos aún, sincronizar el stock inicial del Depósito Nacional
+    // con la nueva cantidad (caso "corrección post-carga"). Si hay movimientos,
+    // el guardia anterior ya cortó el flujo y no llegamos aquí.
+    if (nuevaCantidad !== lote.cantidad) {
+      const depositoNacional = await Ubicacion.findOne({ where: { tipo: 'Deposito Nacional' } });
+      if (depositoNacional) {
+        const stockNC = await Stock.findOne({ where: { id_lote: loteId, id_ubicacion: depositoNacional.id } });
+        if (stockNC) await stockNC.update({ cantidad: nuevaCantidad });
+      }
     }
 
     res.json({
       success: true,
-      message: 'Lote, vacuna y stock actualizados exitosamente',
+      message: 'Lote y vacuna actualizados exitosamente',
       data: lote
     });
 
@@ -374,6 +395,7 @@ lote.buscarLotes = async (req, res) => {
         // Consulta con joins para incluir vacunas y su tipo y nombre comercial
         const { count, rows } = await Lote.findAndCountAll({
             where: whereLote,
+            distinct: true,
             limit,
             offset,
             order: [['id', 'ASC']],

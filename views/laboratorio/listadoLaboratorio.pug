@@ -2,12 +2,14 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 🧪 Listado de Laboratorios
+    h2.fw-bold.mb-4
+      i.bi.bi-building.me-2.text-primary
+      | Listado de Laboratorios
 
-    //- Botón de nuevo laboratorio
-    a.btn.btn-primary.mb-3(href='/nuevolaboratorio')
-      i.bi.bi-plus-circle.me-2
-      | Nuevo Laboratorio
+    if usuario.rol === 'Administrador'
+      a.btn.btn-primary.mb-3(href='/nuevolaboratorio')
+        i.bi.bi-plus-circle.me-2
+        | Nuevo Laboratorio
 
     //- Tabla responsive
     .table-responsive
@@ -16,20 +18,22 @@ block content
           tr
             th(scope='col') Nombre
             th(scope='col') Nacionalidad
-            th(scope='col' style='width: 150px') Acciones
+            if usuario.rol === 'Administrador'
+              th(scope='col' style='width: 150px') Acciones
         tbody
           each laboratorio in laboratorios
             tr
               td= laboratorio.nombre
               td= laboratorio.nacionalidad
-              td
-                .d-flex.gap-2
-                  a.btn.btn-sm.btn-outline-primary.editar-laboratorio(data-id=laboratorio.id)
-                    i.bi.bi-pencil
-                  button.btn.btn-sm.btn-outline-danger.borrar-laboratorio(
-                    data-id=laboratorio.id
-                  )
-                    i.bi.bi-trash
+              if usuario.rol === 'Administrador'
+                td
+                  .d-flex.gap-2
+                    a.btn.btn-sm.btn-outline-primary.editar-laboratorio(data-id=laboratorio.id)
+                      i.bi.bi-pencil
+                    button.btn.btn-sm.btn-outline-danger.borrar-laboratorio(
+                      data-id=laboratorio.id
+                    )
+                      i.bi.bi-trash
 
     //- Controles de paginación
     if pagination.totalPages > 1

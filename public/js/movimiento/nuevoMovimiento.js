@@ -1,3 +1,11 @@
+$(document).ready(function () {
+  // Inicialización de Select2 sobre los selects del formulario
+  $('#id_lote').select2({ placeholder: 'Seleccione un lote', width: '100%', dropdownParent: $('#id_lote').parent() });
+  $('#id_ubicacion_origen').select2({ placeholder: 'Seleccione origen', width: '100%', dropdownParent: $('#id_ubicacion_origen').parent() });
+  $('#id_ubicacion_destino').select2({ placeholder: 'Seleccione destino', width: '100%', dropdownParent: $('#id_ubicacion_destino').parent() });
+  $('#id_transporte').select2({ placeholder: 'Sin transporte (movimiento interno)', allowClear: true, width: '100%', dropdownParent: $('#id_transporte').parent() });
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('formMovimiento');
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
@@ -17,10 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!cantidad || cantidad < 1) {
       return Swal.fire('Validación', 'La cantidad debe ser mayor a 0.', 'warning');
     }
+    if (!idOrigen) {
+      return Swal.fire('Validación', 'Debe seleccionar una ubicación de origen.', 'warning');
+    }
     if (!idDestino) {
       return Swal.fire('Validación', 'Debe seleccionar una ubicación destino.', 'warning');
     }
-    if (idOrigen && idOrigen === idDestino) {
+    if (idOrigen === idDestino) {
       return Swal.fire('Validación', 'La ubicación origen y destino no pueden ser la misma.', 'warning');
     }
     if (!fecha) {
@@ -40,7 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if (!confirm.isConfirmed) return;
 
-    const data = { id_lote: idLote, cantidad, id_ubicacion_origen: idOrigen, id_ubicacion_destino: idDestino, fecha_movimiento: fecha };
+    const idTransporte = document.getElementById('id_transporte').value;
+    const data = { id_lote: idLote, cantidad, id_ubicacion_origen: idOrigen, id_ubicacion_destino: idDestino, fecha_movimiento: fecha, id_transporte: idTransporte || null };
 
     try {
       const res = await fetch('/crearmovimiento', {

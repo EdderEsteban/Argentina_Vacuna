@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 04-05-2026 a las 16:39:35
+-- Tiempo de generación: 02-06-2026 a las 19:16:14
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -25,65 +25,134 @@ DELIMITER $$
 --
 -- Procedimientos
 --
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte1_compras_por_laboratorio` (IN `p_desde` DATE, IN `p_hasta` DATE)   BEGIN
-        SELECT
-          lab.nombre        AS laboratorio,
-          lab.nacionalidad,
-          COUNT(l.id)       AS num_lotes,
-          SUM(l.cantidad)   AS total_dosis,
-          MIN(l.fecha_compra) AS primera_compra,
-          MAX(l.fecha_compra) AS ultima_compra
-        FROM lotes l
-        JOIN laboratorios lab ON l.id_laboratorio = lab.id
-        WHERE l.fecha_compra BETWEEN p_desde AND p_hasta
-          AND l.deletedAt IS NULL
-        GROUP BY lab.id, lab.nombre, lab.nacionalidad
-        ORDER BY total_dosis DESC;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte1_compras_por_laboratorio` (IN `p_desde` DATE, IN `p_hasta` DATE, IN `p_ubicacion_id` INT)   BEGIN
+        IF p_ubicacion_id IS NULL THEN
+          -- Sin filtro: vista nacional, todas las compras
+          SELECT
+            lab.nombre        AS laboratorio,
+            lab.nacionalidad,
+            COUNT(l.id)       AS num_lotes,
+            SUM(l.cantidad)   AS total_dosis,
+            MIN(l.fecha_compra) AS primera_compra,
+            MAX(l.fecha_compra) AS ultima_compra
+          FROM lotes l
+          JOIN laboratorios lab ON l.id_laboratorio = lab.id
+          WHERE l.fecha_compra BETWEEN p_desde AND p_hasta
+            AND l.deletedAt IS NULL
+          GROUP BY lab.id, lab.nombre, lab.nacionalidad
+          ORDER BY total_dosis DESC;
+        ELSE
+          -- Con filtro: compras cuyos lotes fueron despachados a la ubicación
+          SELECT
+            lab.nombre              AS laboratorio,
+            lab.nacionalidad,
+            COUNT(DISTINCT l.id)    AS num_lotes,
+            SUM(ml.cantidad)        AS total_dosis,
+            MIN(l.fecha_compra)     AS primera_compra,
+            MAX(l.fecha_compra)     AS ultima_compra
+          FROM lotes l
+          JOIN laboratorios lab ON l.id_laboratorio = lab.id
+          JOIN movimientolotes ml ON ml.id_lote = l.id
+          WHERE l.fecha_compra BETWEEN p_desde AND p_hasta
+            AND l.deletedAt IS NULL
+            AND ml.id_ubicacion_destino = p_ubicacion_id
+            AND ml.deletedAt IS NULL
+          GROUP BY lab.id, lab.nombre, lab.nacionalidad
+          ORDER BY total_dosis DESC;
+        END IF;
       END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte2_lotes_por_tipo` ()   BEGIN
-        SELECT
-          v.tipo,
-          COALESCE(SUM(CASE WHEN u.tipo = 'Deposito Nacional'   THEN s.cantidad ELSE 0 END), 0) AS en_nacion,
-          COALESCE(SUM(CASE WHEN u.tipo = 'Distribucion'        THEN s.cantidad ELSE 0 END), 0) AS en_distribucion,
-          COALESCE(SUM(CASE WHEN u.tipo = 'Deposito Provincial' THEN s.cantidad ELSE 0 END), 0) AS en_provincia,
-          COALESCE(SUM(CASE WHEN u.tipo = 'Centro Vacunacion'   THEN s.cantidad ELSE 0 END), 0) AS en_centros,
-          (SELECT COUNT(*) FROM aplicaciones a
-           JOIN vacunas av ON a.id_vacuna = av.id
-           WHERE av.tipo = v.tipo AND a.deletedAt IS NULL) AS aplicadas,
-          (SELECT COALESCE(SUM(d.cantidad), 0) FROM descartes d
-           JOIN lotes dl ON d.id_lote = dl.id
-           JOIN vacunas dv ON dv.id_lote = dl.id
-           WHERE dv.tipo = v.tipo AND d.deletedAt IS NULL) AS descartadas,
-          (SELECT COUNT(*) FROM vacunas vv
-           WHERE vv.tipo = v.tipo
-             AND vv.id_estado = (SELECT id FROM estados WHERE codigo = 'VENC' LIMIT 1)) AS vencidas
-        FROM vacunas v
-        LEFT JOIN stocks s  ON s.id_lote     = v.id_lote
-        LEFT JOIN ubicaciones u ON s.id_ubicacion = u.id
-        GROUP BY v.tipo
-        ORDER BY v.tipo;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte2_lotes_por_tipo` (IN `p_ubicacion_id` INT)   BEGIN
+        IF p_ubicacion_id IS NULL THEN
+          SELECT
+            v.tipo,
+            COALESCE(SUM(CASE WHEN u.tipo = 'Deposito Nacional'   THEN s.cantidad ELSE 0 END), 0) AS en_nacion,
+            COALESCE(SUM(CASE WHEN u.tipo = 'Distribucion'        THEN s.cantidad ELSE 0 END), 0) AS en_distribucion,
+            COALESCE(SUM(CASE WHEN u.tipo = 'Deposito Provincial' THEN s.cantidad ELSE 0 END), 0) AS en_provincia,
+            COALESCE(SUM(CASE WHEN u.tipo = 'Centro Vacunacion'   THEN s.cantidad ELSE 0 END), 0) AS en_centros,
+            (SELECT COUNT(*) FROM aplicaciones a
+             JOIN vacunas av ON a.id_vacuna = av.id
+             WHERE av.tipo = v.tipo AND a.deletedAt IS NULL) AS aplicadas,
+            (SELECT COALESCE(SUM(d.cantidad), 0) FROM descartes d
+             JOIN lotes dl ON d.id_lote = dl.id
+             JOIN vacunas dv ON dv.id_lote = dl.id
+             WHERE dv.tipo = v.tipo AND d.deletedAt IS NULL) AS descartadas,
+            (SELECT COALESCE(SUM(s2.cantidad), 0) FROM stocks s2
+             JOIN lotes l2   ON s2.id_lote = l2.id
+             JOIN vacunas v2 ON v2.id_lote = l2.id
+             WHERE v2.tipo = v.tipo AND l2.fecha_venc < CURDATE() AND l2.deletedAt IS NULL) AS vencidas
+          FROM vacunas v
+          LEFT JOIN stocks s  ON s.id_lote     = v.id_lote
+          LEFT JOIN ubicaciones u ON s.id_ubicacion = u.id
+          GROUP BY v.tipo
+          ORDER BY v.tipo;
+        ELSE
+          SELECT
+            v.tipo,
+            COALESCE(SUM(CASE WHEN u.tipo = 'Deposito Nacional'   THEN s.cantidad ELSE 0 END), 0) AS en_nacion,
+            COALESCE(SUM(CASE WHEN u.tipo = 'Distribucion'        THEN s.cantidad ELSE 0 END), 0) AS en_distribucion,
+            COALESCE(SUM(CASE WHEN u.tipo = 'Deposito Provincial' THEN s.cantidad ELSE 0 END), 0) AS en_provincia,
+            COALESCE(SUM(CASE WHEN u.tipo = 'Centro Vacunacion'   THEN s.cantidad ELSE 0 END), 0) AS en_centros,
+            (SELECT COUNT(*) FROM aplicaciones a
+             JOIN vacunas av ON a.id_vacuna = av.id
+             WHERE av.tipo = v.tipo AND a.deletedAt IS NULL AND a.id_ubicacion = p_ubicacion_id) AS aplicadas,
+            (SELECT COALESCE(SUM(d.cantidad), 0) FROM descartes d
+             JOIN lotes dl ON d.id_lote = dl.id
+             JOIN vacunas dv ON dv.id_lote = dl.id
+             WHERE dv.tipo = v.tipo AND d.deletedAt IS NULL AND d.id_ubicacion = p_ubicacion_id) AS descartadas,
+            (SELECT COALESCE(SUM(s2.cantidad), 0) FROM stocks s2
+             JOIN lotes l2   ON s2.id_lote = l2.id
+             JOIN vacunas v2 ON v2.id_lote = l2.id
+             WHERE v2.tipo = v.tipo AND l2.fecha_venc < CURDATE() AND l2.deletedAt IS NULL
+               AND s2.id_ubicacion = p_ubicacion_id) AS vencidas
+          FROM vacunas v
+          LEFT JOIN stocks s  ON s.id_lote     = v.id_lote AND s.id_ubicacion = p_ubicacion_id
+          LEFT JOIN ubicaciones u ON s.id_ubicacion = u.id
+          GROUP BY v.tipo
+          ORDER BY v.tipo;
+        END IF;
       END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte3_stock_por_provincia` ()   BEGIN
-        SELECT
-          v.tipo          AS tipo_vacuna,
-          p.nombre        AS provincia,
-          u.tipo          AS tipo_ubicacion,
-          SUM(s.cantidad) AS stock_disponible
-        FROM stocks s
-        JOIN lotes l      ON s.id_lote      = l.id
-        JOIN vacunas v    ON v.id_lote       = l.id
-        JOIN ubicaciones u ON s.id_ubicacion = u.id
-        JOIN provincias p  ON u.id_provincia  = p.id
-        WHERE u.tipo NOT IN ('Deposito Nacional', 'Distribucion')
-          AND s.cantidad > 0
-          AND l.deletedAt IS NULL
-        GROUP BY v.tipo, p.id, p.nombre, u.tipo
-        ORDER BY v.tipo, p.nombre, u.tipo;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte3_stock_por_provincia` (IN `p_ubicacion_id` INT)   BEGIN
+        IF p_ubicacion_id IS NULL THEN
+          SELECT
+            v.tipo          AS tipo_vacuna,
+            p.nombre        AS provincia,
+            u.tipo          AS tipo_ubicacion,
+            SUM(s.cantidad) AS stock_disponible
+          FROM stocks s
+          JOIN lotes l      ON s.id_lote      = l.id
+          JOIN vacunas v    ON v.id_lote       = l.id
+          JOIN ubicaciones u ON s.id_ubicacion = u.id
+          JOIN provincias p  ON u.id_provincia  = p.id
+          WHERE u.tipo NOT IN ('Deposito Nacional', 'Distribucion')
+            AND s.cantidad > 0
+            AND l.deletedAt IS NULL
+          GROUP BY v.tipo, p.id, p.nombre, u.tipo
+          ORDER BY v.tipo, p.nombre, u.tipo;
+        ELSE
+          -- Stock por ubicación específica
+          SELECT
+            v.tipo          AS tipo_vacuna,
+            p.nombre        AS provincia,
+            u.nombre        AS ubicacion,
+            u.tipo          AS tipo_ubicacion,
+            l.num_lote,
+            DATE_FORMAT(l.fecha_venc, '%d/%m/%Y') AS fecha_vencimiento,
+            s.cantidad      AS stock_disponible
+          FROM stocks s
+          JOIN lotes l       ON s.id_lote      = l.id
+          JOIN vacunas v     ON v.id_lote       = l.id
+          JOIN ubicaciones u ON s.id_ubicacion  = u.id
+          JOIN provincias p  ON u.id_provincia  = p.id
+          WHERE s.id_ubicacion = p_ubicacion_id
+            AND s.cantidad > 0
+            AND l.deletedAt IS NULL
+          ORDER BY v.tipo, l.fecha_venc;
+        END IF;
       END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte4_vacunados_vencidas` ()   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte4_vacunados_vencidas` (IN `p_ubicacion_id` INT)   BEGIN
         SELECT
           pac.nombre                                          AS nombre_paciente,
           pac.apellido                                        AS apellido_paciente,
@@ -91,7 +160,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte4_vacunados_vencidas` () 
           prov.nombre                                         AS provincia,
           u.nombre                                            AS centro,
           vac.tipo                                            AS tipo_vacuna,
-          DATE_FORMAT(a.fecha_aplicacion, '%d/%m/%Y %H:%i')  AS fecha_aplicacion,
+          DATE_FORMAT(a.fecha_aplicacion, '%d/%m/%Y %H:%i')   AS fecha_aplicacion,
           DATE_FORMAT(l.fecha_venc, '%d/%m/%Y')               AS fecha_vencimiento_lote
         FROM aplicaciones a
         JOIN pacientes pac   ON a.id_paciente  = pac.id
@@ -101,10 +170,11 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte4_vacunados_vencidas` () 
         LEFT JOIN provincias prov ON u.id_provincia = prov.id
         WHERE DATE(a.fecha_aplicacion) > l.fecha_venc
           AND a.deletedAt IS NULL
+          AND (p_ubicacion_id IS NULL OR a.id_ubicacion = p_ubicacion_id)
         ORDER BY a.fecha_aplicacion DESC;
       END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte5_vencidas_no_descartadas` ()   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte5_vencidas_no_descartadas` (IN `p_ubicacion_id` INT)   BEGIN
         SELECT
           l.num_lote,
           vac.tipo                                AS tipo_vacuna,
@@ -121,10 +191,11 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte5_vencidas_no_descartadas
         WHERE l.fecha_venc < CURDATE()
           AND s.cantidad > 0
           AND l.deletedAt IS NULL
+          AND (p_ubicacion_id IS NULL OR s.id_ubicacion = p_ubicacion_id)
         ORDER BY l.fecha_venc ASC, p.nombre, u.nombre;
       END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte6_personas_vacunadas` ()   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte6_personas_vacunadas` (IN `p_ubicacion_id` INT)   BEGIN
         SELECT
           vac.tipo                                      AS tipo_vacuna,
           COALESCE(prov.nombre, 'Sin provincia')        AS provincia,
@@ -136,8 +207,29 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte6_personas_vacunadas` () 
         JOIN vacunas vac   ON vac.id_lote   = l.id
         LEFT JOIN provincias prov ON pac.id_provincia = prov.id
         WHERE a.deletedAt IS NULL
+          AND (p_ubicacion_id IS NULL OR a.id_ubicacion = p_ubicacion_id)
         GROUP BY vac.tipo, prov.id, prov.nombre, pac.localidad
         ORDER BY vac.tipo, prov.nombre, pac.localidad;
+      END$$
+
+--
+-- Funciones
+--
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_dias_para_vencer` (`p_id_lote` INT) RETURNS INT(11) DETERMINISTIC READS SQL DATA BEGIN
+        DECLARE venc DATE;
+        SELECT fecha_venc INTO venc FROM Lotes WHERE id = p_id_lote;
+        IF venc IS NULL THEN
+          RETURN NULL;
+        END IF;
+        RETURN DATEDIFF(venc, CURDATE());
+      END$$
+
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_stock_disponible_lote` (`p_id_lote` INT) RETURNS INT(11) DETERMINISTIC READS SQL DATA BEGIN
+        DECLARE total INT;
+        SELECT COALESCE(SUM(cantidad), 0) INTO total
+        FROM Stocks
+        WHERE id_lote = p_id_lote;
+        RETURN total;
       END$$
 
 DELIMITER ;
@@ -162,29 +254,40 @@ CREATE TABLE `aplicaciones` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Volcado de datos para la tabla `aplicaciones`
+--
+
+INSERT INTO `aplicaciones` (`id`, `id_vacuna`, `id_paciente`, `id_ubicacion`, `id_usuario`, `id_lote`, `fecha_aplicacion`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 1, 1, 3, 9, 1, '2026-01-15 09:00:00', '2026-01-15 09:00:00', '2026-01-15 09:00:00', NULL),
+(2, 1, 7, 4, 9, 1, '2026-01-20 10:00:00', '2026-01-20 10:00:00', '2026-01-20 10:00:00', NULL),
+(3, 2, 2, 12, 9, 2, '2026-02-05 09:30:00', '2026-02-05 09:30:00', '2026-02-05 09:30:00', NULL),
+(4, 3, 5, 29, 9, 3, '2026-02-15 11:00:00', '2026-02-15 11:00:00', '2026-02-15 11:00:00', NULL),
+(5, 4, 4, 23, 9, 4, '2026-03-01 08:00:00', '2026-03-01 08:00:00', '2026-03-01 08:00:00', NULL),
+(6, 5, 6, 28, 9, 5, '2026-03-10 09:00:00', '2026-03-10 09:00:00', '2026-03-10 09:00:00', NULL),
+(7, 6, 3, 27, 9, 6, '2026-03-20 10:30:00', '2026-03-20 10:30:00', '2026-03-20 10:30:00', NULL),
+(8, 1, 8, 5, 9, 1, '2026-04-01 09:00:00', '2026-04-01 09:00:00', '2026-04-01 09:00:00', NULL),
+(9, 2, 9, 13, 9, 2, '2026-04-10 10:00:00', '2026-04-10 10:00:00', '2026-04-10 10:00:00', NULL),
+(10, 4, 10, 26, 9, 4, '2026-04-20 11:00:00', '2026-04-20 11:00:00', '2026-04-20 11:00:00', NULL),
+(11, 7, 1, 3, 9, 7, '2026-02-10 09:00:00', '2026-02-10 09:00:00', '2026-02-10 09:00:00', NULL),
+(12, 8, 2, 12, 9, 8, '2026-04-01 10:00:00', '2026-04-01 10:00:00', '2026-04-01 10:00:00', NULL),
+(14, 1, 1, 3, 20, 1, '2026-05-27 00:00:00', '2026-05-27 18:40:12', '2026-05-27 18:40:12', NULL),
+(16, 1, 1, 3, 20, 1, '2026-05-27 00:00:00', '2026-05-27 18:40:45', '2026-05-27 18:40:45', NULL),
+(18, 9, 7, 3, 11, 9, '2026-06-02 00:00:00', '2026-06-02 14:24:07', '2026-06-02 14:24:07', NULL);
+
+--
 -- Disparadores `aplicaciones`
 --
 DELIMITER $$
 CREATE TRIGGER `prevenir_aplicacion_vencida` BEFORE INSERT ON `aplicaciones` FOR EACH ROW BEGIN
-        DECLARE fecha_vencimiento DATE;
-        DECLARE estado_vacuna INT;
-
-        -- Obtener la fecha de vencimiento del lote
-        SELECT fecha_venc INTO fecha_vencimiento
-        FROM Lotes
-        WHERE id = NEW.id_lote;
-
-        -- Obtener el estado de la vacuna
-        SELECT id_estado INTO estado_vacuna
-        FROM Vacunas
-        WHERE id = NEW.id_vacuna;
-
-        -- Verificar si la vacuna está vencida o su lote ha vencido
-        IF estado_vacuna = (SELECT id FROM Estados WHERE codigo = 'VENC') OR fecha_vencimiento < CURDATE() THEN
-          SIGNAL SQLSTATE '45000'
-          SET MESSAGE_TEXT = 'No se puede aplicar una vacuna vencida';
-        END IF;
-      END
+  DECLARE fecha_vencimiento DATE;
+  DECLARE estado_vacuna INT;
+  SELECT fecha_venc INTO fecha_vencimiento FROM Lotes WHERE id = NEW.id_lote;
+  SELECT id_estado INTO estado_vacuna FROM Vacunas WHERE id = NEW.id_vacuna;
+  IF estado_vacuna = (SELECT id FROM Estados WHERE codigo = 'VENC') OR fecha_vencimiento < CURDATE() THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'No se puede aplicar una vacuna vencida';
+  END IF;
+END
 $$
 DELIMITER ;
 
@@ -210,16 +313,24 @@ CREATE TABLE `descartes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Volcado de datos para la tabla `descartes`
+--
+
+INSERT INTO `descartes` (`id`, `id_lote`, `id_usuario`, `id_ubicacion`, `cantidad`, `fecha_descarte`, `forma_descarte`, `motivo`, `id_estado`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 7, 9, 3, 50, '2026-02-20', 'incineracion', 'Lote vencido detectado en depósito, descarte por vencimiento', 3, '2026-05-07 14:42:43', '2026-05-07 14:42:43', NULL),
+(2, 8, 9, 26, 40, '2026-04-05', 'autoclave', 'Lote vencido verificado en almacén, descarte obligatorio', 3, '2026-05-07 14:42:43', '2026-05-07 14:42:43', NULL),
+(3, 5, 9, 28, 30, '2026-03-15', 'reciclaje', 'Vacunas próximas a vencer, descarte preventivo antes del vencimiento', 3, '2026-05-07 14:42:43', '2026-05-07 14:42:43', NULL);
+
+--
 -- Disparadores `descartes`
 --
 DELIMITER $$
 CREATE TRIGGER `actualizar_stock_descarte` AFTER INSERT ON `descartes` FOR EACH ROW BEGIN
-        -- Disminuir stock en todas las ubicaciones
-        UPDATE Stocks
-        SET cantidad = cantidad - NEW.cantidad
-        WHERE id_lote = NEW.id_lote
-        ORDER BY cantidad DESC
-        LIMIT 1;
+        IF NEW.id_ubicacion IS NOT NULL THEN
+          UPDATE Stocks
+          SET cantidad = cantidad - NEW.cantidad
+          WHERE id_lote = NEW.id_lote AND id_ubicacion = NEW.id_ubicacion;
+        END IF;
       END
 $$
 DELIMITER ;
@@ -266,6 +377,16 @@ CREATE TABLE `estados` (
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `estados`
+--
+
+INSERT INTO `estados` (`id`, `nombre`, `codigo`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 'Disponible', 'DISP', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(2, 'Aplicada', 'APLIC', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(3, 'Vencida', 'VENC', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(4, 'Descartada', 'DESC', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -280,6 +401,17 @@ CREATE TABLE `laboratorios` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `laboratorios`
+--
+
+INSERT INTO `laboratorios` (`id`, `nombre`, `nacionalidad`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 'Pfizer-BioNTech', 'Estadounidense', '2026-05-07 14:42:42', '2026-05-27 18:48:35', NULL),
+(2, 'AstraZeneca', 'Británica', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(3, 'Sputnik', 'Rusa', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(4, 'Sinopharm', 'China', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(5, 'Moderna', 'Estadounidense', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL);
 
 -- --------------------------------------------------------
 
@@ -301,6 +433,29 @@ CREATE TABLE `lotes` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `lotes`
+--
+
+INSERT INTO `lotes` (`id`, `num_lote`, `id_laboratorio`, `pais_origen`, `cantidad`, `fecha_fab`, `fecha_venc`, `fecha_compra`, `fecha_adquisicion`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 'LOT-2025-001', 1, 'Argentina', 1000, '2024-01-01', '2027-06-30', '2025-01-15', '2025-01-20', '2026-05-07 14:42:42', '2026-05-27 18:51:15', NULL),
+(2, 'LOT-2025-002', 2, 'India', 500, '2024-03-01', '2027-09-30', '2025-03-10', '2025-03-15', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(3, 'LOT-2025-003', 3, 'Rusia', 800, '2024-06-01', '2027-12-31', '2025-06-20', '2025-06-25', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(4, 'LOT-2025-004', 4, 'China', 600, '2024-09-01', '2027-08-31', '2025-09-05', '2025-09-10', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(5, 'LOT-2026-001', 5, 'Argentina', 400, '2025-01-15', '2026-05-15', '2026-01-20', '2026-01-25', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(6, 'LOT-2026-002', 1, 'Argentina', 300, '2025-02-01', '2026-05-25', '2026-02-10', '2026-02-15', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(7, 'LOT-2024-001', 2, 'India', 200, '2023-10-01', '2026-01-01', '2024-10-15', '2024-10-20', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(8, 'LOT-2024-002', 3, 'Rusia', 150, '2023-06-01', '2026-03-01', '2024-06-10', '2024-06-15', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(9, 'LOT-PFZ-2025', 1, 'Alemania', 1500, '2024-06-01', '2027-06-01', '2025-01-10', '2025-02-01', '2026-05-19 15:38:44', '2026-05-19 15:38:44', NULL),
+(10, 'LOT-AST-2025', 2, 'Reino Unido', 1200, '2024-05-01', '2027-05-01', '2025-01-12', '2025-02-05', '2026-05-19 15:38:46', '2026-05-19 15:38:46', NULL),
+(11, 'LOT-MOD-2025', 5, 'Estados Unidos', 1000, '2024-07-01', '2027-07-01', '2025-01-15', '2025-02-10', '2026-05-19 15:38:48', '2026-05-19 15:38:48', NULL),
+(12, 'LOT-SIN-2025', 4, 'China', 800, '2024-04-01', '2027-04-01', '2025-01-08', '2025-01-25', '2026-05-19 15:38:50', '2026-05-19 15:38:50', NULL),
+(13, 'LOT-SPU-2025', 3, 'Rusia', 500, '2024-08-01', '2027-08-01', '2025-01-20', '2025-02-15', '2026-05-19 15:38:52', '2026-05-19 15:38:52', NULL),
+(18, 'PW-NCL-2026-001', 1, 'Estados Unidos', 2000, '2026-01-01', '2027-06-30', '2026-05-01', '2026-05-10', '2026-05-19 18:26:15', '2026-05-19 18:26:15', NULL),
+(19, 'PW-NCL-2026-002', 2, 'Reino Unido', 1500, '2026-01-15', '2027-07-15', '2026-05-01', '2026-05-10', '2026-05-19 18:26:19', '2026-05-19 18:26:19', NULL),
+(20, 'PW-NCL-2026-003', 3, 'Rusia', 1000, '2026-02-01', '2027-08-01', '2026-05-02', '2026-05-12', '2026-05-19 18:26:22', '2026-05-19 18:26:22', NULL),
+(21, 'PW-NCL-2026-004', 4, 'China', 500, '2026-02-15', '2027-09-15', '2026-05-02', '2026-05-12', '2026-05-19 18:26:25', '2026-05-19 18:26:25', NULL);
 
 --
 -- Disparadores `lotes`
@@ -333,10 +488,30 @@ CREATE TABLE `movimientolotes` (
   `cantidad` int(11) NOT NULL,
   `fecha_movimiento` date NOT NULL DEFAULT curdate(),
   `id_estado` int(11) NOT NULL DEFAULT 1,
+  `id_transporte` int(11) DEFAULT NULL,
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `movimientolotes`
+--
+
+INSERT INTO `movimientolotes` (`id`, `id_lote`, `id_ubicacion_origen`, `id_ubicacion_destino`, `id_usuario_origen`, `id_usuario_destino`, `fecha_recepcion`, `cantidad`, `fecha_movimiento`, `id_estado`, `id_transporte`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 9, 1, 1, 9, NULL, NULL, 500, '2026-05-19', 1, NULL, '2026-05-19 15:38:54', '2026-05-19 15:26:52', NULL),
+(2, 9, 1, 1, 9, NULL, NULL, 500, '2026-05-19', 1, NULL, '2026-05-19 15:42:20', '2026-05-19 15:26:56', NULL),
+(3, 10, 1, 5, 9, NULL, NULL, 500, '2026-05-19', 1, NULL, '2026-05-19 15:42:30', '2026-05-19 15:26:58', NULL),
+(4, 11, 1, 6, 9, NULL, NULL, 500, '2026-05-19', 1, 1, '2026-05-19 15:42:40', '2026-05-27 17:55:37', NULL),
+(5, 13, 1, 8, 9, NULL, NULL, 500, '2026-05-19', 1, 2, '2026-05-19 15:42:50', '2026-05-27 17:55:37', NULL),
+(6, 9, 1, 3, 9, 9, '2026-05-19 15:43:19', 500, '2026-05-19', 1, 1, '2026-05-19 15:43:00', '2026-05-19 15:27:05', NULL),
+(7, 10, 1, 12, 9, 9, '2026-05-19 15:43:29', 500, '2026-05-19', 1, 2, '2026-05-19 15:43:10', '2026-05-19 15:27:07', NULL),
+(10, 18, 1, 2, 14, 17, '2026-05-19 18:26:39', 1500, '2026-05-19', 1, 1, '2026-05-19 18:26:31', '2026-05-19 18:26:39', NULL),
+(11, 19, 1, 2, 14, NULL, NULL, 1500, '2026-05-19', 1, 2, '2026-05-19 18:26:35', '2026-05-27 17:55:37', NULL),
+(12, 1, 2, 1, 9, NULL, NULL, 1, '2026-05-27', 1, NULL, '2026-05-27 18:37:18', '2026-05-27 18:37:18', NULL),
+(13, 1, 2, 2, 9, NULL, NULL, 1, '2026-05-27', 1, NULL, '2026-05-27 18:37:18', '2026-05-27 18:37:18', NULL),
+(15, 1, 2, 1, 9, NULL, NULL, 1, '2026-05-27', 1, NULL, '2026-05-27 18:40:12', '2026-05-27 18:40:12', NULL),
+(16, 1, 2, 1, 9, NULL, NULL, 1, '2026-05-27', 1, NULL, '2026-05-27 18:40:45', '2026-05-27 18:40:45', NULL);
 
 --
 -- Disparadores `movimientolotes`
@@ -398,6 +573,22 @@ CREATE TABLE `pacientes` (
   `updatedAt` datetime NOT NULL,
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `pacientes`
+--
+
+INSERT INTO `pacientes` (`id`, `nombre`, `apellido`, `dni`, `fecha_nacimiento`, `genero`, `localidad`, `telefono`, `correo`, `id_provincia`, `id_ubicacion_registro`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 'Juan', 'Pérez', '28567890', '1985-03-15', 'Masculino', 'Buenos Aires', '1156781234', 'juan.perez@mail.com', 1, 3, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(2, 'María', 'González', '35123789', '1990-07-22', 'Femenino', 'Córdoba', '3515678901', 'maria.gonzalez@mail.com', 5, 12, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(3, 'Carlos', 'López', '42678901', '2000-11-30', 'Masculino', 'Rosario', '3415678901', 'carlos.lopez@mail.com', 20, 27, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(4, 'Ana', 'Martínez', '31456123', '1978-05-10', 'Femenino', 'Mendoza', '2614567890', 'ana.martinez@mail.com', 12, 23, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(5, 'Luis', 'Ramírez', '25987654', '1962-09-18', 'Masculino', 'Tucumán', '3815123456', 'luis.ramirez@mail.com', 23, 28, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(6, 'Laura', 'Sánchez', '38765432', '1995-02-28', 'Femenino', 'Salta', '3874123456', 'laura.sanchez@mail.com', 16, 29, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(7, 'Diego', 'Torres', '40234567', '2002-06-15', 'Masculino', 'San Isidro', '1156781235', 'diego.torres@mail.com', 1, 4, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(8, 'Patricia', 'Fernández', '22345678', '1955-12-03', 'Femenino', 'Buenos Aires', '1156781236', 'patricia.fern@mail.com', 1, 5, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(9, 'Roberto', 'Díaz', '29876543', '1988-04-25', 'Masculino', 'Villa Carlos Paz', '3516789012', 'roberto.diaz@mail.com', 5, 13, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(10, 'Mónica', 'Ruiz', '44123456', '2005-08-11', 'Femenino', 'Santa Fe', '3456789012', 'monica.ruiz@mail.com', 20, 26, '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL);
 
 -- --------------------------------------------------------
 
@@ -503,7 +694,14 @@ INSERT INTO `sequelizemeta` (`name`) VALUES
 ('20260504100000-add-fields-lotes.js'),
 ('20260504100001-add-fields-pacientes.js'),
 ('20260504110000-add-ubicacion-to-descartes.js'),
-('20260504120000-create-stored-procedures.js');
+('20260504120000-create-stored-procedures.js'),
+('20260507100000-add-credentials-to-solicitudes.js'),
+('20260513100000-create-transportes.js'),
+('20260513100001-add-transporte-to-movimiento-lotes.js'),
+('20260527123613-update-stored-procedures-ubicacion-filter.js'),
+('20260527152729-fix-trigger-descarte-por-ubicacion.js'),
+('20260529112537-fix-reporte2-vencidas-dosis.js'),
+('20260529121953-create-functions.js');
 
 -- --------------------------------------------------------
 
@@ -518,6 +716,13 @@ CREATE TABLE `sessions` (
   `createdAt` datetime NOT NULL,
   `updatedAt` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `sessions`
+--
+
+INSERT INTO `sessions` (`sid`, `expires`, `data`, `createdAt`, `updatedAt`) VALUES
+('S0ms9RF7KXttw8294_oKDuqnDtEMGtzA', '2026-06-02 17:44:22', '{\"cookie\":{\"originalMaxAge\":1800000,\"expires\":\"2026-06-02T17:43:33.442Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\"},\"passport\":{\"user\":46},\"usuario\":{\"id\":46,\"usuario\":\"fatys426\",\"nombre\":\"Fatima\",\"apellido\":\"Lebri\",\"rol\":\"Auditor\",\"ubicaciones\":[{\"id\":33,\"nombre\":\"Hospital del Sur\",\"tipo\":\"Centro Vacunacion\"}],\"ubicacionActual\":{\"id\":33,\"nombre\":\"Hospital del Sur\",\"tipo\":\"Centro Vacunacion\"}}}', '2026-06-02 17:13:33', '2026-06-02 17:14:22');
 
 -- --------------------------------------------------------
 
@@ -536,8 +741,21 @@ CREATE TABLE `solicitudesacceso` (
   `estado` enum('Pendiente','Aprobado','Rechazado') NOT NULL DEFAULT 'Pendiente',
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `deletedAt` datetime DEFAULT NULL
+  `deletedAt` datetime DEFAULT NULL,
+  `usuario` varchar(50) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `solicitudesacceso`
+--
+
+INSERT INTO `solicitudesacceso` (`id`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `motivo`, `estado`, `createdAt`, `updatedAt`, `deletedAt`, `usuario`, `password`) VALUES
+(1, 'Pedro', 'Alvarado', '33445566', 'pedro.alvarado@gmail.com', NULL, 'Solicito acceso como enfermero para registrar aplicaciones de vacunas en el Hospital Italiano', 'Pendiente', '2026-05-07 14:42:43', '2026-05-07 15:08:57', NULL, NULL, NULL),
+(2, 'Lucía', 'Morales', '41789012', 'lucia.morales@gmail.com', '01155556666', 'Solicito acceso para realizar auditoría del sistema de trazabilidad', 'Aprobado', '2026-05-07 14:42:43', '2026-05-07 14:42:43', NULL, NULL, NULL),
+(3, 'Héctor', 'Villanueva', '27654321', 'hector.villanueva@gmail.com', NULL, 'Acceso para gestión administrativa y generación de reportes mensuales', 'Rechazado', '2026-05-07 14:42:43', '2026-05-07 14:42:43', NULL, NULL, NULL),
+(4, 'Mauricio', 'del Mar', '12345678', 'mauri@delmar.com', '1234567890', 'SOlicitud de enfermero para el hospital policlinico de san luis', 'Aprobado', '2026-05-07 17:59:32', '2026-05-07 18:00:42', NULL, 'Enfer', '$2b$10$NACzuB6jLu9f41ff51NQ6OTvv6Zp2rBjgP8eO0Sowqkj1xxohE9D6'),
+(10, 'Fatima', 'Lebri', '23234432', 'fatima@lebri.com.ar', '2332123456', 'Solicito rol de auditor para hospital del sur', 'Aprobado', '2026-06-02 00:59:49', '2026-06-02 01:02:05', NULL, 'fatys426', '$2b$10$3efBi1dfpiOdDlpI3pVEhOjbRXsHW08n8xwwfjWSc3sDzxOLKzboK');
 
 -- --------------------------------------------------------
 
@@ -553,6 +771,85 @@ CREATE TABLE `stocks` (
   `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `stocks`
+--
+
+INSERT INTO `stocks` (`id`, `id_lote`, `id_ubicacion`, `cantidad`, `createdAt`, `updatedAt`) VALUES
+(1, 1, 2, 391, '2026-05-07 14:42:43', '2026-05-27 18:51:15'),
+(2, 1, 3, 197, '2026-05-07 14:42:43', '2026-05-27 18:51:15'),
+(3, 1, 4, 150, '2026-05-07 14:42:43', '2026-05-27 18:51:15'),
+(4, 1, 5, 99, '2026-05-07 14:42:43', '2026-05-27 18:51:15'),
+(5, 2, 2, 200, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(6, 2, 12, 100, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(7, 2, 13, 80, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(8, 3, 2, 350, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(9, 3, 29, 80, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(10, 4, 2, 250, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(11, 4, 23, 150, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(12, 4, 26, 100, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(13, 5, 2, 170, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(14, 5, 28, 100, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(15, 6, 2, 150, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(16, 6, 27, 80, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(17, 7, 3, 30, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(18, 7, 12, 60, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(19, 8, 26, 30, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(20, 8, 28, 40, '2026-05-07 14:42:43', '2026-05-07 14:42:43'),
+(21, 9, 2, 750, '2026-05-19 15:38:44', '2026-05-29 15:21:43'),
+(22, 10, 2, 655, '2026-05-19 15:38:46', '2026-05-29 15:21:43'),
+(23, 11, 2, 667, '2026-05-19 15:38:48', '2026-05-29 15:21:43'),
+(24, 12, 2, 800, '2026-05-19 15:38:50', '2026-05-19 15:38:50'),
+(25, 13, 2, 250, '2026-05-19 15:38:52', '2026-05-29 15:21:43'),
+(26, 9, 1, 500, '2026-05-19 15:38:54', '2026-05-29 15:21:43'),
+(28, 10, 5, 273, '2026-05-19 15:42:30', '2026-05-29 15:21:43'),
+(29, 11, 6, 333, '2026-05-19 15:42:40', '2026-05-29 15:21:43'),
+(30, 13, 8, 250, '2026-05-19 15:42:50', '2026-05-29 15:21:43'),
+(31, 9, 3, 249, '2026-05-19 15:43:00', '2026-06-02 14:24:07'),
+(32, 10, 12, 272, '2026-05-19 15:43:10', '2026-05-29 15:21:43'),
+(39, 18, 1, 500, '2026-05-19 18:26:15', '2026-05-19 18:26:31'),
+(40, 19, 1, 0, '2026-05-19 18:26:19', '2026-05-19 18:26:35'),
+(41, 20, 1, 1000, '2026-05-19 18:26:22', '2026-05-19 18:26:22'),
+(42, 21, 1, 500, '2026-05-19 18:26:25', '2026-05-19 18:26:25'),
+(43, 18, 2, 1500, '2026-05-19 18:26:31', '2026-05-19 18:26:31'),
+(44, 19, 2, 1500, '2026-05-19 18:26:35', '2026-05-19 18:26:35'),
+(45, 1, 1, 158, '2026-05-27 18:37:18', '2026-05-29 15:21:43'),
+(49, 2, 1, 118, '2026-05-29 15:21:43', '2026-05-29 15:21:43'),
+(50, 3, 1, 369, '2026-05-29 15:21:43', '2026-05-29 15:21:43'),
+(51, 4, 1, 98, '2026-05-29 15:21:43', '2026-05-29 15:21:43'),
+(52, 5, 1, 99, '2026-05-29 15:21:43', '2026-05-29 15:21:43'),
+(53, 6, 1, 69, '2026-05-29 15:21:43', '2026-05-29 15:21:43'),
+(54, 7, 1, 59, '2026-05-29 15:21:43', '2026-05-29 15:21:43'),
+(55, 8, 1, 39, '2026-05-29 15:21:43', '2026-05-29 15:21:43');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `transportes`
+--
+
+CREATE TABLE `transportes` (
+  `id` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `id_movil` varchar(50) NOT NULL,
+  `createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deletedAt` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `transportes`
+--
+
+INSERT INTO `transportes` (`id`, `nombre`, `id_movil`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 'Correo Argentino', 'AA-123-BB', '2026-05-19 15:38:41', '2026-05-27 18:27:16', NULL),
+(2, 'Andreani Logística', 'CC-456-DD', '2026-05-19 15:38:42', '2026-05-19 15:38:42', NULL),
+(3, 'Correo Argentino', 'AA-123-BB', '2026-05-19 15:40:27', '2026-05-19 15:40:27', NULL),
+(4, 'Andreani Logística', 'CC-456-DD', '2026-05-19 15:40:29', '2026-05-19 15:40:29', NULL),
+(5, 'AuditTest', 'AUDIT-1779906398750', '2026-05-27 18:26:38', '2026-05-27 18:26:38', '2026-05-27 18:26:38'),
+(6, 'AuditTest', 'AUDIT-1779906436832', '2026-05-27 18:27:16', '2026-05-27 18:27:16', '2026-05-27 18:27:16'),
+(7, 'AuditTest', 'AUDIT-1779906501574', '2026-05-27 18:28:21', '2026-05-27 18:28:21', '2026-05-27 18:28:21');
 
 -- --------------------------------------------------------
 
@@ -577,8 +874,8 @@ CREATE TABLE `ubicaciones` (
 --
 
 INSERT INTO `ubicaciones` (`id`, `nombre`, `direccion`, `telefono`, `tipo`, `id_provincia`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(1, 'Nivel Central', 'Av. San Martín 123', '4455-6677', 'Deposito Provincial', 1, '2025-07-03 13:42:36', '2025-07-11 14:25:50', NULL),
-(2, 'Hospital Garrahan', 'Av. Monroe 890', '11-3344-5566', 'Deposito Nacional', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
+(1, 'Nivel Central', 'Av. San Martín 123', '4455-6677', 'Deposito Nacional', 1, '2025-07-03 13:42:36', '2025-07-11 14:25:50', NULL),
+(2, 'Hospital Garrahan', 'Av. Monroe 890', '11-3344-5566', 'Deposito Provincial', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (3, 'Hospital Italiano', 'Av. Córdoba 1234', '11-7788-9900', 'Centro Vacunacion', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (4, 'Hospital de San Isidro', 'Av. Maipú 567', '4567-8901', 'Centro Vacunacion', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (5, 'Hospital de San Nicolás', 'Av. España 89', '3456-7890', 'Centro Vacunacion', 1, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
@@ -607,7 +904,8 @@ INSERT INTO `ubicaciones` (`id`, `nombre`, `direccion`, `telefono`, `tipo`, `id_
 (28, 'Hospital de Tucumán', 'Av. Independencia 234', '3815-678900', 'Centro Vacunacion', 23, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (29, 'Hospital de Salta', 'Av. Belgrano 567', '3874-556677', 'Centro Vacunacion', 16, '2025-07-03 13:42:36', '2025-07-03 13:42:36', NULL),
 (31, 'Oca Transporte', 'CABA 123', '2224444444', 'Distribucion', 1, '2025-07-11 14:35:53', '2025-07-11 14:37:50', NULL),
-(32, 'Andreani Transporte', 'Ministro Berrondo 338', '02664271316', 'Distribucion', 18, '2025-07-24 16:19:17', '2025-07-24 16:19:17', NULL);
+(32, 'Andreani Transporte', 'Ministro Berrondo 338', '02664271316', 'Distribucion', 18, '2025-07-24 16:19:17', '2025-07-24 16:19:17', NULL),
+(33, 'Hospital del Sur', 'Zabala 126', '4452000', 'Centro Vacunacion', 18, '2026-06-02 01:01:36', '2026-06-02 01:01:36', NULL);
 
 -- --------------------------------------------------------
 
@@ -634,7 +932,32 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `usuario`, `password`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
-(9, 'Edder', 'Santibañez', '93962239', 'edder709@gmail.com', '02664271316', 'Administrador', '$2b$10$9E.d3IscxjzO682zL7HRQO6.IQH1jTIXoIciYqz/o3GPkNHpDeB.i', '2026-05-04 05:05:21', '2026-05-04 05:05:21', NULL);
+(9, 'Edder', 'Santibañez', '93962239', 'edder709@gmail.com', '02664271316', 'Administrador', '$2b$10$skYQ9DJJ1sCL1t8C81xMrOev9u7SCLt0H6jxInQS2hQYtm4Dn74lC', '2026-05-04 05:05:21', '2026-05-29 15:38:14', NULL),
+(10, 'Ana', 'García', '28765432', 'ana.garcia@argentina.gob.ar', '01112345678', 'Auditor', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-07 14:42:42', '2026-05-19 14:00:35', NULL),
+(11, 'Carlos', 'López', '35123456', 'carlos.lopez@argentina.gob.ar', '01198765432', 'Enfermero', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-07 14:42:42', '2026-05-19 14:00:38', NULL),
+(12, 'María', 'Rodríguez', '42654321', 'maria.rodriguez@argentina.gob.ar', '01187654321', 'Administrativo', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-07 14:42:42', '2026-05-19 14:00:43', NULL),
+(13, 'Mauricio', 'del Mar', '12345678', 'mauri@delmar.com', '1234567890', 'Enfer', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-07 18:00:42', '2026-05-19 14:01:26', NULL),
+(14, 'Roberto', 'Fernández', '20111001', 'r.fernandez@vacuna.ar', '1140001001', 'adm.ncl1', '$2b$10$NJ317aafDJ4bqcqP.CNp8.dsOod4RWJYOimtS.WCdwYj5YxK4oL8O', '2026-05-19 16:58:07', '2026-05-27 18:15:23', NULL),
+(15, 'Claudia', 'Suárez', '20111002', 'c.suarez@vacuna.ar', '1140001002', 'adm.ncl2', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(16, 'Diego', 'Morales', '20111003', 'd.morales@vacuna.ar', '1140001003', 'aud.ncl1', '$2b$10$NJ317aafDJ4bqcqP.CNp8.dsOod4RWJYOimtS.WCdwYj5YxK4oL8O', '2026-05-19 16:58:07', '2026-05-27 18:15:23', NULL),
+(17, 'Valeria', 'Torres', '20111004', 'v.torres@vacuna.ar', '1140001004', 'adm.garrahan', '$2b$10$NJ317aafDJ4bqcqP.CNp8.dsOod4RWJYOimtS.WCdwYj5YxK4oL8O', '2026-05-19 16:58:07', '2026-05-27 18:15:23', NULL),
+(18, 'Marcos', 'Reyes', '20111005', 'm.reyes@vacuna.ar', '1140001005', 'aud.garrahan1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(19, 'Lucía', 'Vargas', '20111006', 'l.vargas@vacuna.ar', '1140001006', 'aud.garrahan2', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(20, 'Paula', 'Méndez', '20111007', 'enf.ital.1780068531207@example.com', '1144556677', 'enf.italiano1', '$2b$10$ULUGrl1wExDobvDmyGjSXOnVyeZ6L51PSGSB6u4Wfwi9V94EerH6.', '2026-05-19 16:58:07', '2026-05-29 15:38:14', NULL),
+(21, 'Sebastián', 'Castro', '20111008', 's.castro@vacuna.ar', '1140001008', 'enf.italiano2', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(22, 'María', 'González', '20111009', 'm.gonzalez@vacuna.ar', '1140001009', 'aud.italiano1', '$2b$10$NJ317aafDJ4bqcqP.CNp8.dsOod4RWJYOimtS.WCdwYj5YxK4oL8O', '2026-05-19 16:58:07', '2026-05-27 18:15:23', NULL),
+(23, 'Natalia', 'Romero', '20111010', 'n.romero@vacuna.ar', '1140001010', 'enf.sanisidro1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(24, 'Federico', 'López', '20111011', 'f.lopez@vacuna.ar', '1140001011', 'enf.sanisidro2', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(25, 'Carmen', 'Ortega', '20111012', 'c.ortega@vacuna.ar', '1140001012', 'aud.sanisidro1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(26, 'Gabriel', 'Martínez', '20111013', 'g.martinez@vacuna.ar', '1140001013', 'enf.cordoba1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(27, 'Daniela', 'Herrera', '20111014', 'd.herrera@vacuna.ar', '1140001014', 'enf.cordoba2', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(28, 'Ricardo', 'Navarro', '20111015', 'r.navarro@vacuna.ar', '1140001015', 'aud.cordoba1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(29, 'Verónica', 'Silva', '20111016', 'v.silva@vacuna.ar', '1140001016', 'enf.rosario1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(30, 'Andrés', 'Moreno', '20111017', 'a.moreno@vacuna.ar', '1140001017', 'enf.rosario2', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(31, 'Laura', 'Jiménez', '20111018', 'l.jimenez@vacuna.ar', '1140001018', 'aud.rosario1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(32, 'Hugo', 'Díaz', '20111019', 'h.diaz@vacuna.ar', '1140001019', 'enf.tucuman1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(33, 'Silvia', 'Peña', '20111020', 's.pena@vacuna.ar', '1140001020', 'aud.tucuman1', '$2b$10$QfzSYPYKCQVU9.Fhy7pUCeYKU/inF9sKSTa72p9Nglt2sspn0oNXS', '2026-05-19 16:58:07', '2026-05-19 16:58:07', NULL),
+(46, 'Fatima', 'Lebri', '23234432', 'fatima@lebri.com.ar', '2332123456', 'fatys426', '$2b$10$3efBi1dfpiOdDlpI3pVEhOjbRXsHW08n8xwwfjWSc3sDzxOLKzboK', '2026-06-02 01:02:05', '2026-06-02 01:02:05', NULL);
 
 -- --------------------------------------------------------
 
@@ -685,7 +1008,38 @@ INSERT INTO `usuarioubicaciones` (`id_usuario`, `id_ubicacion`, `id_rol`, `creat
 (9, 28, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
 (9, 29, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
 (9, 31, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
-(9, 32, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21');
+(9, 32, 1, '2026-05-04 05:05:21', '2026-05-04 05:05:21'),
+(10, 8, 2, '2026-05-27 18:23:04', '2026-05-27 18:23:04'),
+(10, 10, 2, '2026-05-27 18:23:04', '2026-05-27 18:23:04'),
+(10, 11, 2, '2026-05-27 18:23:04', '2026-05-27 18:23:04'),
+(10, 12, 2, '2026-05-27 18:23:04', '2026-05-27 18:23:04'),
+(10, 14, 2, '2026-05-27 18:23:04', '2026-05-27 18:23:04'),
+(10, 16, 2, '2026-05-27 18:23:04', '2026-05-27 18:23:04'),
+(11, 3, 3, '2026-05-07 14:42:42', '2026-05-07 14:42:42'),
+(11, 12, 3, '2026-05-07 14:42:42', '2026-05-07 14:42:42'),
+(12, 2, 4, '2026-05-07 14:42:42', '2026-05-07 14:42:42'),
+(13, 14, 3, '2026-05-07 18:00:42', '2026-05-07 18:00:42'),
+(14, 1, 4, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(15, 1, 4, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(16, 1, 2, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(17, 2, 4, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(18, 2, 2, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(19, 2, 2, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(20, 3, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(21, 3, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(22, 3, 2, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(23, 4, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(24, 4, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(25, 4, 2, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(26, 12, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(27, 12, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(28, 12, 2, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(29, 27, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(30, 27, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(31, 27, 2, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(32, 28, 3, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(33, 28, 2, '2026-05-19 16:58:07', '2026-05-19 16:58:07'),
+(46, 33, 2, '2026-06-02 01:02:05', '2026-06-02 01:02:05');
 
 -- --------------------------------------------------------
 
@@ -703,6 +1057,29 @@ CREATE TABLE `vacunas` (
   `updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deletedAt` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `vacunas`
+--
+
+INSERT INTO `vacunas` (`id`, `id_lote`, `id_estado`, `tipo`, `nombre_comercial`, `createdAt`, `updatedAt`, `deletedAt`) VALUES
+(1, 1, 1, 'COVID-19', 'Comirnaty', '2026-05-07 14:42:42', '2026-05-27 18:48:35', NULL),
+(2, 2, 1, 'COVID-19', 'Vaxzevria', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(3, 3, 1, 'COVID-19', 'Sputnik V', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(4, 4, 1, 'Influenza', 'Sinopharm Flu', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(5, 5, 1, 'Fiebre Amarilla', 'Stamaril', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(6, 6, 1, 'Hepatitis B', 'Engerix-B', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(7, 7, 3, 'COVID-19', 'Vaxzevria', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(8, 8, 3, 'COVID-19', 'Sputnik V', '2026-05-07 14:42:42', '2026-05-07 14:42:42', NULL),
+(9, 9, 1, 'COVID-19 mRNA', 'Comirnaty', '2026-05-19 15:38:44', '2026-05-19 15:38:44', NULL),
+(10, 10, 1, 'COVID-19', 'Vaxzevria', '2026-05-19 15:38:46', '2026-05-19 15:38:46', NULL),
+(11, 11, 1, 'COVID-19 mRNA', 'Spikevax', '2026-05-19 15:38:48', '2026-05-19 15:38:48', NULL),
+(12, 12, 1, 'COVID-19 Inactivada', 'BBIBP-CorV', '2026-05-19 15:38:50', '2026-05-19 15:38:50', NULL),
+(13, 13, 1, 'COVID-19', 'Sputnik V', '2026-05-19 15:38:52', '2026-05-19 15:38:52', NULL),
+(18, 18, 1, 'COVID-19', 'Comirnaty', '2026-05-19 18:26:15', '2026-05-19 18:26:15', NULL),
+(19, 19, 1, 'COVID-19', 'Vaxzevria', '2026-05-19 18:26:19', '2026-05-19 18:26:19', NULL),
+(20, 20, 1, 'COVID-19', 'Sputnik V', '2026-05-19 18:26:22', '2026-05-19 18:26:22', NULL),
+(21, 21, 1, 'COVID-19', 'Coronavac', '2026-05-19 18:26:25', '2026-05-19 18:26:25', NULL);
 
 --
 -- Índices para tablas volcadas
@@ -770,7 +1147,8 @@ ALTER TABLE `movimientolotes`
   ADD KEY `movimiento_lotes_id_ubicacion_origen` (`id_ubicacion_origen`),
   ADD KEY `movimiento_lotes_id_ubicacion_destino` (`id_ubicacion_destino`),
   ADD KEY `movimiento_lotes_fecha_movimiento` (`fecha_movimiento`),
-  ADD KEY `movimiento_lotes_id_estado` (`id_estado`);
+  ADD KEY `movimiento_lotes_id_estado` (`id_estado`),
+  ADD KEY `MovimientoLotes_id_transporte_foreign_idx` (`id_transporte`);
 
 --
 -- Indices de la tabla `pacientes`
@@ -826,6 +1204,12 @@ ALTER TABLE `stocks`
   ADD KEY `stocks_id_ubicacion` (`id_ubicacion`);
 
 --
+-- Indices de la tabla `transportes`
+--
+ALTER TABLE `transportes`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indices de la tabla `ubicaciones`
 --
 ALTER TABLE `ubicaciones`
@@ -869,43 +1253,43 @@ ALTER TABLE `vacunas`
 -- AUTO_INCREMENT de la tabla `aplicaciones`
 --
 ALTER TABLE `aplicaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `descartes`
 --
 ALTER TABLE `descartes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `estados`
 --
 ALTER TABLE `estados`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `laboratorios`
 --
 ALTER TABLE `laboratorios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `lotes`
 --
 ALTER TABLE `lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientolotes`
 --
 ALTER TABLE `movimientolotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `pacientes`
 --
 ALTER TABLE `pacientes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `provincias`
@@ -923,31 +1307,37 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `solicitudesacceso`
 --
 ALTER TABLE `solicitudesacceso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `stocks`
 --
 ALTER TABLE `stocks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+
+--
+-- AUTO_INCREMENT de la tabla `transportes`
+--
+ALTER TABLE `transportes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de la tabla `ubicaciones`
 --
 ALTER TABLE `ubicaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT de la tabla `vacunas`
 --
 ALTER TABLE `vacunas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- Restricciones para tablas volcadas
@@ -982,6 +1372,7 @@ ALTER TABLE `lotes`
 -- Filtros para la tabla `movimientolotes`
 --
 ALTER TABLE `movimientolotes`
+  ADD CONSTRAINT `MovimientoLotes_id_transporte_foreign_idx` FOREIGN KEY (`id_transporte`) REFERENCES `transportes` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `movimientolotes_ibfk_1` FOREIGN KEY (`id_lote`) REFERENCES `lotes` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `movimientolotes_ibfk_2` FOREIGN KEY (`id_ubicacion_origen`) REFERENCES `ubicaciones` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `movimientolotes_ibfk_3` FOREIGN KEY (`id_ubicacion_destino`) REFERENCES `ubicaciones` (`id`) ON UPDATE CASCADE,
@@ -1036,156 +1427,6 @@ CREATE DEFINER=`root`@`localhost` EVENT `ev_marcar_vencimientos` ON SCHEDULE EVE
         AND id_estado = (SELECT id FROM estados WHERE codigo = 'DISP' LIMIT 1)$$
 
 DELIMITER ;
-
--- ============================================================
--- SEED DATA — datos de prueba para todos los módulos
--- ============================================================
-
--- 1. Estados (DISP=1, APLIC=2, VENC=3, DESC=4)
-INSERT INTO `estados` (`id`, `nombre`, `codigo`, `createdAt`, `updatedAt`) VALUES
-(1, 'Disponible',  'DISP', NOW(), NOW()),
-(2, 'Aplicada',    'APLIC', NOW(), NOW()),
-(3, 'Vencida',     'VENC', NOW(), NOW()),
-(4, 'Descartada',  'DESC', NOW(), NOW());
-
--- 2. Laboratorios
-INSERT INTO `laboratorios` (`id`, `nombre`, `nacionalidad`, `createdAt`, `updatedAt`) VALUES
-(1, 'Pfizer-BioNTech', 'Estadounidense', NOW(), NOW()),
-(2, 'AstraZeneca',     'Británica',      NOW(), NOW()),
-(3, 'Sputnik',         'Rusa',           NOW(), NOW()),
-(4, 'Sinopharm',       'China',          NOW(), NOW()),
-(5, 'Moderna',         'Estadounidense', NOW(), NOW());
-
--- 3. Lotes (lotes 1-4 activos, 5-6 próximos a vencer, 7-8 vencidos)
-INSERT INTO `lotes` (`id`, `num_lote`, `id_laboratorio`, `pais_origen`, `cantidad`, `fecha_fab`, `fecha_venc`, `fecha_compra`, `fecha_adquisicion`, `createdAt`, `updatedAt`) VALUES
-(1, 'LOT-2025-001', 1, 'Argentina', 1000, '2024-01-01', '2027-06-30', '2025-01-15', '2025-01-20', NOW(), NOW()),
-(2, 'LOT-2025-002', 2, 'India',      500, '2024-03-01', '2027-09-30', '2025-03-10', '2025-03-15', NOW(), NOW()),
-(3, 'LOT-2025-003', 3, 'Rusia',      800, '2024-06-01', '2027-12-31', '2025-06-20', '2025-06-25', NOW(), NOW()),
-(4, 'LOT-2025-004', 4, 'China',      600, '2024-09-01', '2027-08-31', '2025-09-05', '2025-09-10', NOW(), NOW()),
-(5, 'LOT-2026-001', 5, 'Argentina',  400, '2025-01-15', '2026-05-15', '2026-01-20', '2026-01-25', NOW(), NOW()),
-(6, 'LOT-2026-002', 1, 'Argentina',  300, '2025-02-01', '2026-05-25', '2026-02-10', '2026-02-15', NOW(), NOW()),
-(7, 'LOT-2024-001', 2, 'India',      200, '2023-10-01', '2026-01-01', '2024-10-15', '2024-10-20', NOW(), NOW()),
-(8, 'LOT-2024-002', 3, 'Rusia',      150, '2023-06-01', '2026-03-01', '2024-06-10', '2024-06-15', NOW(), NOW());
-
--- 4. Vacunas (1 por lote; lotes 7-8 en estado VENC=3)
-INSERT INTO `vacunas` (`id`, `id_lote`, `id_estado`, `tipo`, `nombre_comercial`, `createdAt`, `updatedAt`) VALUES
-(1, 1, 1, 'COVID-19',        'Comirnaty',     NOW(), NOW()),
-(2, 2, 1, 'COVID-19',        'Vaxzevria',     NOW(), NOW()),
-(3, 3, 1, 'COVID-19',        'Sputnik V',     NOW(), NOW()),
-(4, 4, 1, 'Influenza',       'Sinopharm Flu', NOW(), NOW()),
-(5, 5, 1, 'Fiebre Amarilla', 'Stamaril',      NOW(), NOW()),
-(6, 6, 1, 'Hepatitis B',     'Engerix-B',     NOW(), NOW()),
-(7, 7, 3, 'COVID-19',        'Vaxzevria',     NOW(), NOW()),
-(8, 8, 3, 'COVID-19',        'Sputnik V',     NOW(), NOW());
-
--- 5. Usuarios adicionales (misma contraseña que el Administrador id=9)
-INSERT INTO `usuarios` (`id`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `usuario`, `password`, `createdAt`, `updatedAt`) VALUES
-(10, 'Ana',    'García',     '28765432', 'ana.garcia@argentina.gob.ar',    '01112345678', 'Auditor',         '$2b$10$9E.d3IscxjzO682zL7HRQO6.IQH1jTIXoIciYqz/o3GPkNHpDeB.i', NOW(), NOW()),
-(11, 'Carlos', 'López',      '35123456', 'carlos.lopez@argentina.gob.ar',  '01198765432', 'Enfermero',       '$2b$10$9E.d3IscxjzO682zL7HRQO6.IQH1jTIXoIciYqz/o3GPkNHpDeB.i', NOW(), NOW()),
-(12, 'María',  'Rodríguez',  '42654321', 'maria.rodriguez@argentina.gob.ar','01187654321','Administrativo',  '$2b$10$9E.d3IscxjzO682zL7HRQO6.IQH1jTIXoIciYqz/o3GPkNHpDeB.i', NOW(), NOW());
-
--- 6. Ubicaciones para los nuevos usuarios
-INSERT INTO `usuarioubicaciones` (`id_usuario`, `id_ubicacion`, `id_rol`, `createdAt`, `updatedAt`) VALUES
-(10,  3, 2, NOW(), NOW()),  -- Auditor → Hospital Italiano (CV prov 1)
-(10,  4, 2, NOW(), NOW()),  -- Auditor → Hospital San Isidro
-(10, 12, 2, NOW(), NOW()),  -- Auditor → Hospital de Córdoba (CV prov 5)
-(10, 13, 2, NOW(), NOW()),  -- Auditor → Hospital Italiano Córdoba
-(11,  3, 3, NOW(), NOW()),  -- Enfermero → Hospital Italiano
-(11, 12, 3, NOW(), NOW()),  -- Enfermero → Hospital de Córdoba
-(12,  2, 4, NOW(), NOW());  -- Administrativo → Hospital Garrahan (Dep. Nacional)
-
--- 7. Pacientes
-INSERT INTO `pacientes` (`id`, `nombre`, `apellido`, `dni`, `fecha_nacimiento`, `genero`, `localidad`, `telefono`, `correo`, `id_provincia`, `id_ubicacion_registro`, `createdAt`, `updatedAt`) VALUES
-(1,  'Juan',     'Pérez',     '28567890', '1985-03-15', 'Masculino',        'Buenos Aires',      '1156781234', 'juan.perez@mail.com',      1,  3,  NOW(), NOW()),
-(2,  'María',    'González',  '35123789', '1990-07-22', 'Femenino',         'Córdoba',           '3515678901', 'maria.gonzalez@mail.com',  5,  12, NOW(), NOW()),
-(3,  'Carlos',   'López',     '42678901', '2000-11-30', 'Masculino',        'Rosario',           '3415678901', 'carlos.lopez@mail.com',    20, 27, NOW(), NOW()),
-(4,  'Ana',      'Martínez',  '31456123', '1978-05-10', 'Femenino',         'Mendoza',           '2614567890', 'ana.martinez@mail.com',    12, 23, NOW(), NOW()),
-(5,  'Luis',     'Ramírez',   '25987654', '1962-09-18', 'Masculino',        'Tucumán',           '3815123456', 'luis.ramirez@mail.com',    23, 28, NOW(), NOW()),
-(6,  'Laura',    'Sánchez',   '38765432', '1995-02-28', 'Femenino',         'Salta',             '3874123456', 'laura.sanchez@mail.com',   16, 29, NOW(), NOW()),
-(7,  'Diego',    'Torres',    '40234567', '2002-06-15', 'Masculino',        'San Isidro',        '1156781235', 'diego.torres@mail.com',    1,  4,  NOW(), NOW()),
-(8,  'Patricia', 'Fernández', '22345678', '1955-12-03', 'Femenino',         'Buenos Aires',      '1156781236', 'patricia.fern@mail.com',   1,  5,  NOW(), NOW()),
-(9,  'Roberto',  'Díaz',      '29876543', '1988-04-25', 'Masculino',        'Villa Carlos Paz',  '3516789012', 'roberto.diaz@mail.com',    5,  13, NOW(), NOW()),
-(10, 'Mónica',   'Ruiz',      '44123456', '2005-08-11', 'Femenino',         'Santa Fe',          '3456789012', 'monica.ruiz@mail.com',     20, 26, NOW(), NOW());
-
--- 8. Stocks (inserción directa sin trigger)
-INSERT INTO `stocks` (`id_lote`, `id_ubicacion`, `cantidad`, `createdAt`, `updatedAt`) VALUES
--- Lote 1 COVID-19 activo
-(1,  2, 400, NOW(), NOW()),   -- Dep. Nacional (id=2)
-(1,  3, 200, NOW(), NOW()),   -- Hospital Italiano prov.BA
-(1,  4, 150, NOW(), NOW()),   -- Hospital San Isidro prov.BA
-(1,  5, 100, NOW(), NOW()),   -- Hospital San Nicolás prov.BA
--- Lote 2 COVID-19 activo
-(2,  2, 200, NOW(), NOW()),
-(2, 12, 100, NOW(), NOW()),   -- Hospital de Córdoba
-(2, 13,  80, NOW(), NOW()),   -- Hospital Italiano Córdoba
--- Lote 3 COVID-19 activo
-(3,  2, 350, NOW(), NOW()),
-(3, 29,  80, NOW(), NOW()),   -- Hospital de Salta
--- Lote 4 Influenza activo
-(4,  2, 250, NOW(), NOW()),
-(4, 23, 150, NOW(), NOW()),   -- Hospital de Mendoza
-(4, 26, 100, NOW(), NOW()),   -- Hospital de Santa Fe
--- Lote 5 Fiebre Amarilla vence 2026-05-15
-(5,  2, 200, NOW(), NOW()),
-(5, 28, 100, NOW(), NOW()),   -- Hospital de Tucumán
--- Lote 6 Hepatitis B vence 2026-05-25
-(6,  2, 150, NOW(), NOW()),
-(6, 27,  80, NOW(), NOW()),   -- Hospital de Rosario
--- Lote 7 COVID-19 VENCIDO 2026-01-01 → Reporte 5
-(7,  3,  80, NOW(), NOW()),   -- Hospital Italiano
-(7, 12,  60, NOW(), NOW()),   -- Hospital de Córdoba
--- Lote 8 COVID-19 VENCIDO 2026-03-01 → Reporte 5
-(8, 26,  70, NOW(), NOW()),   -- Hospital de Santa Fe
-(8, 28,  40, NOW(), NOW());   -- Hospital de Tucumán
-
--- 9. Aplicaciones normales (vacunas NO vencidas al momento de la aplicación)
-INSERT INTO `aplicaciones` (`id`, `id_vacuna`, `id_paciente`, `id_ubicacion`, `id_usuario`, `id_lote`, `fecha_aplicacion`, `createdAt`, `updatedAt`) VALUES
-(1,  1, 1,  3, 9, 1, '2026-01-15 09:00:00', '2026-01-15 09:00:00', '2026-01-15 09:00:00'),
-(2,  1, 7,  4, 9, 1, '2026-01-20 10:00:00', '2026-01-20 10:00:00', '2026-01-20 10:00:00'),
-(3,  2, 2, 12, 9, 2, '2026-02-05 09:30:00', '2026-02-05 09:30:00', '2026-02-05 09:30:00'),
-(4,  3, 5, 29, 9, 3, '2026-02-15 11:00:00', '2026-02-15 11:00:00', '2026-02-15 11:00:00'),
-(5,  4, 4, 23, 9, 4, '2026-03-01 08:00:00', '2026-03-01 08:00:00', '2026-03-01 08:00:00'),
-(6,  5, 6, 28, 9, 5, '2026-03-10 09:00:00', '2026-03-10 09:00:00', '2026-03-10 09:00:00'),
-(7,  6, 3, 27, 9, 6, '2026-03-20 10:30:00', '2026-03-20 10:30:00', '2026-03-20 10:30:00'),
-(8,  1, 8,  5, 9, 1, '2026-04-01 09:00:00', '2026-04-01 09:00:00', '2026-04-01 09:00:00'),
-(9,  2, 9, 13, 9, 2, '2026-04-10 10:00:00', '2026-04-10 10:00:00', '2026-04-10 10:00:00'),
-(10, 4, 10,26, 9, 4, '2026-04-20 11:00:00', '2026-04-20 11:00:00', '2026-04-20 11:00:00');
-
--- Aplicaciones de vacunas VENCIDAS (para Reporte 4: fecha_aplicacion > fecha_venc del lote)
--- Se deshabilita el trigger temporalmente para poder insertar estos datos de prueba
-DROP TRIGGER IF EXISTS `prevenir_aplicacion_vencida`;
-
-INSERT INTO `aplicaciones` (`id`, `id_vacuna`, `id_paciente`, `id_ubicacion`, `id_usuario`, `id_lote`, `fecha_aplicacion`, `createdAt`, `updatedAt`) VALUES
-(11, 7, 1,  3, 9, 7, '2026-02-10 09:00:00', '2026-02-10 09:00:00', '2026-02-10 09:00:00'),
-(12, 8, 2, 12, 9, 8, '2026-04-01 10:00:00', '2026-04-01 10:00:00', '2026-04-01 10:00:00');
-
--- Recrear trigger prevenir_aplicacion_vencida
-DELIMITER $$
-CREATE TRIGGER `prevenir_aplicacion_vencida` BEFORE INSERT ON `aplicaciones` FOR EACH ROW BEGIN
-  DECLARE fecha_vencimiento DATE;
-  DECLARE estado_vacuna INT;
-  SELECT fecha_venc INTO fecha_vencimiento FROM Lotes WHERE id = NEW.id_lote;
-  SELECT id_estado INTO estado_vacuna FROM Vacunas WHERE id = NEW.id_vacuna;
-  IF estado_vacuna = (SELECT id FROM Estados WHERE codigo = 'VENC') OR fecha_vencimiento < CURDATE() THEN
-    SIGNAL SQLSTATE '45000'
-    SET MESSAGE_TEXT = 'No se puede aplicar una vacuna vencida';
-  END IF;
-END
-$$
-DELIMITER ;
-
--- 10. Descartes (el trigger actualizar_stock_descarte reducirá el stock del lote mayor)
-INSERT INTO `descartes` (`id`, `id_lote`, `id_usuario`, `id_ubicacion`, `cantidad`, `fecha_descarte`, `forma_descarte`, `motivo`, `id_estado`, `createdAt`, `updatedAt`) VALUES
-(1, 7, 9,  3, 50, '2026-02-20', 'incineracion', 'Lote vencido detectado en depósito, descarte por vencimiento',        3, NOW(), NOW()),
-(2, 8, 9, 26, 40, '2026-04-05', 'autoclave',    'Lote vencido verificado en almacén, descarte obligatorio',            3, NOW(), NOW()),
-(3, 5, 9, 28, 30, '2026-03-15', 'reciclaje',    'Vacunas próximas a vencer, descarte preventivo antes del vencimiento', 3, NOW(), NOW());
-
--- 11. Solicitudes de acceso
-INSERT INTO `solicitudesacceso` (`id`, `nombre`, `apellido`, `dni`, `correo`, `telefono`, `motivo`, `estado`, `createdAt`, `updatedAt`) VALUES
-(1, 'Pedro',  'Alvarado',   '33445566', 'pedro.alvarado@gmail.com',    NULL,         'Solicito acceso como enfermero para registrar aplicaciones de vacunas en el Hospital Italiano', 'Pendiente', NOW(), NOW()),
-(2, 'Lucía',  'Morales',    '41789012', 'lucia.morales@gmail.com',     '01155556666','Solicito acceso para realizar auditoría del sistema de trazabilidad',                             'Aprobado',  NOW(), NOW()),
-(3, 'Héctor', 'Villanueva', '27654321', 'hector.villanueva@gmail.com', NULL,         'Acceso para gestión administrativa y generación de reportes mensuales',                           'Rechazado', NOW(), NOW());
-
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

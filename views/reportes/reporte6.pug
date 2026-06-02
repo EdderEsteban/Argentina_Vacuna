@@ -6,7 +6,37 @@ block content
       a.btn.btn-outline-secondary(href='/reportes')
         i.bi.bi-arrow-left.me-1
         | Volver
-      h1.mb-0 📊 Reporte 6 — Personas Vacunadas
+      h2.fw-bold.mb-0
+        i.bi.bi-bar-chart-line.me-2.text-primary
+        | Reporte 6 — Personas Vacunadas
+
+    if !alcance.esNC && !alcance.mostrarSelector && alcance.ubicacionSeleccionada
+      .alert.alert-light.border.py-2.mb-3
+        i.bi.bi-geo-alt-fill.me-2.text-primary
+        | Mostrando datos de:&nbsp;
+        strong
+          - var ubi = alcance.ubicacionesDisponibles.find(u => u.id === alcance.ubicacionSeleccionada)
+          if ubi
+            = ubi.nombre
+
+    if alcance.mostrarSelector
+      .card.mb-4
+        .card-header.bg-primary.text-white
+          i.bi.bi-funnel.me-2
+          | Filtros
+        .card-body
+          form(method='GET' action='/reportes/6')
+            .row.g-3.align-items-end
+              .col-md-6
+                .form-floating
+                  select.form-select#ubicacion(name='ubicacion')
+                    each u in alcance.ubicacionesDisponibles
+                      option(value=u.id selected=(u.id === alcance.ubicacionSeleccionada))= u.nombre
+                  label(for='ubicacion') Ubicación
+              .col-md-3
+                button.btn.btn-primary.w-100(type='submit')
+                  i.bi.bi-arrow-clockwise.me-2
+                  | Actualizar
 
     if resultados.length === 0
       .alert.alert-warning
@@ -15,7 +45,7 @@ block content
     else
       .card
         .table-responsive
-          table.table.table-striped.table-hover.align-middle.mb-0
+          table#tablaReporte.table.table-striped.table-hover.align-middle.mb-0
             thead.table-dark
               tr
                 th Tipo de Vacuna
@@ -31,3 +61,19 @@ block content
                   td= r.localidad
                   td.text-center
                     span.badge.bg-primary.fs-6= r.cantidad_vacunados
+
+block scripts
+  link(rel='stylesheet' href='https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css')
+  script(src='https://cdn.datatables.net/2.1.8/js/dataTables.min.js')
+  script(src='https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js')
+  script.
+    $(function () {
+      if ($('#tablaReporte').length) {
+        $('#tablaReporte').DataTable({
+          language: { url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json' },
+          pageLength: 25,
+          order: []
+        });
+      }
+      $('#ubicacion').select2({ width: '100%', dropdownParent: $('#ubicacion').parent() });
+    });

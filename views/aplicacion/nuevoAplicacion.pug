@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 💉 Registrar Aplicación de Vacuna
+    h2.fw-bold.mb-4
+      i.bi.bi-capsule.me-2.text-primary
+      | Registrar Aplicación de Vacuna
 
     form#formNuevaAplicacion
       input(type='hidden' name='_csrf' value=csrfToken)
@@ -90,16 +92,3 @@ block content
           | Cancelar
 
   script(src='/js/aplicacion/nuevoAplicacion.js')
-  script.
-      $(document).ready(function() {
-          $('#id_lote').select2({
-              placeholder: '-- Seleccione un lote --',
-              allowClear: true,
-              width: '100%',
-              dropdownParent: $('#id_lote').parent()
-          });
-          // Re-trigger change on select2 selection
-          $('#id_lote').on('select2:select select2:unselect', function() {
-              $(this).trigger('change');
-          });
-      });

@@ -1,0 +1,158 @@
+nav#sidebar.sidebar
+
+  //- Marca / Brand
+  a.sidebar-brand(href='/dashboard')
+    i.bi.bi-shield-check
+    span Argentina Vacuna
+
+  //- Navegación por rol
+  ul.sidebar-nav.list-unstyled
+
+    li
+      a.sidebar-link(href='/dashboard')
+        i.bi.bi-house-door
+        span Dashboard
+
+    //- ── Administrador ────────────────────────────────────────────────────────
+    if usuario.rol === 'Administrador'
+
+      li.sidebar-section Gestión
+      li
+        a.sidebar-link(href='/laboratorios')
+          i.bi.bi-building
+          span Laboratorios
+      li
+        a.sidebar-link(href='/lotes')
+          i.bi.bi-box-seam
+          span Lotes
+      li
+        a.sidebar-link(href='/ubicaciones')
+          i.bi.bi-geo-alt
+          span Ubicaciones
+      li
+        a.sidebar-link(href='/movimientos')
+          i.bi.bi-arrow-left-right
+          span Movimientos
+      li
+        a.sidebar-link(href='/transportes')
+          i.bi.bi-truck
+          span Transportes
+      li
+        a.sidebar-link(href='/usuarios')
+          i.bi.bi-people
+          span Usuarios
+      li
+        a.sidebar-link(href='/solicitudes')
+          i.bi.bi-person-check
+          span Solicitudes de Acceso
+
+      li.sidebar-section Registro
+      li
+        a.sidebar-link(href='/pacientes')
+          i.bi.bi-person-badge
+          span Pacientes
+      li
+        a.sidebar-link(href='/aplicaciones')
+          i.bi.bi-capsule
+          span Aplicaciones
+      li
+        a.sidebar-link(href='/descartes')
+          i.bi.bi-trash
+          span Descartes
+
+      li.sidebar-section Reportes
+      li
+        a.sidebar-link(href='/reportes')
+          i.bi.bi-bar-chart-line
+          span Reportes
+
+    //- ── Auditor ──────────────────────────────────────────────────────────────
+    else if usuario.rol === 'Auditor'
+
+      li.sidebar-section Consultas
+      li
+        a.sidebar-link(href='/laboratorios')
+          i.bi.bi-building
+          span Laboratorios
+      li
+        a.sidebar-link(href='/lotes')
+          i.bi.bi-box-seam
+          span Lotes
+      li
+        a.sidebar-link(href='/ubicaciones')
+          i.bi.bi-geo-alt
+          span Ubicaciones
+      li
+        a.sidebar-link(href='/movimientos')
+          i.bi.bi-arrow-left-right
+          span Movimientos
+      li
+        a.sidebar-link(href='/transportes')
+          i.bi.bi-truck
+          span Transportes
+      li
+        a.sidebar-link(href='/pacientes')
+          i.bi.bi-person-badge
+          span Pacientes
+      li
+        a.sidebar-link(href='/aplicaciones')
+          i.bi.bi-capsule
+          span Aplicaciones
+      li
+        a.sidebar-link(href='/descartes')
+          i.bi.bi-trash
+          span Descartes
+
+      li.sidebar-section Reportes
+      li
+        a.sidebar-link(href='/reportes')
+          i.bi.bi-bar-chart-line
+          span Reportes
+
+    //- ── Enfermero ────────────────────────────────────────────────────────────
+    else if usuario.rol === 'Enfermero'
+
+      li.sidebar-section Mis secciones
+      li
+        a.sidebar-link(href='/pacientes')
+          i.bi.bi-person-badge
+          span Pacientes
+      li
+        a.sidebar-link(href='/aplicaciones')
+          i.bi.bi-capsule
+          span Aplicaciones
+      li
+        a.sidebar-link(href='/lotes')
+          i.bi.bi-box-seam
+          span Lotes
+      li
+        a.sidebar-link(href='/movimientos')
+          i.bi.bi-arrow-left-right
+          span Movimientos
+
+    //- ── Administrativo ───────────────────────────────────────────────────────
+    else if usuario.rol === 'Administrativo'
+
+      li.sidebar-section Gestión
+      li
+        a.sidebar-link(href='/laboratorios')
+          i.bi.bi-building
+          span Laboratorios
+      li
+        a.sidebar-link(href='/lotes')
+          i.bi.bi-box-seam
+          span Lotes
+      li
+        a.sidebar-link(href='/movimientos')
+          i.bi.bi-arrow-left-right
+          span Movimientos
+      li
+        a.sidebar-link(href='/transportes')
+          i.bi.bi-truck
+          span Transportes
+
+      li.sidebar-section Reportes
+      li
+        a.sidebar-link(href='/reportes')
+          i.bi.bi-bar-chart-line
+          span Reportes

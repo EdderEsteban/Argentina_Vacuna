@@ -2,15 +2,19 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 💉 Listado de Aplicaciones
 
-    .d-flex.gap-2.mb-3
-      a.btn.btn-primary(href='/nuevaaplicacion')
-        i.bi.bi-plus-circle.me-2
-        | Registrar Aplicación
-      a.btn.btn-outline-secondary(href='/buscadoraplicacion')
-        i.bi.bi-search.me-2
-        | Buscar
+    .av-page-header
+      h2.page-title
+        i.bi.bi-capsule
+        | Aplicaciones
+      .page-actions
+        if usuario.rol === 'Enfermero'
+          a.btn.btn-primary(href='/nuevaaplicacion')
+            i.bi.bi-plus-circle.me-2
+            | Registrar
+        a.btn.btn-outline-secondary(href='/buscadoraplicacion')
+          i.bi.bi-search.me-2
+          | Buscar
 
     if filtroLabel
       .filtro-banner.p-3.mb-3.d-flex.align-items-center.justify-content-between.gap-3(class=`filtro-${filtroVariante}`)
@@ -21,30 +25,36 @@ block content
           i.bi.bi-x-circle.me-1
           | Ver todas
 
-    .table-responsive
-      table.table.table-striped.table-hover.align-middle
-        thead.table-dark
-          tr
-            th(scope='col') Fecha
-            th(scope='col') Paciente
-            th(scope='col') DNI
-            th(scope='col') Lote
-            th(scope='col') Tipo de Vacuna
-            th(scope='col') Centro de Vacunación
-            th(scope='col') Enfermero
-        tbody
-          if aplicaciones.length === 0
+    .card.border-0.shadow-sm.mb-4
+      .table-responsive
+        table.table.table-striped.table-hover.align-middle.mb-0
+          thead.table-dark
             tr
-              td.text-center.text-muted(colspan='7') No hay aplicaciones registradas
-          each a in aplicaciones
-            tr
-              td= a.fecha_aplicacion
-              td= a.paciente ? `${a.paciente.nombre} ${a.paciente.apellido}` : '—'
-              td= a.paciente ? a.paciente.dni : '—'
-              td= a.lote ? a.lote.num_lote : '—'
-              td= (a.lote && a.lote.vacunas && a.lote.vacunas.length > 0) ? a.lote.vacunas[0].tipo : '—'
-              td= a.ubicacion ? a.ubicacion.nombre : '—'
-              td= a.usuario ? `${a.usuario.nombre} ${a.usuario.apellido}` : '—'
+              th(scope='col') Fecha
+              th(scope='col') Paciente
+              th(scope='col') DNI
+              th(scope='col') Lote
+              th(scope='col') Tipo de Vacuna
+              th(scope='col') Centro de Vacunación
+              th(scope='col') Enfermero
+          tbody
+            if aplicaciones.length === 0
+              tr
+                td.text-center.text-muted.py-4(colspan='7')
+                  i.bi.bi-inbox.d-block.mb-2(style='font-size:1.5rem;opacity:0.4')
+                  | No hay aplicaciones registradas
+            each a in aplicaciones
+              tr
+                td.text-muted.small= a.fecha_aplicacion
+                td.fw-medium= a.paciente ? `${a.paciente.apellido}, ${a.paciente.nombre}` : '—'
+                td
+                  code= a.paciente ? a.paciente.dni : '—'
+                td
+                  code= a.lote ? a.lote.num_lote : '—'
+                td
+                  span.badge.rounded-pill(style='background:rgba(26,86,219,0.1);color:var(--av-blue)')= (a.lote && a.lote.vacunas && a.lote.vacunas.length > 0) ? a.lote.vacunas[0].tipo : '—'
+                td.text-muted.small= a.ubicacion ? a.ubicacion.nombre : '—'
+                td.text-muted.small= a.usuario ? `${a.usuario.nombre} ${a.usuario.apellido}` : '—'
 
     if pagination.totalPages > 1
       nav(aria-label='Paginación')

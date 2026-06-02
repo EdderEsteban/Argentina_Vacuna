@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --------------------------
   document.getElementById('btnGuardarUbicaciones').addEventListener('click', async () => {
     const rows = [...tablaAsignadas.querySelectorAll('tr')];
-    const payload = rows.map(tr => ({
+    const ubicaciones = rows.map(tr => ({
       id_ubicacion: parseInt(tr.dataset.ubicacion || tr.querySelector('select').dataset.ubicacion),
       id_rol: parseInt(tr.querySelector('.rol-select').value)
     }));
@@ -117,11 +117,12 @@ document.addEventListener('DOMContentLoaded', () => {
           'Content-Type': 'application/json',
           'X-CSRF-Token': csrfToken
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ ubicaciones })
       });
       const data = await res.json();
       if (res.ok) {
         modal.hide();
+        await refrescarListaEfectores();
         Swal.fire('Guardado', data.message || 'Ubicaciones actualizadas', 'success');
       } else {
         Swal.fire('Error', data.message || 'No se pudieron guardar los cambios', 'error');
@@ -130,6 +131,28 @@ document.addEventListener('DOMContentLoaded', () => {
       Swal.fire('Error', 'Falló la conexión', 'error');
     }
   });
+
+  // Refresca la lista #listaEfectores leyendo el endpoint que ya devuelve nombres + rol
+  async function refrescarListaEfectores() {
+    try {
+      const res = await fetch(`/usuarios/${userId}/ubicaciones`);
+      const lista = await res.json();
+      const ul = document.getElementById('listaEfectores');
+      if (!ul) return;
+      if (!lista.length) {
+        ul.innerHTML = '<li class="list-group-item text-muted">Sin efectores asignados</li>';
+        return;
+      }
+      ul.innerHTML = lista.map(ef => `
+        <li class="list-group-item d-flex justify-content-between">
+          <span>${ef.nombre}</span>
+          <span class="badge bg-primary">${ef.rolNombre || '—'}</span>
+        </li>
+      `).join('');
+    } catch (err) {
+      console.error('Error al refrescar lista de efectores:', err);
+    }
+  }
 
   // --------------------------
   // 7.  Cargar al abrir el modal

@@ -68,7 +68,7 @@ module.exports = (sequelize, DataTypes) => {
         async coincideConVacuna(value) {
           if (this.id_vacuna) {
             const vacuna = await sequelize.models.Vacuna.findByPk(this.id_vacuna);
-            if (vacuna && vacuna.id_lote !== value) {
+            if (vacuna && parseInt(vacuna.id_lote, 10) !== parseInt(value, 10)) {
               throw new Error('El lote no coincide con la vacuna aplicada');
             }
           }

@@ -59,6 +59,7 @@ aplicacion.listar = async (req, res) => {
           include: [{ model: Vacuna, as: 'vacunas', attributes: ['tipo', 'nombre_comercial'] }]
         }
       ],
+      distinct: true,
       order: [['fecha_aplicacion', 'DESC']],
       limit,
       offset
@@ -181,17 +182,24 @@ aplicacion.buscarPacientePorDni = async (req, res) => {
 // POST crear aplicación
 aplicacion.crearAplicacion = async (req, res) => {
   try {
-    const { id_paciente, id_lote, fecha_aplicacion } = req.body;
+    const id_paciente  = parseInt(req.body.id_paciente, 10);
+    const id_lote      = parseInt(req.body.id_lote, 10);
+    const fecha_aplicacion = req.body.fecha_aplicacion;
     const id_usuario = req.session?.usuario?.id;
     const sesionUbis = req.session?.usuario?.ubicaciones || [];
     const ubiActual = req.session?.usuario?.ubicacionActual;
 
-    // id_ubicacion viene del hidden input (pre-poblado desde sesión); se valida que pertenezca al usuario
-    const id_ubicacion_body = req.body.id_ubicacion;
+    // id_ubicacion viene del hidden input (pre-poblado desde sesión).
+    // Si se envía un id distinto de los asignados al usuario → rechazo explícito (403)
+    const id_ubicacion_body = req.body.id_ubicacion ? parseInt(req.body.id_ubicacion, 10) : null;
     const validIds = ubiActual ? [ubiActual.id] : sesionUbis.map(u => u.id);
-    const id_ubicacion = validIds.some(id => id == id_ubicacion_body)
-      ? id_ubicacion_body
-      : (ubiActual?.id || sesionUbis[0]?.id);
+    if (id_ubicacion_body && !validIds.some(id => id == id_ubicacion_body)) {
+      return res.status(403).json({
+        success: false,
+        message: 'No puede registrar aplicaciones en una ubicación que no le pertenece.'
+      });
+    }
+    const id_ubicacion = id_ubicacion_body || ubiActual?.id || sesionUbis[0]?.id;
 
     if (!id_usuario) {
       return res.status(401).json({ success: false, message: 'Sesión expirada. Inicie sesión nuevamente.' });
@@ -236,6 +244,16 @@ aplicacion.crearAplicacion = async (req, res) => {
     const errMsg = error.message || '';
     if (errMsg.toLowerCase().includes('stock') || errMsg.toLowerCase().includes('disponible')) {
       return res.status(400).json({ success: false, message: errMsg });
+    }
+
+    // FK constraint: id_paciente o id_lote inexistente
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      const fk = error.parent?.sqlMessage || '';
+      let msg = 'Referencia inválida.';
+      if (fk.includes('id_paciente')) msg = 'El paciente indicado no existe.';
+      else if (fk.includes('id_lote')) msg = 'El lote indicado no existe.';
+      else if (fk.includes('id_ubicacion')) msg = 'La ubicación indicada no existe.';
+      return res.status(400).json({ success: false, message: msg });
     }
 
     res.status(500).json({ success: false, message: errMsg || 'Error al registrar la aplicación.' });
@@ -289,6 +307,7 @@ aplicacion.buscarAplicaciones = async (req, res) => {
           include: [{ model: Vacuna, as: 'vacunas', attributes: ['tipo', 'nombre_comercial'] }]
         }
       ],
+      distinct: true,
       order: [['fecha_aplicacion', 'DESC']],
       limit,
       offset

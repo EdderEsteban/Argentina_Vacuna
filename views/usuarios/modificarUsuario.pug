@@ -6,7 +6,9 @@ block content
       .col-md-6
         .card.shadow
           .card-header.bg-primary.text-white
-            h4.mb-0 ✏️ Modificar Usuario
+            h5.fw-bold.mb-0
+              i.bi.bi-pencil-square.me-2
+              | Modificar Usuario
           .card-body
             form#formModificarUsuario
               input(type="hidden" name="_csrf" value=csrfToken)
@@ -47,14 +49,14 @@ block content
               // --- Efectores actuales ---
               .mb-3
                 label.form-label Efectores Asignados
-                if efectores && efectores.length
-                  ul.list-group#listaEfectores
+                ul.list-group#listaEfectores
+                  if efectores && efectores.length
                     each ef in efectores
                       li.list-group-item.d-flex.justify-content-between
                         span= ef.nombre
                         span.badge.bg-primary= ef.usuariosUbicacion[0].rol.nombre
-                else
-                  .form-control-plaintext.text-muted Sin efectores asignados
+                  else
+                    li.list-group-item.text-muted Sin efectores asignados
 
               // --- Botón para re-asignar ---
               .mb-3

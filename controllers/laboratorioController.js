@@ -1,4 +1,4 @@
-const { Laboratorio } = require('../models');
+const { Laboratorio, Lote } = require('../models');
 const { Op } = require('sequelize');
 
 const labo = {}
@@ -31,7 +31,7 @@ labo.listar = async (req, res) => {
 
   } catch (error) {
     console.error('Error al listar laboratorios:', error);
-    res.redirect('/404');
+    res.redirect('/500');
   }
 };
 
@@ -42,7 +42,7 @@ labo.mostrarNuevo = async (req, res) => {
         res.render('laboratorio/nuevoLaboratorio');
     } catch (error) {
         console.error('Error al cargar formulario de nuevo laboratorio:', error);
-        res.redirect('/404');
+        res.redirect('/500');
     }
 }
 
@@ -82,7 +82,7 @@ labo.editarLaboratorio = async (req, res) => {
         const laboratorio = await Laboratorio.findByPk(req.params.id);
 
         if (!laboratorio) {
-            return res.redirect('laboratorio/listadoLaboratorio');
+            return res.redirect('/laboratorios');
         }
 
         res.render('laboratorio/modificarLaboratorio', {
@@ -91,7 +91,7 @@ labo.editarLaboratorio = async (req, res) => {
 
     } catch (error) {
         console.error('Error al cargar formulario de edición:', error);
-        res.redirect('/404');
+        res.redirect('/500');
     }
 }
 
@@ -132,13 +132,19 @@ labo.actualizarLaboratorio = async (req, res) => {
     }
 };
 
-// Eliminar laboratorio (soft delete)
+// Eliminar laboratorio (soft delete). Bloquea si hay lotes activos del laboratorio
+// para no dejar lotes huérfanos referenciando un laboratorio inexistente.
 labo.borrarLaboratorio = async (req, res) => {
     try {
-        await Laboratorio.destroy({
-            where: { id: req.params.id }
-        });
-        res.sendStatus(204); // Respuesta exitosa sin contenido
+        const lotesActivos = await Lote.count({ where: { id_laboratorio: req.params.id, deletedAt: null } });
+        if (lotesActivos > 0) {
+            return res.status(409).json({
+                success: false,
+                message: `No se puede eliminar: hay ${lotesActivos} lote(s) activos de este laboratorio.`
+            });
+        }
+        await Laboratorio.destroy({ where: { id: req.params.id } });
+        res.sendStatus(204);
     } catch (error) {
         res.status(500).json({
             success: false,

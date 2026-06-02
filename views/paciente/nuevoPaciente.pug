@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
     .container.mt-4
-        h1.mb-4 👤 Nuevo Paciente
+        h2.fw-bold.mb-4
+          i.bi.bi-person-plus.me-2.text-primary
+          | Nuevo Paciente
 
         form#formNuevoPaciente
             input(type="hidden" name="_csrf" value=csrfToken)
@@ -130,17 +132,3 @@ block content
                     | Cancelar
 
     script(src="/js/paciente/nuevoPaciente.js")
-    script.
-        $(document).ready(function() {
-          function inicializarSelect2(selector) {
-            $(selector).select2({
-              placeholder: '',
-              allowClear: true,
-              width: '100%',
-              dropdownParent: $(selector).parent()
-            });
-          }
-
-          inicializarSelect2('#id_provincia');
-          inicializarSelect2('#ubicacionRegistroPaciente');
-        });

@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (btnEditar) {
             const loteId = btnEditar.dataset.id;
-            window.location.href = `/editarLote/${loteId}`;
+            window.location.href = `/editarlote/${loteId}`;
         }
 
         if (btnBorrar) {

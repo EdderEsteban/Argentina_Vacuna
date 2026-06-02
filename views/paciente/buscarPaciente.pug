@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 👨‍⚕️ Búsqueda de Pacientes
+    h2.fw-bold.mb-4
+      i.bi.bi-person-vcard.me-2.text-primary
+      | Búsqueda de Pacientes
 
     // Filtros de búsqueda
     .card.mb-4
@@ -57,17 +59,3 @@ block content
     #paginacionContainer.d-flex.justify-content-center.mt-4
 
   script(src="/js/paciente/buscarPaciente.js")
-  script.
-        $(document).ready(function() {
-          function inicializarSelect2(selector) {
-            $(selector).select2({
-              placeholder: '',
-              allowClear: true,
-              width: '100%',
-              dropdownParent: $(selector).parent()
-            });
-          }
-
-          inicializarSelect2('#id_provincia');
-          inicializarSelect2('#id_ubicacion');
-        });

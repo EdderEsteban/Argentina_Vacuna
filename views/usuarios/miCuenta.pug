@@ -1,0 +1,93 @@
+extends ../__layout/main
+
+block content
+  .container.mt-4
+    h2.fw-bold.mb-4
+      i.bi.bi-person-gear.me-2.text-primary
+      | Mi Cuenta
+
+    .row.g-4
+      //- ── Datos personales (solo lectura) + contacto editable ──
+      .col-lg-6
+        .card.shadow-sm.h-100
+          .card-header.bg-light.fw-semibold
+            i.bi.bi-person-vcard.me-2
+            | Mis datos
+          .card-body
+            form#formContacto(data-id=cuenta.id)
+              input(type="hidden" name="_csrf" value=csrfToken)
+
+              .row
+                .col-md-6.mb-3
+                  label.form-label.small.text-muted Nombre
+                  .form-control-plaintext.border.rounded.px-2.bg-light= cuenta.nombre
+                .col-md-6.mb-3
+                  label.form-label.small.text-muted Apellido
+                  .form-control-plaintext.border.rounded.px-2.bg-light= cuenta.apellido
+
+              .row
+                .col-md-6.mb-3
+                  label.form-label.small.text-muted DNI
+                  .form-control-plaintext.border.rounded.px-2.bg-light= cuenta.dni
+                .col-md-6.mb-3
+                  label.form-label.small.text-muted Usuario
+                  .form-control-plaintext.border.rounded.px-2.bg-light= cuenta.usuario
+
+              hr.my-2
+              p.small.text-muted.mb-3 Podés actualizar tu correo y teléfono:
+
+              .form-floating.mb-3
+                input.form-control#correo(type="email" name="correo" value=cuenta.correo required placeholder="")
+                label(for="correo") Correo electrónico
+              .form-floating.mb-3
+                input.form-control#telefono(type="text" name="telefono" value=cuenta.telefono placeholder="")
+                label(for="telefono") Teléfono
+
+              .d-flex.justify-content-end
+                button.btn.btn-primary#btnGuardarContacto(type="button")
+                  i.bi.bi-save.me-2
+                  | Guardar datos
+
+      //- ── Cambio de contraseña ──
+      .col-lg-6
+        .card.shadow-sm.h-100
+          .card-header.bg-light.fw-semibold
+            i.bi.bi-shield-lock.me-2
+            | Cambiar contraseña
+          .card-body
+            form#formPassword
+              input(type="hidden" name="_csrf" value=csrfToken)
+
+              .form-floating.mb-3
+                input.form-control#actual(type="password" name="actual" autocomplete="current-password" required placeholder="")
+                label(for="actual") Contraseña actual
+              .form-floating.mb-3
+                input.form-control#nueva(type="password" name="nueva" autocomplete="new-password" required placeholder="")
+                label(for="nueva") Nueva contraseña
+                .form-text Mínimo 8 caracteres.
+              .form-floating.mb-3
+                input.form-control#confirmar(type="password" name="confirmar" autocomplete="new-password" required placeholder="")
+                label(for="confirmar") Confirmar nueva contraseña
+
+              .d-flex.justify-content-end
+                button.btn.btn-warning#btnCambiarPassword(type="button")
+                  i.bi.bi-key.me-2
+                  | Cambiar contraseña
+
+      //- ── Efectores asignados (informativo) ──
+      .col-12
+        .card.shadow-sm
+          .card-header.bg-light.fw-semibold
+            i.bi.bi-geo-alt.me-2
+            | Mis ubicaciones asignadas
+          .card-body
+            if efectores && efectores.length
+              ul.list-group
+                each ef in efectores
+                  li.list-group-item.d-flex.justify-content-between
+                    span= ef.nombre
+                    span.badge.bg-primary= ef.rol
+            else
+              p.text-muted.mb-0 No tenés ubicaciones asignadas.
+
+  script(src="/js/usuario/miCuenta.js")

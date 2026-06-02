@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
     .container.mt-4
-        h1.mb-4 ✏️ Editar Lote
+        h2.fw-bold.mb-4
+          i.bi.bi-pencil-square.me-2.text-primary
+          | Editar Lote
 
         form#formEditarLote(data-id=lote.id)
             input(type="hidden" name="_csrf" value=csrfToken)
@@ -130,12 +132,3 @@ block content
                     | Cancelar
 
     script(src="/js/lote/modificarLote.js")
-    script.
-        $(document).ready(function() {
-            $('#id_laboratorio').select2({
-                placeholder: '',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#id_laboratorio').parent()
-            });
-        });

@@ -67,7 +67,7 @@ module.exports = (sequelize, DataTypes) => {
     id_estado: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 3
+      defaultValue: 4
     }
   }, {
     sequelize,

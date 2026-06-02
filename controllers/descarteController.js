@@ -60,6 +60,7 @@ descarte.listar = async (req, res) => {
         { model: Ubicacion, as: 'ubicacion', attributes: ['id', 'nombre'] },
         { model: Estado, as: 'estado', attributes: ['nombre', 'codigo'] }
       ],
+      distinct: true,
       order: [['fecha_descarte', 'DESC']],
       limit,
       offset
@@ -161,20 +162,29 @@ descarte.crearDescarte = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
     }
 
+    // id_ubicacion es obligatorio: sin ella el trigger no sabe de qué stock descontar
+    // y se pierde trazabilidad de dónde se hizo el descarte.
+    if (!id_ubicacion) {
+      return res.status(400).json({ success: false, message: 'La ubicación del descarte es obligatoria.' });
+    }
+
     const cantidadNum = parseInt(cantidad);
     if (isNaN(cantidadNum) || cantidadNum < 1) {
       return res.status(400).json({ success: false, message: 'La cantidad debe ser un número positivo.' });
     }
 
+    // id_estado: 4 = DESC (Descartada). Antes era 3 que es VENC y eso causaba
+    // que la primera descarte de un lote dejara todas sus vacunas como vencidas,
+    // bloqueando aplicaciones legítimas y distorsionando reportes.
     await Descarte.create({
       id_lote,
       id_usuario,
-      id_ubicacion: id_ubicacion || null,
+      id_ubicacion,
       cantidad: cantidadNum,
       fecha_descarte: fecha_descarte || new Date(),
       forma_descarte,
       motivo: motivo.trim(),
-      id_estado: 3
+      id_estado: 4
     });
 
     res.status(201).json({ success: true, message: 'Descarte registrado correctamente.' });

@@ -45,7 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ usuario, password })
             });
 
+            const contentType = res.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`Error del servidor (${res.status})`);
+            }
             const data = await res.json();
+
 
             if (res.ok) {
                 Swal.fire({

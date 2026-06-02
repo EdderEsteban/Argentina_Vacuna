@@ -1,5 +1,11 @@
-footer.bg-secondary.text-white.py-4.mt-auto
-  .container
-    .row
-      .col-12.text-center
-        p.mb-0 © 2025. Derechos reservados.
+footer.app-footer.mt-auto
+  .container-fluid.px-4
+    .row.align-items-center.g-3
+      .col-md-6.text-center.text-md-start
+        .d-flex.align-items-center.justify-content-center.justify-content-md-start.gap-2
+          i.bi.bi-shield-check.text-info
+          span.footer-brand Argentina Vacuna
+          span.text-muted.small.ms-2 — Trazabilidad de Vacunas
+      .col-md-6.text-center.text-md-end
+        p.mb-0.small
+          | &copy; #{new Date().getFullYear()} · Laboratorio de Programación II · Tecnicatura Universitaria en Desarrollo Web

@@ -1,3 +1,16 @@
+// Inicialización de Select2 sobre el select de lote y re-trigger del change
+$(document).ready(function () {
+  $('#id_lote').select2({
+    placeholder: '-- Seleccione un lote --',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('#id_lote').parent()
+  });
+  $('#id_lote').on('select2:select select2:unselect', function () {
+    $(this).trigger('change');
+  });
+});
+
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 const btnRegistrar = document.getElementById('btnRegistrarAplicacion');
 

@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
     .container.mt-4
-        h1.mb-4 ✏️ Editar Paciente
+        h2.fw-bold.mb-4
+          i.bi.bi-pencil-square.me-2.text-primary
+          | Editar Paciente
 
         form#formEditarPaciente
             input(type="hidden" name="_csrf" value=csrfToken)
@@ -131,18 +133,3 @@ block content
                     | Cancelar
 
     script(src="/js/paciente/modificarPaciente.js")
-
-    script.
-        $(document).ready(function() {
-          function inicializarSelect2(selector) {
-            $(selector).select2({
-              placeholder: '',
-              allowClear: true,
-              width: '100%',
-              dropdownParent: $(selector).parent()
-            });
-          }
-
-          inicializarSelect2('#id_provincia');
-          inicializarSelect2('#ubicacionRegistroPaciente');
-        });

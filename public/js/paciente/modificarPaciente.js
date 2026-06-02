@@ -1,3 +1,17 @@
+// -----------------------------------Inicialización de Select2--------------------------------
+$(document).ready(function () {
+    function inicializarSelect2(selector) {
+        $(selector).select2({
+            placeholder: '',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $(selector).parent()
+        });
+    }
+    inicializarSelect2('#id_provincia');
+    inicializarSelect2('#ubicacionRegistroPaciente');
+});
+
 // -----------------------------------Variables-------------------------------------------------
 const formEditarPaciente = document.getElementById('formEditarPaciente');
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

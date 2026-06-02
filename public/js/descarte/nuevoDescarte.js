@@ -1,3 +1,17 @@
+// Inicialización de Select2 sobre el select de lote y re-disparo del change nativo
+$(document).ready(function () {
+  $('#id_lote').select2({
+    placeholder: '',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('#id_lote').parent()
+  });
+  $('#id_lote').on('change', function () {
+    const event = new Event('change', { bubbles: true });
+    document.getElementById('id_lote').dispatchEvent(event);
+  });
+});
+
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 const btnRegistrar = document.getElementById('btnRegistrarDescarte');
 const selectUbicacion = document.getElementById('id_ubicacion');

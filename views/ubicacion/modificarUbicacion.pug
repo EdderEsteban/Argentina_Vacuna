@@ -2,7 +2,9 @@ extends ../__layout/main
 
 block content
   .container.mt-4
-    h1.mb-4 ✏️ Editar Ubicación
+    h2.fw-bold.mb-4
+      i.bi.bi-pencil-square.me-2.text-primary
+      | Editar Ubicación
 
     form#formEditarUbicacion(data-id=ubicacion.id)
       input(type="hidden" name="_csrf" value=csrfToken)
@@ -74,12 +76,3 @@ block content
           | Cancelar
 
     script(src="/js/ubicacion/modificarUbicacion.js")
-    script.
-        $(document).ready(function() {
-            $('#id_provincia').select2({
-                placeholder: '',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#id_provincia').parent()
-            });
-        });

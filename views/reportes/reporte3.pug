@@ -6,33 +6,106 @@ block content
       a.btn.btn-outline-secondary(href='/reportes')
         i.bi.bi-arrow-left.me-1
         | Volver
-      h1.mb-0 📊 Reporte 3 — Stock por Provincia
+      h2.fw-bold.mb-0
+        i.bi.bi-bar-chart-line.me-2.text-primary
+        if alcance.ubicacionSeleccionada
+          | Reporte 3 — Stock por Ubicación
+        else
+          | Reporte 3 — Stock por Provincia
 
-    .alert.alert-info.mb-4
-      i.bi.bi-info-circle.me-2
-      | Excluye depósito nacional y nodos de distribución. Muestra solo stock en depósitos provinciales y centros de vacunación.
+    //- Indicador / ayuda
+    if alcance.esNC && !alcance.ubicacionSeleccionada
+      .alert.alert-info.mb-4
+        i.bi.bi-info-circle.me-2
+        | Excluye depósito nacional y nodos de distribución. Muestra stock en depósitos provinciales y centros de vacunación.
+    else if !alcance.mostrarSelector && alcance.ubicacionSeleccionada
+      .alert.alert-light.border.py-2.mb-3
+        i.bi.bi-geo-alt-fill.me-2.text-primary
+        | Stock detallado de:&nbsp;
+        strong
+          - var ubi = alcance.ubicacionesDisponibles.find(u => u.id === alcance.ubicacionSeleccionada)
+          if ubi
+            = ubi.nombre
+
+    //- Dropdown cuando tiene varias ubicaciones
+    if alcance.mostrarSelector
+      .card.mb-4
+        .card-header.bg-primary.text-white
+          i.bi.bi-funnel.me-2
+          | Filtros
+        .card-body
+          form(method='GET' action='/reportes/3')
+            .row.g-3.align-items-end
+              .col-md-6
+                .form-floating
+                  select.form-select#ubicacion(name='ubicacion')
+                    each u in alcance.ubicacionesDisponibles
+                      option(value=u.id selected=(u.id === alcance.ubicacionSeleccionada))= u.nombre
+                  label(for='ubicacion') Ubicación
+              .col-md-3
+                button.btn.btn-primary.w-100(type='submit')
+                  i.bi.bi-arrow-clockwise.me-2
+                  | Actualizar
 
     if resultados.length === 0
       .alert.alert-warning
         i.bi.bi-exclamation-circle.me-2
-        | No hay stock disponible en provincias.
+        | No hay stock disponible.
     else
       .card
         .table-responsive
-          table.table.table-striped.table-hover.align-middle.mb-0
+          table#tablaReporte.table.table-striped.table-hover.align-middle.mb-0
             thead.table-dark
-              tr
-                th Tipo de Vacuna
-                th Provincia
-                th Tipo de Ubicación
-                th.text-center Stock Disponible
+              if alcance.ubicacionSeleccionada
+                //- Vista detallada por ubicación
+                tr
+                  th Tipo de Vacuna
+                  th N° Lote
+                  th Provincia
+                  th Ubicación
+                  th Vencimiento
+                  th.text-center Stock
+              else
+                //- Vista agregada por provincia
+                tr
+                  th Tipo de Vacuna
+                  th Provincia
+                  th Tipo de Ubicación
+                  th.text-center Stock Disponible
             tbody
               each r in resultados
                 tr
-                  td
-                    strong= r.tipo_vacuna
-                  td= r.provincia
-                  td
-                    span.badge.bg-secondary= r.tipo_ubicacion
-                  td.text-center
-                    span.badge.bg-success.fs-6= r.stock_disponible
+                  if alcance.ubicacionSeleccionada
+                    td
+                      strong= r.tipo_vacuna
+                    td
+                      code= r.num_lote
+                    td= r.provincia
+                    td= r.ubicacion
+                    td= r.fecha_vencimiento
+                    td.text-center
+                      span.badge.bg-success.fs-6= r.stock_disponible
+                  else
+                    td
+                      strong= r.tipo_vacuna
+                    td= r.provincia
+                    td
+                      span.badge.bg-secondary= r.tipo_ubicacion
+                    td.text-center
+                      span.badge.bg-success.fs-6= r.stock_disponible
+
+block scripts
+  link(rel='stylesheet' href='https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css')
+  script(src='https://cdn.datatables.net/2.1.8/js/dataTables.min.js')
+  script(src='https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js')
+  script.
+    $(function () {
+      if ($('#tablaReporte').length) {
+        $('#tablaReporte').DataTable({
+          language: { url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/es-ES.json' },
+          pageLength: 25,
+          order: []
+        });
+      }
+      $('#ubicacion').select2({ width: '100%', dropdownParent: $('#ubicacion').parent() });
+    });

@@ -1,3 +1,13 @@
+// Inicialización de Select2 sobre el filtro de centro de vacunación
+$(document).ready(function () {
+  $('#id_ubicacion').select2({
+    placeholder: '',
+    allowClear: true,
+    width: '100%',
+    dropdownParent: $('#id_ubicacion').parent()
+  });
+});
+
 document.getElementById('formBuscarAplicacion').addEventListener('submit', async function (e) {
   e.preventDefault();
   await buscar(1);
