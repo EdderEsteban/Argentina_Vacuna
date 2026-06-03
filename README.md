@@ -56,7 +56,7 @@ npm install
 
 ### 2. Configurar la base de datos
 
-Crear `config/config.json` con las credenciales locales (el archivo está excluido del repo por seguridad):
+Crear `config/config.json` con las credenciales locales:
 
 ```json
 {
