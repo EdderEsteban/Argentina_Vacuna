@@ -31,7 +31,6 @@ El sistema diferencia cuatro roles (Administrador, Auditor, Enfermero, Administr
 - **Auth**: Passport.js (estrategia local) · express-session · connect-session-sequelize
 - **Seguridad**: csurf (CSRF tokens) · bcryptjs
 - **Dev**: nodemon
-- **Pruebas**: Playwright
 
 ---
 
@@ -54,69 +53,27 @@ cd Argentina_Vacuna
 npm install
 ```
 
-### 2. Configurar la base de datos
+### 2. Importar la base de datos
 
-Crear `config/config.json` con las credenciales locales:
+El repositorio incluye un dump completo (`argentina_vacuna.sql`) con el **esquema, los Stored Procedures, Triggers, Functions, el Event de vencimientos y todos los datos de prueba** (usuarios, ubicaciones, lotes y pacientes de ejemplo).
 
-```json
-{
-  "development": {
-    "username": "root",
-    "password": "",
-    "database": "argentina_vacuna",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  },
-  "test": {
-    "username": "root",
-    "password": "",
-    "database": "argentina_vacuna_test",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  },
-  "production": {
-    "username": "root",
-    "password": "",
-    "database": "argentina_vacuna",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  }
-}
-```
+Desde **phpMyAdmin** → pestaña **Importar** → seleccionar `argentina_vacuna.sql` → **Continuar**.
 
-Crear la base de datos vacía desde phpMyAdmin:
+> Esto crea la base `argentina_vacuna` ya poblada y lista para usar. **No** hace falta ejecutar migraciones ni seeders.
 
-```sql
-CREATE DATABASE argentina_vacuna;
-```
+La conexión ya viene configurada en `config/config.json` para un MySQL local (`root` sin contraseña en `127.0.0.1:3306`). Si tu MySQL usa otras credenciales, ajustalas ahí.
 
-### 3. Ejecutar migrations
+### 3. Activar el event scheduler de MySQL
 
-```bash
-npx sequelize-cli db:migrate
-```
-
-Esto crea todas las tablas, los Stored Procedures, los Triggers y el Event de marcado de vencimientos.
-
-### 4. Activar el event scheduler de MySQL
-
-Una sola vez, desde phpMyAdmin:
+Una sola vez, desde phpMyAdmin (pestaña **SQL**):
 
 ```sql
 SET GLOBAL event_scheduler = ON;
 ```
 
-Esto habilita el evento `ev_marcar_vencimientos` que corre diariamente para marcar como `VENC` las vacunas cuyo lote ya venció.
+Habilita el evento `ev_marcar_vencimientos`, que marca diariamente como `VENC` las vacunas cuyo lote ya venció.
 
-### 5. Cargar usuarios de prueba (opcional)
-
-```bash
-node seed_usuarios.js
-```
-
-Crea 20 usuarios distribuidos en 7 ubicaciones clave. Es idempotente: si los usuarios ya existen no los duplica.
-
-### 6. Iniciar el servidor
+### 4. Iniciar el servidor
 
 ```bash
 npm start
@@ -153,13 +110,15 @@ Todos los usuarios tienen la misma contraseña: **`Vacuna2026`**
 ```
 argentina_vacuna/
 ├── app.js                  Entry point. Middlewares, sesión, CSRF, Passport.
+├── argentina_vacuna.sql    Dump completo: schema + objetos de BD + datos de prueba.
 ├── modules/
 │   ├── routers.js          Todas las rutas con sus middlewares de auth y rol.
 │   ├── auth.js             isAuthenticated, hasRole(...), requireUbicacion.
 │   └── handler.js          Handlers de errores 400/401/403/404/500.
 ├── controllers/            Lógica de negocio (un archivo por módulo).
 ├── models/                 Modelos Sequelize.
-├── migrations/             Cambios de schema versionados.
+├── migrations/             Cambios de schema versionados (historial).
+├── seeders/                Seeders Sequelize (estados, roles, provincias).
 ├── views/
 │   ├── __layout/           main.pug, navbar, sidebar, footer.
 │   └── [modulo]/           Vistas por módulo (listado, nuevo, modificar, buscar).
@@ -167,14 +126,9 @@ argentina_vacuna/
 │   ├── css/style.css       Estilos custom.
 │   ├── js/[modulo]/        JS por módulo (fetch a la API REST).
 │   └── img/
-├── config/
-│   ├── config.json         Credenciales de BD (no se commitea).
-│   └── passport-config.js  Estrategia local con rol y ubicaciones por sesión.
-├── seed_usuarios.js        Carga usuarios de prueba (idempotente).
-├── pw_carga.js             Pruebas Playwright de carga inicial.
-├── pw_deposito_nacional.js Prueba end-to-end del flujo del Depósito Nacional.
-├── INFORME.md              Informe técnico de la entrega.
-└── GUIA_DEFENSA.md         Guía de defensa para presentación oral.
+└── config/
+    ├── config.json         Credenciales de BD (incluida, configurada para local).
+    └── passport-config.js  Estrategia local con rol y ubicaciones por sesión.
 ```
 
 ---
