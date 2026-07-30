@@ -8,7 +8,7 @@ block content
         | Volver
       h2.fw-bold.mb-0
         i.bi.bi-bar-chart-line.me-2.text-primary
-        | Reporte 2 — Dosis por Tipo de Vacuna
+        | Reporte 2 — Trazabilidad por Lote-Proveedor
 
     //- Indicador de ubicación filtrada (sin dropdown)
     if !alcance.esNC && !alcance.mostrarSelector && alcance.ubicacionSeleccionada
@@ -49,30 +49,65 @@ block content
         .table-responsive
           table#tablaReporte.table.table-striped.table-hover.align-middle.mb-0
             thead.table-dark
-              tr
-                th Tipo de Vacuna
-                th.text-center En Nación
-                th.text-center En Distribución
-                th.text-center En Provincia
-                th.text-center En Centros
-                th.text-center Aplicadas
-                th.text-center Descartadas
-                th.text-center Vencidas
+              if alcance.esNacional
+                tr
+                  th Lote
+                  th Laboratorio
+                  th Tipo de Vacuna
+                  th.text-center Vence
+                  th.text-center En Nación
+                  th.text-center En Distribución
+                  th.text-center En Provincia
+                  th.text-center En Centros
+                  th.text-center Aplicadas
+                  th.text-center Descartadas
+                  th.text-center Vencidas
+              else
+                tr
+                  th Lote
+                  th Laboratorio
+                  th Tipo de Vacuna
+                  th.text-center Vence
+                  th.text-center En stock
+                  th.text-center Aplicadas
+                  th.text-center Descartadas
+                  th.text-center Estado
             tbody
               each r in resultados
-                tr
-                  td
-                    strong= r.tipo
-                  td.text-center= r.en_nacion
-                  td.text-center= r.en_distribucion
-                  td.text-center= r.en_provincia
-                  td.text-center= r.en_centros
-                  td.text-center
-                    span.badge.bg-success= r.aplicadas
-                  td.text-center
-                    span.badge.bg-danger= r.descartadas
-                  td.text-center
-                    span.badge.bg-warning.text-dark= r.vencidas
+                if alcance.esNacional
+                  tr
+                    td
+                      code= r.lote
+                    td= r.laboratorio
+                    td= r.tipo_vacuna
+                    td.text-center= r.fecha_vencimiento
+                    td.text-center= r.en_nacion
+                    td.text-center= r.en_distribucion
+                    td.text-center= r.en_provincia
+                    td.text-center= r.en_centros
+                    td.text-center
+                      span.badge.bg-success= r.aplicadas
+                    td.text-center
+                      span.badge.bg-danger= r.descartadas
+                    td.text-center
+                      span.badge.bg-warning.text-dark= r.vencidas
+                else
+                  tr
+                    td
+                      code= r.lote
+                    td= r.laboratorio
+                    td= r.tipo_vacuna
+                    td.text-center= r.fecha_vencimiento
+                    td.text-center= r.en_ambito
+                    td.text-center
+                      span.badge.bg-success= r.aplicadas
+                    td.text-center
+                      span.badge.bg-danger= r.descartadas
+                    td.text-center
+                      if r.vencido
+                        span.badge.bg-danger Vencido
+                      else
+                        span.badge.bg-success Vigente
 
 block scripts
   link(rel='stylesheet' href='https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css')

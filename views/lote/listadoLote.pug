@@ -8,7 +8,7 @@ block content
         i.bi.bi-box-seam
         | Lotes
       .page-actions
-        if usuario.rol === 'Administrador' || (usuario.rol === 'Administrativo' && usuario.ubicacionActual && usuario.ubicacionActual.tipo === 'Deposito Nacional')
+        if caps.gestionar
           a.btn.btn-primary(href='/nuevolote')
             i.bi.bi-plus-circle.me-2
             | Nuevo Lote
@@ -31,46 +31,51 @@ block content
               th(scope='col') Laboratorio
               th(scope='col') Tipo de Vacuna
               th(scope='col') Nombre Comercial
+              th(scope='col') Stock total
               th(scope='col') Fecha de Compra
               th(scope='col') Fecha de Fabricación
               th(scope='col') Fecha de Vencimiento
               if filtro === 'alerta'
                 th(scope='col') Estado de Alerta
-              else if usuario.rol === 'Administrador'
+              else if caps.gestionar
                 th(scope='col') Acciones
           tbody
             each lote in lotes
-              - const hoy = new Date(); hoy.setHours(0,0,0,0);
-              - const vencDate = lote.fecha_venc_raw ? new Date(lote.fecha_venc_raw + 'T00:00:00') : null;
-              - const diffDias = vencDate ? Math.ceil((vencDate - hoy) / 86400000) : null;
-              tr(class=filtro === 'alerta' ? (diffDias !== null && diffDias < 0 ? 'table-danger' : 'table-warning') : '')
+              //- días hasta el vencimiento (fn_dias_para_vencer)
+              - const diasVenc = (lote.diasParaVencer !== null && lote.diasParaVencer !== undefined) ? Number(lote.diasParaVencer) : null;
+              tr(class=filtro === 'alerta' ? (diasVenc !== null && diasVenc < 0 ? 'table-danger' : 'table-warning') : '')
                 td
                   code= lote.num_lote
                 td= lote.laboratorio.nombre
                 td
                   each vacuna in lote.vacunas
                     if vacuna.tipo
-                      span.badge.rounded-pill(style='background:rgba(26,86,219,0.1);color:var(--av-blue)')= vacuna.tipo
+                      span.badge.rounded-pill(style='background:var(--av-accent-soft);color:var(--av-accent-deep)')= vacuna.tipo
                 td
                   each vacuna in lote.vacunas
                     if vacuna.nombre_comercial
                       | #{vacuna.nombre_comercial}
+                td
+                  //- stock total del lote (fn_stock_disponible_lote)
+                  span.fw-semibold= lote.stockTotal != null ? lote.stockTotal : '—'
+                  |
+                  span.text-muted.small dosis
                 td= lote.fecha_compra
                 td= lote.fecha_fab
                 td= lote.fecha_venc
                 if filtro === 'alerta'
                   td
-                    if diffDias !== null && diffDias < 0
+                    if diasVenc !== null && diasVenc < 0
                       span.badge.bg-danger
                         i.bi.bi-x-octagon.me-1
-                        | Vencido hace #{Math.abs(diffDias)} día#{Math.abs(diffDias) !== 1 ? 's' : ''}
-                    else if diffDias !== null
+                        | Vencido hace #{Math.abs(diasVenc)} día#{Math.abs(diasVenc) !== 1 ? 's' : ''}
+                    else if diasVenc !== null
                       span.badge.bg-warning.text-dark
                         i.bi.bi-clock.me-1
-                        | Vence en #{diffDias} día#{diffDias !== 1 ? 's' : ''}
+                        | Vence en #{diasVenc} día#{diasVenc !== 1 ? 's' : ''}
                     else
                       | —
-                else if usuario.rol === 'Administrador'
+                else if caps.gestionar
                   td
                     .d-flex.gap-2
                       a.btn.btn-sm.btn-outline-primary.editar-lote(data-id=lote.id)

@@ -6,7 +6,7 @@ block content
       h2.fw-bold
         i.bi.bi-truck.me-2
         | Transportes
-      if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
+      if caps.gestionar
         a.btn.btn-primary(href='/nuevotransporte')
           i.bi.bi-plus-circle.me-2
           | Nuevo Transporte
@@ -20,12 +20,12 @@ block content
                 th #
                 th Empresa
                 th Identificador del Móvil
-                if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
+                if caps.gestionar
                   th.text-center Acciones
             tbody
               if transportes.length === 0
                 tr
-                  - const cols = (usuario.rol === 'Administrador' || usuario.rol === 'Administrativo') ? '4' : '3'
+                  - const cols = (caps.gestionar) ? '4' : '3'
                   td.text-center.text-muted(colspan=cols) No hay transportes registrados
               each t in transportes
                 tr
@@ -35,7 +35,7 @@ block content
                     = t.nombre
                   td
                     code= t.id_movil
-                  if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
+                  if caps.gestionar
                     td.text-center
                       button.btn.btn-sm.btn-outline-danger.btn-borrar(
                         data-id=t.id

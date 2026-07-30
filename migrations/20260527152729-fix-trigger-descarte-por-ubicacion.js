@@ -1,11 +1,7 @@
 'use strict';
 
-// El trigger AFTER INSERT del descarte estaba descontando del stock con MAYOR
-// cantidad del lote, ignorando la ubicación donde se hizo el descarte. Eso
-// rompía la trazabilidad: si descartaba 5 dosis del Hospital Italiano pero el
-// Nivel Central tenía más stock del mismo lote, el trigger restaba del NC.
-//
-// Esta migration reemplaza el trigger por una versión que respeta id_ubicacion.
+// Corrige el trigger de descarte para que descuente del stock de la ubicación
+// donde se hizo el descarte
 
 module.exports = {
   async up(queryInterface) {

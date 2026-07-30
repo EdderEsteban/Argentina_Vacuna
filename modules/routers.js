@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const handler = require('./handler.js');
 const { isAuthenticated: auth, hasRole, ROLES, requireUbicacion } = require('./auth');
+const { exigir } = require('./permisos');
 const laboratorio = require('../controllers/laboratorioController');
 const lote = require('../controllers/loteController');
 const paciente = require('../controllers/pacienteController');
@@ -25,8 +26,15 @@ const adminEnfermero   = [auth, hasRole(ADMIN, ENFERMERO)];
 const adminAuditorEnf  = [auth, hasRole(ADMIN, AUDITOR, ENFERMERO)];
 const adminAuditorAdm  = [auth, hasRole(ADMIN, AUDITOR, ADMINISTRATIVO)];
 const adminAdmEnf      = [auth, hasRole(ADMIN, ADMINISTRATIVO, ENFERMERO)];
-const reportes         = [auth, hasRole(ADMIN, AUDITOR, ADMINISTRATIVO)];
+const reportes         = [auth, hasRole(ADMIN, AUDITOR, ADMINISTRATIVO, ENFERMERO)];
 const todoAutenticado  = [auth, hasRole(ADMIN, AUDITOR, ENFERMERO, ADMINISTRATIVO)];
+
+// ─── Capacidades de acción por rol y nivel de ubicación ──────────────────────
+const puedeGestionar   = [auth, exigir('gestionar')];   // CRUD de catálogos
+const puedeDistribuir  = [auth, exigir('distribuir')];  // crear movimientos
+const puedeRecibir     = [auth, exigir('recibir')];     // registrar recepción
+const puedeDescartar   = [auth, exigir('descartar')];   // registrar descartes
+const puedeVacunar     = [auth, exigir('vacunar')];     // aplicar vacuna
 
 // ─── Middleware global: fuerza selección de ubicación si corresponde ──────────
 const RUTAS_PUBLICAS = ['/', '/login', '/solicitud', '/nuevaSolicitud', '/logout', '/seleccionar-ubicacion'];
@@ -70,21 +78,21 @@ router.delete('/borrarUsuario/:id',       ...soloAdmin, usuarios.borrarUsuario);
 
 // ─── Laboratorios ─────────────────────────────────────────────────────────────
 router.get('/laboratorios',               ...adminAuditorAdm, laboratorio.listar);
-router.get('/nuevolaboratorio',           ...soloAdmin, laboratorio.mostrarNuevo);
-router.post('/crearlaboratorio',          ...soloAdmin, laboratorio.crearLaboratorio);
-router.get('/editarlaboratorio/:id',      ...soloAdmin, laboratorio.editarLaboratorio);
-router.put('/actualizarlaboratorio/:id',  ...soloAdmin, laboratorio.actualizarLaboratorio);
-router.delete('/borrarlaboratorio/:id',   ...soloAdmin, laboratorio.borrarLaboratorio);
+router.get('/nuevolaboratorio',           ...puedeGestionar, laboratorio.mostrarNuevo);
+router.post('/crearlaboratorio',          ...puedeGestionar, laboratorio.crearLaboratorio);
+router.get('/editarlaboratorio/:id',      ...puedeGestionar, laboratorio.editarLaboratorio);
+router.put('/actualizarlaboratorio/:id',  ...puedeGestionar, laboratorio.actualizarLaboratorio);
+router.delete('/borrarlaboratorio/:id',   ...puedeGestionar, laboratorio.borrarLaboratorio);
 router.get('/buscadorlaboratorio',        ...adminAuditorAdm, laboratorio.mostrarBuscar);
 router.get('/buscarlaboratorio',          ...adminAuditorAdm, laboratorio.buscarLaboratorio);
 
 // ─── Lotes ────────────────────────────────────────────────────────────────────
 router.get('/lotes',                      ...todoAutenticado, lote.listar);
-router.get('/nuevolote',                  ...adminAdm, lote.mostrarNuevo);
-router.post('/crearlote',                 ...adminAdm, lote.crearLote);
-router.get('/editarlote/:id',             ...soloAdmin, lote.editarLote);
-router.put('/actualizarlote/:id',         ...soloAdmin, lote.actualizarLote);
-router.delete('/borrarlote/:id',          ...soloAdmin, lote.borrarLote);
+router.get('/nuevolote',                  ...puedeGestionar, lote.mostrarNuevo);
+router.post('/crearlote',                 ...puedeGestionar, lote.crearLote);
+router.get('/editarlote/:id',             ...puedeGestionar, lote.editarLote);
+router.put('/actualizarlote/:id',         ...puedeGestionar, lote.actualizarLote);
+router.delete('/borrarlote/:id',          ...puedeGestionar, lote.borrarLote);
 router.get('/buscardorlote',              ...todoAutenticado, lote.mostrarBuscar);
 router.get('/buscarlote',                 ...todoAutenticado, lote.buscarLotes);
 
@@ -101,40 +109,40 @@ router.get('/detallespaciente/:id',       ...adminAuditorEnf, paciente.detallePa
 
 // ─── Ubicaciones ──────────────────────────────────────────────────────────────
 router.get('/ubicaciones',                ...adminAuditor, ubicacion.listar);
-router.get('/nuevoubicacion',             ...soloAdmin, ubicacion.mostrarNuevo);
-router.post('/crearubicacion',            ...soloAdmin, ubicacion.crearUbicacion);
-router.get('/editarubicacion/:id',        ...soloAdmin, ubicacion.editarUbicacion);
-router.put('/actualizarubicacion/:id',    ...soloAdmin, ubicacion.actualizarUbicacion);
-router.delete('/borrarubicacion/:id',     ...soloAdmin, ubicacion.borrarUbicacion);
+router.get('/nuevoubicacion',             ...puedeGestionar, ubicacion.mostrarNuevo);
+router.post('/crearubicacion',            ...puedeGestionar, ubicacion.crearUbicacion);
+router.get('/editarubicacion/:id',        ...puedeGestionar, ubicacion.editarUbicacion);
+router.put('/actualizarubicacion/:id',    ...puedeGestionar, ubicacion.actualizarUbicacion);
+router.delete('/borrarubicacion/:id',     ...puedeGestionar, ubicacion.borrarUbicacion);
 router.get('/buscadorubicacion',          ...adminAuditor, ubicacion.mostrarBuscar);
 router.get('/buscarubicacion',            ...adminAuditor, ubicacion.buscarUbicacion);
 
 // ─── Movimientos ──────────────────────────────────────────────────────────────
 router.get('/movimientos',                ...todoAutenticado, movimientoLote.listar);
-router.get('/nuevomovimiento',            ...adminAdm, movimientoLote.mostrarNuevo);
-router.post('/crearmovimiento',           ...adminAdm, movimientoLote.crearMovimiento);
-router.put('/movimientos/:id/recepcion',  ...adminAdmEnf, movimientoLote.registrarRecepcion);
+router.get('/nuevomovimiento',            ...puedeDistribuir, movimientoLote.mostrarNuevo);
+router.post('/crearmovimiento',           ...puedeDistribuir, movimientoLote.crearMovimiento);
+router.put('/movimientos/:id/recepcion',  ...puedeRecibir, movimientoLote.registrarRecepcion);
 
 // ─── Transportes ──────────────────────────────────────────────────────────────
 router.get('/transportes',                ...adminAuditorAdm, transporteCtrl.listar);
-router.get('/nuevotransporte',            ...adminAdm, transporteCtrl.mostrarNuevo);
-router.post('/creartransporte',           ...adminAdm, transporteCtrl.crearTransporte);
-router.delete('/borrartransporte/:id',    ...adminAdm, transporteCtrl.borrarTransporte);
+router.get('/nuevotransporte',            ...puedeGestionar, transporteCtrl.mostrarNuevo);
+router.post('/creartransporte',           ...puedeGestionar, transporteCtrl.crearTransporte);
+router.delete('/borrartransporte/:id',    ...puedeGestionar, transporteCtrl.borrarTransporte);
 
 // ─── Aplicaciones ─────────────────────────────────────────────────────────────
 router.get('/aplicaciones',               ...adminAuditorEnf, aplicacion.listar);
-router.get('/nuevaaplicacion',            ...soloEnfermero, aplicacion.mostrarNuevo);
-router.post('/crearaplicacion',           ...soloEnfermero, aplicacion.crearAplicacion);
-router.get('/aplicaciones/ubicaciones/:id_lote',   ...soloEnfermero, aplicacion.ubicacionesPorLote);
-router.get('/aplicaciones/buscar-paciente',        ...soloEnfermero, aplicacion.buscarPacientePorDni);
+router.get('/nuevaaplicacion',            ...puedeVacunar, aplicacion.mostrarNuevo);
+router.post('/crearaplicacion',           ...puedeVacunar, aplicacion.crearAplicacion);
+router.get('/aplicaciones/ubicaciones/:id_lote',   ...puedeVacunar, aplicacion.ubicacionesPorLote);
+router.get('/aplicaciones/buscar-paciente',        ...puedeVacunar, aplicacion.buscarPacientePorDni);
 router.get('/buscadoraplicacion',         ...adminAuditorEnf, aplicacion.mostrarBuscar);
 router.get('/buscaraplicacion',           ...adminAuditorEnf, aplicacion.buscarAplicaciones);
 
 // ─── Descartes ────────────────────────────────────────────────────────────────
 router.get('/descartes',                  ...adminAuditor, descarteCtrl.listar);
-router.get('/nuevodescarte',              ...soloAdmin, descarteCtrl.mostrarNuevo);
-router.post('/creardescarte',             ...soloAdmin, descarteCtrl.crearDescarte);
-router.get('/descartes/ubicaciones/:id_lote',      ...soloAdmin, descarteCtrl.ubicacionesPorLote);
+router.get('/nuevodescarte',              ...puedeDescartar, descarteCtrl.mostrarNuevo);
+router.post('/creardescarte',             ...puedeDescartar, descarteCtrl.crearDescarte);
+router.get('/descartes/ubicaciones/:id_lote',      ...puedeDescartar, descarteCtrl.ubicacionesPorLote);
 
 // ─── Solicitudes de Acceso ────────────────────────────────────────────────────
 router.get('/solicitudes',             ...soloAdmin, solicitudesCtrl.listar);

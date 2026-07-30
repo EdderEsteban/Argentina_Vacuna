@@ -12,16 +12,17 @@ block content
     .row.g-4
 
       //- Reporte 1
-      .col-md-6.col-lg-4
-        a.text-decoration-none.text-dark(href='/reportes/1')
-          .card.h-100.reporte-card.reporte-1
-            .card-body
-              .reporte-icono
-                i.bi.bi-cash-coin
-              p.reporte-numero Reporte 1
-              h5.fw-bold.mb-2 Compras por Laboratorio
-              p.text-muted.small.mb-0
-                | Cantidad de vacunas compradas a cada laboratorio filtradas por rango de fecha de compra.
+      if mostrarReporte1
+        .col-md-6.col-lg-4
+          a.text-decoration-none.text-dark(href='/reportes/1')
+            .card.h-100.reporte-card.reporte-1
+              .card-body
+                .reporte-icono
+                  i.bi.bi-cash-coin
+                p.reporte-numero Reporte 1
+                h5.fw-bold.mb-2 Compras por Laboratorio
+                p.text-muted.small.mb-0
+                  | Cantidad de vacunas compradas a cada laboratorio filtradas por rango de fecha de compra.
 
       //- Reporte 2
       .col-md-6.col-lg-4
@@ -44,14 +45,14 @@ block content
                 .reporte-icono
                   i.bi.bi-geo-alt
                 p.reporte-numero Reporte 3
-                if alcance.esNC
+                if alcance.esCentro
+                  h5.fw-bold.mb-2 Stock en Vacunatorio
+                  p.text-muted.small.mb-0
+                    | Stock disponible en tu vacunatorio, detallado por tipo de vacuna y lote.
+                else
                   h5.fw-bold.mb-2 Stock por Provincia
                   p.text-muted.small.mb-0
                     | Stock disponible por tipo de vacuna y provincia (excluye depósito nacional y distribución).
-                else
-                  h5.fw-bold.mb-2 Stock por Ubicación
-                  p.text-muted.small.mb-0
-                    | Stock disponible en tu ubicación asignada, detallado por tipo de vacuna y lote.
 
       //- Reporte 4
       .col-md-6.col-lg-4

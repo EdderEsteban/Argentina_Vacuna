@@ -1,15 +1,15 @@
 const { Aplicacion, Paciente, Vacuna, Lote, Ubicacion, Usuario, Stock, Laboratorio } = require('../models');
 const { Op } = require('sequelize');
+const { idsEnScope } = require('../modules/permisos');
 
 const aplicacion = {};
 
-// Construye el filtro WHERE según el rol: Auditor por ubicación, Enfermero por sus propias aplicaciones
-function wherePorRol(sessionUser) {
-  const { rol, id, ubicaciones = [], ubicacionActual } = sessionUser;
-  const ids = ubicacionActual ? [ubicacionActual.id] : ubicaciones.map(u => u.id);
-  if (rol === 'Auditor')   return { id_ubicacion: { [Op.in]: ids } };
-  if (rol === 'Enfermero') return { id_usuario: id, id_ubicacion: { [Op.in]: ids } };
-  return {};
+// Función para armar el filtro WHERE de aplicaciones según el ámbito del usuario
+function wherePorRol(sessionUser, scopeIds) {
+  const { rol, id } = sessionUser;
+  const scope = scopeIds === null ? {} : { id_ubicacion: { [Op.in]: scopeIds } };
+  if (rol === 'Enfermero') return { ...scope, id_usuario: id };
+  return scope;
 }
 
 // Convierte fecha YYYY-MM-DD a DD/MM/YYYY para mostrar en las vistas
@@ -29,7 +29,8 @@ aplicacion.listar = async (req, res) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    const where = wherePorRol(req.session.usuario);
+    const scopeIds = await idsEnScope(req.session.usuario);
+    const where = wherePorRol(req.session.usuario, scopeIds);
     let filtroLabel = null;
     let filtroVariante = 'info';
 
@@ -284,7 +285,8 @@ aplicacion.buscarAplicaciones = async (req, res) => {
     const wherePaciente = {};
     if (dni) wherePaciente.dni = { [Op.like]: `${dni.trim()}%` };
 
-    const whereAplicacion = wherePorRol(req.session.usuario);
+    const scopeIds = await idsEnScope(req.session.usuario);
+    const whereAplicacion = wherePorRol(req.session.usuario, scopeIds);
     if (id_ubicacion) whereAplicacion.id_ubicacion = id_ubicacion;
     if (fecha_desde || fecha_hasta) {
       whereAplicacion.fecha_aplicacion = {};

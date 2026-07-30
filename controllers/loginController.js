@@ -43,22 +43,20 @@ loginController.seleccionarUbicacion = (req, res) => {
   res.render('seleccionarUbicacion', { ubicaciones, ubicacionActual, sinSidebar: true });
 };
 
-// Guardar en sesión la ubicación elegida. Solo Admin puede cambiarla si ya hay una activa.
+// Ruta para guardar en sesión la ubicación elegida por el usuario
 loginController.guardarUbicacion = (req, res) => {
   if (!req.session?.usuario) {
     return res.status(401).json({ success: false, message: 'Sesión expirada.' });
   }
-  const { rol, ubicaciones = [], ubicacionActual } = req.session.usuario;
-  // Bloquear cambio mid-sesión para roles distintos de Administrador
-  if (ubicacionActual && rol !== 'Administrador') {
-    return res.status(403).json({ success: false, message: 'Solo el Administrador puede cambiar la ubicación activa.' });
-  }
+  const { ubicaciones = [] } = req.session.usuario;
   const { id_ubicacion } = req.body;
   const ubi = ubicaciones.find(u => u.id == id_ubicacion);
   if (!ubi) {
     return res.status(400).json({ success: false, message: 'Ubicación no válida.' });
   }
+  // Al cambiar de institución también cambia el rol activo
   req.session.usuario.ubicacionActual = ubi;
+  req.session.usuario.rol = ubi.rol || req.session.usuario.rol;
   res.json({ success: true, redirectTo: '/dashboard' });
 };
 

@@ -1,5 +1,6 @@
 const { MovimientoLote, Lote, Ubicacion, Stock, Vacuna, Estado, Transporte } = require('../models');
 const { Op } = require('sequelize');
+const { idsEnScope } = require('../modules/permisos');
 
 const movimiento = {};
 
@@ -10,19 +11,20 @@ movimiento.listar = async (req, res) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    const { rol, ubicaciones, ubicacionActual } = req.session.usuario;
+    const { rol } = req.session.usuario;
+    const scopeIds = await idsEnScope(req.session.usuario);
     let where = {};
-    if (rol !== 'Administrador') {
-      const ids = ubicacionActual ? [ubicacionActual.id] : ubicaciones.map(u => u.id);
+    if (scopeIds !== null) {
+      // Fuera del nivel nacional, solo movimientos del ámbito del usuario
       if (rol === 'Enfermero') {
-        // Enfermero: solo ve los movimientos que llegan a su centro
-        where = { id_ubicacion_destino: { [Op.in]: ids } };
+        // El enfermero solo ve los movimientos que llegan a su centro
+        where = { id_ubicacion_destino: { [Op.in]: scopeIds } };
       } else {
-        // Auditor y Administrativo: ven movimientos donde su ubicación es origen O destino
+        // Los demás ven los movimientos donde su ámbito es origen o destino
         where = {
           [Op.or]: [
-            { id_ubicacion_origen: { [Op.in]: ids } },
-            { id_ubicacion_destino: { [Op.in]: ids } }
+            { id_ubicacion_origen: { [Op.in]: scopeIds } },
+            { id_ubicacion_destino: { [Op.in]: scopeIds } }
           ]
         };
       }

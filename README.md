@@ -156,11 +156,25 @@ argentina_vacuna/
 Los seis reportes obligatorios están implementados como Stored Procedures (`sp_reporte1` a `sp_reporte6`):
 
 1. **Compras por Laboratorio** — vacunas compradas a cada laboratorio en un rango de fecha.
-2. **Dosis por Tipo de Vacuna** — distribución en nación / distribución / provincia / centros / aplicadas / descartadas / vencidas.
+2. **Trazabilidad por Lote-Proveedor** — por cada lote-proveedor (con su tipo de vacuna y laboratorio), cuántas dosis están en nación / distribución / provincia / centros / aplicadas / descartadas / vencidas.
 3. **Stock por Provincia** — stock disponible por tipo de vacuna y provincia (excluye nación y distribución).
 4. **Aplicaciones con Vacuna Vencida** — personas a las que se aplicó una vacuna vencida.
 5. **Vacunas Vencidas No Descartadas** — agrupadas por lote, provincia y centro.
 6. **Personas Vacunadas** — por tipo de vacuna, provincia y localidad.
+
+---
+
+## Modelo de trazabilidad
+
+La trazabilidad se sigue **por lote-proveedor y cantidad de dosis**, no con un registro por cada dosis individual. Cada lote (`num_lote`) se rastrea a lo largo de todo su ciclo de vida:
+
+- **Compra** — `lotes` (fechas de compra / fabricación / vencimiento / adquisición, laboratorio, país de origen).
+- **Distribución** — `movimientolotes` (ubicación origen y destino, cantidad, transporte, fecha de recepción).
+- **Stock por ubicación** — `stocks` (cuántas dosis del lote hay en cada depósito o centro).
+- **Aplicación / Descarte** — `aplicaciones` (paciente, enfermero, centro, lote) y `descartes` (cantidad, motivo, forma).
+- **Estado** — `estados` (Disponible / Aplicada / Vencida / Descartada), propagado por triggers y el evento de vencimiento.
+
+El **Reporte 2 (Trazabilidad por Lote-Proveedor)** consolida esta vista: por cada lote informa cuántas dosis están en nación, distribución, provincia, centros, aplicadas, descartadas y vencidas. Seguir la dosis por **lote + cantidad + estado** es la práctica estándar del dominio; un registro por cada una de millones de dosis individuales no es viable ni lo requiere la operatoria.
 
 ---
 
@@ -175,6 +189,12 @@ Los seis reportes obligatorios están implementados como Stored Procedures (`sp_
 | `actualizar_stock_descarte` | AFTER INSERT en descartes | Resta del stock |
 | `prevenir_aplicacion_vencida` | BEFORE INSERT en aplicaciones | Lanza error si la vacuna venció |
 | `actualizar_estado_vencimiento` | AFTER UPDATE en lotes | Propaga VENC a las vacunas |
+
+### Funciones
+| Función | Devuelve | Uso en la app |
+|---|---|---|
+| `fn_stock_disponible_lote(id_lote)` | Dosis totales en stock del lote (sumando todas las ubicaciones) | Columna **Stock total** del listado de lotes |
+| `fn_dias_para_vencer(id_lote)` | Días hasta el vencimiento (negativo si ya venció) | Indicador de alerta de vencimiento en el listado de lotes |
 
 ### Evento
 - `ev_marcar_vencimientos` — corre diariamente y marca como `VENC` las vacunas `DISP` cuyo lote ya venció.

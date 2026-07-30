@@ -8,10 +8,7 @@ block content
         | Volver
       h2.fw-bold.mb-0
         i.bi.bi-bar-chart-line.me-2.text-primary
-        if alcance.ubicacionSeleccionada
-          | Reporte 3 — Stock por Ubicación
-        else
-          | Reporte 3 — Stock por Provincia
+        | Reporte 3 — #{tituloScope}
 
     //- Indicador / ayuda
     if alcance.esNC && !alcance.ubicacionSeleccionada
@@ -56,7 +53,7 @@ block content
         .table-responsive
           table#tablaReporte.table.table-striped.table-hover.align-middle.mb-0
             thead.table-dark
-              if alcance.ubicacionSeleccionada
+              if alcance.esCentro
                 //- Vista detallada por ubicación
                 tr
                   th Tipo de Vacuna
@@ -75,7 +72,7 @@ block content
             tbody
               each r in resultados
                 tr
-                  if alcance.ubicacionSeleccionada
+                  if alcance.esCentro
                     td
                       strong= r.tipo_vacuna
                     td

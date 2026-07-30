@@ -9,10 +9,10 @@ block content
         .d-flex.justify-content-between.align-items-center.flex-wrap.gap-2
           div
             h5.mb-1.fw-bold.text-white
-              i.bi.bi-shield-check.me-2(style='color:#93c5fd')
+              i.bi.bi-shield-check.me-2(style='color:#ffd9c7')
               | Bienvenido, #{usuario.nombre} #{usuario.apellido}
             p.mb-0.small.text-white-50= fechaHoy
-          span.badge.rounded-pill.px-3.py-2(style='background:rgba(255,255,255,0.14);color:#e0edff;font-size:0.8rem')
+          span.badge.rounded-pill.px-3.py-2(style='background:rgba(255,255,255,0.18);color:#fff;font-size:0.8rem')
             i.bi.bi-person-badge.me-1
             = usuario.rol
 
@@ -23,7 +23,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-blue(href='/aplicaciones?filtro=hoy')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(26,86,219,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-capsule.text-primary(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Aplicaciones hoy
@@ -33,7 +33,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-green(href='/aplicaciones?filtro=mes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(5,150,105,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-graph-up-arrow.text-success(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Aplicaciones del mes
@@ -43,7 +43,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-cyan(href='/lotes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(8,145,178,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-box-seam.text-info(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Stock depósito nac.
@@ -53,7 +53,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-yellow(href='/lotes?filtro=alerta')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(217,119,6,0.12)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-clock-history(style='font-size:1.2rem;color:#d97706')
                 div
                   p.text-muted.small.mb-0 Lotes en alerta
@@ -63,7 +63,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-red(href='/descartes?filtro=mes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(220,53,69,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-trash.text-danger(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Descartes del mes
@@ -73,7 +73,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-gray(href='/pacientes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(107,114,128,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-people.text-secondary(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Pacientes registrados
@@ -87,7 +87,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-blue(href='/aplicaciones?filtro=hoy')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(26,86,219,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-capsule.text-primary(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Aplicaciones hoy
@@ -97,7 +97,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-green(href='/aplicaciones?filtro=mes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(5,150,105,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-graph-up-arrow.text-success(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Aplicaciones del mes
@@ -107,7 +107,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-cyan(href='/lotes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(8,145,178,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-box-seam.text-info(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Stock en mis ubicaciones
@@ -117,7 +117,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-red(href='/descartes?filtro=mes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(220,53,69,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-trash.text-danger(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Descartes del mes
@@ -131,7 +131,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-cyan(href='/lotes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(8,145,178,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-box-seam.text-info(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Lotes registrados este mes
@@ -141,7 +141,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-green(href='/lotes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(5,150,105,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-archive.text-success(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Stock en mi depósito
@@ -151,7 +151,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-blue(href='/movimientos')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(26,86,219,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-arrow-left-right.text-primary(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Despachos este mes
@@ -161,7 +161,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-yellow(href='/movimientos')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(217,119,6,0.12)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-truck(style='font-size:1.2rem;color:#d97706')
                 div
                   p.text-muted.small.mb-0 En tránsito sin recibir
@@ -175,7 +175,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-blue(href='/aplicaciones?filtro=hoy')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(26,86,219,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-capsule.text-primary(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Mis aplicaciones hoy
@@ -185,7 +185,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-green(href='/aplicaciones?filtro=mes')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(5,150,105,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-graph-up-arrow.text-success(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Mis aplicaciones del mes
@@ -195,7 +195,7 @@ block content
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.kpi-card.kpi-gray(href='/aplicaciones')
             .card-body.p-3
               .d-flex.align-items-center.gap-3
-                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:rgba(107,114,128,0.1)')
+                .flex-shrink-0.rounded-circle.d-flex.align-items-center.justify-content-center(style='width:44px;height:44px;background:var(--av-accent-soft)')
                   i.bi.bi-clipboard2-check.text-secondary(style='font-size:1.2rem')
                 div
                   p.text-muted.small.mb-0 Total mis aplicaciones
@@ -208,7 +208,7 @@ block content
           a.d-block.text-decoration-none(href='/solicitudes')
             .card.border-0.shadow-sm.solicitudes-alerta
               .card-body.d-flex.align-items-center.gap-3.py-3
-                .rounded-circle.d-flex.align-items-center.justify-content-center.flex-shrink-0(style='width:48px;height:48px;background:rgba(217,119,6,0.12)')
+                .rounded-circle.d-flex.align-items-center.justify-content-center.flex-shrink-0(style='width:48px;height:48px;background:var(--av-accent-soft)')
                   i.bi.bi-person-exclamation(style='font-size:1.4rem;color:#d97706')
                 .flex-grow-1
                   p.mb-0.fw-bold(style='color:#92400e')
@@ -225,7 +225,7 @@ block content
           i.bi.bi-lightning-charge.me-1
           | Acciones rápidas
 
-      if usuario.rol === 'Enfermero'
+      if caps.vacunar
         .col-6.col-md-3
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevaaplicacion')
             .card-body.text-center.py-3
@@ -245,28 +245,28 @@ block content
               i.bi.bi-person-plus.text-success(style='font-size:1.7rem')
               p.mt-2.mb-0.small.fw-semibold Nuevo Paciente
 
-      if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
+      if caps.distribuir
         .col-6.col-md-3
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevomovimiento')
             .card-body.text-center.py-3
               i.bi.bi-arrow-left-right.text-info(style='font-size:1.7rem')
               p.mt-2.mb-0.small.fw-semibold Nuevo Movimiento
 
-      if usuario.rol === 'Administrador' || (usuario.rol === 'Administrativo' && usuario.ubicacionActual && usuario.ubicacionActual.tipo === 'Deposito Nacional')
+      if caps.gestionar
         .col-6.col-md-3
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevolote')
             .card-body.text-center.py-3
               i.bi.bi-box-seam.text-warning(style='font-size:1.7rem')
               p.mt-2.mb-0.small.fw-semibold Registrar Lote
 
-      if usuario.rol === 'Administrador'
+      if caps.descartar
         .col-6.col-md-3
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/nuevodescarte')
             .card-body.text-center.py-3
               i.bi.bi-trash.text-danger(style='font-size:1.7rem')
               p.mt-2.mb-0.small.fw-semibold Registrar Descarte
 
-      if usuario.rol !== 'Enfermero'
+      if caps
         .col-6.col-md-3
           a.card.text-decoration-none.text-dark.border-0.shadow-sm.h-100.accion-rapida(href='/reportes')
             .card-body.text-center.py-3
@@ -280,7 +280,7 @@ block content
       if usuario.rol === 'Administrador' && lotesAlerta && lotesAlerta.length > 0
         .col-lg-5
           .card.border-0.shadow-sm.h-100
-            .card-header.fw-semibold.border-0.d-flex.align-items-center.gap-2(style='background:linear-gradient(135deg,#7c2d12 0%,#c2410c 100%);color:#fff;border-radius:0.55rem 0.55rem 0 0')
+            .card-header.fw-semibold.border-0.d-flex.align-items-center.gap-2(style='background:#a83c1f;color:#fff;border-radius:0.85rem 0.85rem 0 0')
               i.bi.bi-exclamation-triangle-fill
               | Lotes próximos a vencer
             .card-body.p-0
@@ -318,11 +318,11 @@ block content
           .card.border-0.shadow-sm.h-100
             .card-header.bg-white.fw-semibold.border-bottom.d-flex.justify-content-between.align-items-center(style='border-radius:0.55rem 0.55rem 0 0')
               span.d-flex.align-items-center.gap-2
-                .rounded-circle.d-flex.align-items-center.justify-content-center(style='width:28px;height:28px;background:rgba(26,86,219,0.1)')
+                .rounded-circle.d-flex.align-items-center.justify-content-center(style='width:28px;height:28px;background:var(--av-accent-soft)')
                   i.bi.bi-clock-history.text-primary(style='font-size:0.8rem')
                 | Últimas aplicaciones
                 if usuario.ubicacionActual
-                  span.badge.rounded-pill(style='background:rgba(26,86,219,0.1);color:var(--av-blue);font-size:0.72rem')= usuario.ubicacionActual.nombre
+                  span.badge.rounded-pill(style='background:var(--av-accent-soft);color:var(--av-blue);font-size:0.72rem')= usuario.ubicacionActual.nombre
               a.btn.btn-sm.btn-outline-primary(href='/aplicaciones') Ver todas
             .card-body.p-0
               .table-responsive
@@ -341,6 +341,6 @@ block content
                         td
                           code= a.paciente ? a.paciente.dni : '—'
                         td
-                          span.badge.rounded-pill(style='background:rgba(26,86,219,0.1);color:var(--av-blue)')= (a.lote && a.lote.vacunas && a.lote.vacunas[0]) ? a.lote.vacunas[0].tipo : '—'
+                          span.badge.rounded-pill(style='background:var(--av-accent-soft);color:var(--av-blue)')= (a.lote && a.lote.vacunas && a.lote.vacunas[0]) ? a.lote.vacunas[0].tipo : '—'
                         td.text-muted.small= a.ubicacion ? a.ubicacion.nombre : '—'
                         td.text-muted.small= a.fecha_aplicacion

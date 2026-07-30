@@ -47,20 +47,40 @@ block content
         .table-responsive
           table#tablaReporte.table.table-striped.table-hover.align-middle.mb-0
             thead.table-dark
-              tr
-                th Tipo de Vacuna
-                th Provincia
-                th Localidad
-                th.text-center Personas Vacunadas
+              if alcance.esCentro
+                tr
+                  th Paciente
+                  th DNI
+                  th Tipo de Vacuna
+                  th Provincia
+                  th Localidad
+                  th Fecha
+              else
+                tr
+                  th Tipo de Vacuna
+                  th Provincia
+                  th Localidad
+                  th.text-center Personas Vacunadas
             tbody
               each r in resultados
-                tr
-                  td
-                    strong= r.tipo_vacuna
-                  td= r.provincia
-                  td= r.localidad
-                  td.text-center
-                    span.badge.bg-primary.fs-6= r.cantidad_vacunados
+                if alcance.esCentro
+                  tr
+                    td.fw-medium= `${r.apellido}, ${r.nombre}`
+                    td
+                      code= r.dni
+                    td
+                      strong= r.tipo_vacuna
+                    td= r.provincia
+                    td= r.localidad
+                    td= r.fecha_aplicacion
+                else
+                  tr
+                    td
+                      strong= r.tipo_vacuna
+                    td= r.provincia
+                    td= r.localidad
+                    td.text-center
+                      span.badge.bg-primary.fs-6= r.cantidad_vacunados
 
 block scripts
   link(rel='stylesheet' href='https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css')

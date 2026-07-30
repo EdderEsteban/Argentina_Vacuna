@@ -1,22 +1,18 @@
 const { Descarte, Lote, Vacuna, Ubicacion, Usuario, Stock, Estado } = require('../models');
 const { Op } = require('sequelize');
+const { idsEnScope } = require('../modules/permisos');
 
-// Construye el filtro WHERE según el rol: Auditor ve solo descartes de sus ubicaciones
-function wherePorRol(sessionUser) {
-  const { rol, ubicaciones = [], ubicacionActual } = sessionUser;
-  if (rol === 'Auditor') {
-    const ids = ubicacionActual ? [ubicacionActual.id] : ubicaciones.map(u => u.id);
-    return { id_ubicacion: { [Op.in]: ids } };
-  }
-  return {};
+// Función para armar el filtro WHERE de descartes según el ámbito del usuario
+function wherePorRol(sessionUser, scopeIds) {
+  return scopeIds === null ? {} : { id_ubicacion: { [Op.in]: scopeIds } };
 }
 
 const descarte = {};
 
-// Convierte fecha YYYY-MM-DD a DD/MM/YYYY para mostrar en las vistas
+// Función para formatear fechas
 function formatearFecha(fecha) {
   if (!fecha) return '';
-  if (fecha instanceof Date) fecha = fecha.toISOString().split('T')[0];
+  if (fecha instanceof Date) fecha = fecha.toISOString().split('T')[0]; 
   if (typeof fecha !== 'string') return '';
   const [anio, mes, dia] = fecha.split('-');
   return `${dia}/${mes}/${anio}`;
@@ -30,7 +26,7 @@ const FORMAS_DESCARTE = [
   { valor: 'devolucion_proveedor', etiqueta: 'Devolución al proveedor' }
 ];
 
-// Listar descartes con paginación, con soporte de filtro desde el dashboard
+// Listar descartes con paginación y filtro desde el dashboard
 descarte.listar = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -38,7 +34,8 @@ descarte.listar = async (req, res) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    const where = wherePorRol(req.session.usuario);
+    const scopeIds = await idsEnScope(req.session.usuario);
+    const where = wherePorRol(req.session.usuario, scopeIds);
     let filtroLabel = null;
 
     if (filtro === 'mes') {
@@ -93,24 +90,34 @@ descarte.listar = async (req, res) => {
 // Mostrar formulario de nuevo descarte
 descarte.mostrarNuevo = async (req, res) => {
   try {
-    // Solo lotes con stock disponible en alguna ubicación
+    // Solo lotes con stock disponible en el ámbito del usuario
+    const scopeIds = await idsEnScope(req.session.usuario);
+    const stockWhere = { cantidad: { [Op.gt]: 0 } };
+    if (scopeIds !== null) stockWhere.id_ubicacion = { [Op.in]: scopeIds };
+
     const stocks = await Stock.findAll({
-      where: { cantidad: { [Op.gt]: 0 } },
+      where: stockWhere,
       attributes: ['id_lote'],
       group: ['id_lote']
     });
     const idLotesConStock = stocks.map(s => s.id_lote);
 
-    const lotes = await Lote.findAll({
+    const lotesRaw = await Lote.findAll({
       where: { id: { [Op.in]: idLotesConStock }, deletedAt: null },
       include: [{ model: Vacuna, as: 'vacunas', attributes: ['tipo', 'nombre_comercial'] }],
       order: [['num_lote', 'ASC']]
     });
 
+    // Marcar los lotes vencidos y ordenarlos primero
+    const hoy = new Date().toISOString().split('T')[0];
+    const lotes = lotesRaw
+      .map(l => { const o = l.toJSON(); o.vencido = String(o.fecha_venc) < hoy; return o; })
+      .sort((a, b) => (b.vencido ? 1 : 0) - (a.vencido ? 1 : 0));
+
     res.render('descarte/nuevoDescarte', {
       lotes,
       formas: FORMAS_DESCARTE,
-      fechaHoy: new Date().toISOString().split('T')[0]
+      fechaHoy: hoy
     });
   } catch (error) {
     console.error('Error al cargar formulario de descarte:', error);
@@ -118,14 +125,15 @@ descarte.mostrarNuevo = async (req, res) => {
   }
 };
 
-// GET /descartes/ubicaciones/:id_lote — ubicaciones con stock del lote (AJAX)
+// Ruta para obtener las ubicaciones con stock de un lote
 descarte.ubicacionesPorLote = async (req, res) => {
   try {
+    const scopeIds = await idsEnScope(req.session.usuario);
+    const where = { id_lote: req.params.id_lote, cantidad: { [Op.gt]: 0 } };
+    if (scopeIds !== null) where.id_ubicacion = { [Op.in]: scopeIds };
+
     const stocks = await Stock.findAll({
-      where: {
-        id_lote: req.params.id_lote,
-        cantidad: { [Op.gt]: 0 }
-      },
+      where,
       include: [{
         model: Ubicacion,
         as: 'ubicacion',
@@ -162,8 +170,7 @@ descarte.crearDescarte = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Todos los campos son obligatorios.' });
     }
 
-    // id_ubicacion es obligatorio: sin ella el trigger no sabe de qué stock descontar
-    // y se pierde trazabilidad de dónde se hizo el descarte.
+    // La ubicación es obligatoria porque el trigger descuenta del stock de esa ubicación
     if (!id_ubicacion) {
       return res.status(400).json({ success: false, message: 'La ubicación del descarte es obligatoria.' });
     }
@@ -173,9 +180,7 @@ descarte.crearDescarte = async (req, res) => {
       return res.status(400).json({ success: false, message: 'La cantidad debe ser un número positivo.' });
     }
 
-    // id_estado: 4 = DESC (Descartada). Antes era 3 que es VENC y eso causaba
-    // que la primera descarte de un lote dejara todas sus vacunas como vencidas,
-    // bloqueando aplicaciones legítimas y distorsionando reportes.
+    // id_estado 4 = Descartada
     await Descarte.create({
       id_lote,
       id_usuario,

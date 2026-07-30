@@ -1,5 +1,6 @@
-const { Lote, Laboratorio, Vacuna, Estado, Stock, Ubicacion, MovimientoLote } = require('../models');
+const { Lote, Laboratorio, Vacuna, Estado, Stock, Ubicacion, MovimientoLote, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { idsEnScope } = require('../modules/permisos');
 
 const lote = {};
 
@@ -21,6 +22,13 @@ lote.listar = async (req, res) => {
         const whereLote = { deletedAt: null };
         let filtroLabel = null;
 
+        // Fuera del nivel nacional, solo lotes con stock en el ámbito del usuario
+        const scopeIds = await idsEnScope(req.session.usuario);
+        if (scopeIds !== null) {
+            const idsList = scopeIds.length ? scopeIds.join(',') : 'NULL';
+            whereLote.id = { [Op.in]: sequelize.literal(`(SELECT DISTINCT id_lote FROM stocks WHERE id_ubicacion IN (${idsList}))`) };
+        }
+
         if (filtro === 'alerta') {
             const en30 = new Date();
             en30.setDate(en30.getDate() + 30);
@@ -30,6 +38,13 @@ lote.listar = async (req, res) => {
 
         const { count, rows: lotes } = await Lote.findAndCountAll({
             where: whereLote,
+            // Funciones de BD para el stock total y los días hasta el vencimiento
+            attributes: {
+                include: [
+                    [sequelize.literal('fn_stock_disponible_lote(`Lote`.`id`)'), 'stockTotal'],
+                    [sequelize.literal('fn_dias_para_vencer(`Lote`.`id`)'), 'diasParaVencer']
+                ]
+            },
             include: [
                 { model: Laboratorio, as: 'laboratorio' },
                 {

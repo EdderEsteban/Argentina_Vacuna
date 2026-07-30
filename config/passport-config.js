@@ -9,7 +9,9 @@ function buildUserPayload(user) {
   const ubicaciones = (user.usuariosUbicacion || []).map(uu => ({
     id: uu.id_ubicacion,
     nombre: uu.ubicacion?.nombre || '',
-    tipo: uu.ubicacion?.tipo || ''
+    tipo: uu.ubicacion?.tipo || '',
+    id_provincia: uu.ubicacion?.id_provincia ?? null,
+    rol: uu.rol?.nombre || 'Sin rol'
   }));
   return { id: user.id, usuario: user.usuario, nombre: user.nombre, apellido: user.apellido, rol, ubicaciones };
 }
@@ -19,7 +21,7 @@ const includeUbicacionesConRol = [{
   as: 'usuariosUbicacion',
   include: [
     { model: Rol, as: 'rol', attributes: ['nombre'] },
-    { model: Ubicacion, as: 'ubicacion', attributes: ['id', 'nombre', 'tipo'] }
+    { model: Ubicacion, as: 'ubicacion', attributes: ['id', 'nombre', 'tipo', 'id_provincia'] }
   ]
 }];
 

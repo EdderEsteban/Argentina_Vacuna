@@ -1,5 +1,6 @@
 const { Aplicacion, Descarte, Lote, Vacuna, Ubicacion, Stock, Paciente, SolicitudesAcceso, MovimientoLote } = require('../models');
 const { Op } = require('sequelize');
+const { alcanceUbicacion } = require('../modules/alcance');
 
 // Formatea una fecha/hora a DD/MM/YYYY HH:MM para mostrar en el dashboard
 function formatearFechaHora(fecha) {
@@ -52,14 +53,22 @@ const includeUltimasAplic = [
 
 // ─── KPIs por rol ─────────────────────────────────────────────────────────────
 
-// Calcula los KPIs del Administrador: aplicaciones, stock nacional, lotes por vencer, descartes y pacientes
-async function kpisAdmin() {
+// Función para calcular los KPIs del Administrador
+async function kpisAdmin(alcance) {
   const { inicio: inicioHoy, fin: finHoy }   = rangosDeHoy();
   const { inicio: inicioMes, fin: finMes }   = rangosDelMes();
 
-  // Deposito Nacional → IDs
-  const depNac = await Ubicacion.findAll({ where: { tipo: 'Deposito Nacional' }, attributes: ['id'] });
-  const idsDepNac = depNac.map(u => u.id);
+  // WHERE de ubicación para aplicaciones y descartes
+  const whereUbic = alcance.global ? {} : { id_ubicacion: alcance.idUbicacion };
+
+  // WHERE de stock: Depósito Nacional en Nivel Central, si no la ubicación actual
+  let stockWhere;
+  if (alcance.global) {
+    const depNac = await Ubicacion.findAll({ where: { tipo: 'Deposito Nacional' }, attributes: ['id'] });
+    stockWhere = { id_ubicacion: { [Op.in]: depNac.map(u => u.id) } };
+  } else {
+    stockWhere = { id_ubicacion: alcance.idUbicacion };
+  }
 
   const [
     aplicacionesHoy,
@@ -70,11 +79,11 @@ async function kpisAdmin() {
     totalPacientes,
     solicitudesPendientes
   ] = await Promise.all([
-    Aplicacion.count({ where: { fecha_aplicacion: { [Op.between]: [inicioHoy, finHoy] } } }),
-    Aplicacion.count({ where: { fecha_aplicacion: { [Op.between]: [inicioMes, finMes] } } }),
-    Stock.sum('cantidad', { where: { id_ubicacion: { [Op.in]: idsDepNac } } }),
+    Aplicacion.count({ where: { fecha_aplicacion: { [Op.between]: [inicioHoy, finHoy] }, ...whereUbic } }),
+    Aplicacion.count({ where: { fecha_aplicacion: { [Op.between]: [inicioMes, finMes] }, ...whereUbic } }),
+    Stock.sum('cantidad', { where: stockWhere }),
     Lote.count({ where: { fecha_venc: { [Op.lte]: en30DiasStr() }, deletedAt: null } }),
-    Descarte.count({ where: { fecha_descarte: { [Op.between]: [hoyStr().slice(0, 7) + '-01', en30DiasStr()] } } }),
+    Descarte.count({ where: { fecha_descarte: { [Op.between]: [hoyStr().slice(0, 7) + '-01', en30DiasStr()] }, ...whereUbic } }),
     Paciente.count({ where: { deletedAt: null } }),
     SolicitudesAcceso.count({ where: { estado: 'Pendiente' } })
   ]);
@@ -84,7 +93,7 @@ async function kpisAdmin() {
   const anoMes   = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
   const diasMes  = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
   const descartesDelMesReal = await Descarte.count({
-    where: { fecha_descarte: { [Op.between]: [`${anoMes}-01`, `${anoMes}-${diasMes}`] } }
+    where: { fecha_descarte: { [Op.between]: [`${anoMes}-01`, `${anoMes}-${diasMes}`] }, ...whereUbic }
   });
 
   return {
@@ -98,18 +107,19 @@ async function kpisAdmin() {
   };
 }
 
-// Calcula los KPIs del Auditor filtrados por sus ubicaciones asignadas
-async function kpisAuditor(idsUbicaciones) {
+// Función para calcular los KPIs del Auditor
+async function kpisAuditor(alcance) {
   const { inicio: inicioHoy, fin: finHoy } = rangosDeHoy();
   const ahora = new Date();
   const anoMes  = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
   const diasMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
+  const whereUbic = alcance.global ? {} : { id_ubicacion: alcance.idUbicacion };
 
   const [aplicacionesHoy, aplicacionesDelMes, stockUbicaciones, descartesDelMes] = await Promise.all([
-    Aplicacion.count({ where: { fecha_aplicacion: { [Op.between]: [inicioHoy, finHoy] }, id_ubicacion: { [Op.in]: idsUbicaciones } } }),
-    Aplicacion.count({ where: { fecha_aplicacion: { [Op.gte]: new Date(ahora.getFullYear(), ahora.getMonth(), 1) }, id_ubicacion: { [Op.in]: idsUbicaciones } } }),
-    Stock.sum('cantidad', { where: { id_ubicacion: { [Op.in]: idsUbicaciones } } }),
-    Descarte.count({ where: { fecha_descarte: { [Op.between]: [`${anoMes}-01`, `${anoMes}-${diasMes}`] }, id_ubicacion: { [Op.in]: idsUbicaciones } } })
+    Aplicacion.count({ where: { fecha_aplicacion: { [Op.between]: [inicioHoy, finHoy] }, ...whereUbic } }),
+    Aplicacion.count({ where: { fecha_aplicacion: { [Op.gte]: new Date(ahora.getFullYear(), ahora.getMonth(), 1) }, ...whereUbic } }),
+    Stock.sum('cantidad', { where: whereUbic }),
+    Descarte.count({ where: { fecha_descarte: { [Op.between]: [`${anoMes}-01`, `${anoMes}-${diasMes}`] }, ...whereUbic } })
   ]);
 
   return {
@@ -120,11 +130,13 @@ async function kpisAuditor(idsUbicaciones) {
   };
 }
 
-// Calcula los KPIs del Administrativo: lotes registrados, stock en depósito, despachos y tránsitos
-async function kpisAdministrativo(idsUbicaciones) {
+// Función para calcular los KPIs del Administrativo
+async function kpisAdministrativo(alcance) {
   const ahora = new Date();
   const anoMes  = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
   const diasMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0).getDate();
+  const whereStock  = alcance.global ? {} : { id_ubicacion: alcance.idUbicacion };
+  const whereOrigen = alcance.global ? {} : { id_ubicacion_origen: alcance.idUbicacion };
 
   const [lotesRegistradosMes, stockEnDeposito, movimientosDespachados, movimientosEnTransito] = await Promise.all([
     Lote.count({
@@ -133,16 +145,16 @@ async function kpisAdministrativo(idsUbicaciones) {
         deletedAt: null
       }
     }),
-    Stock.sum('cantidad', { where: { id_ubicacion: { [Op.in]: idsUbicaciones } } }),
+    Stock.sum('cantidad', { where: whereStock }),
     MovimientoLote.count({
       where: {
-        id_ubicacion_origen: { [Op.in]: idsUbicaciones },
+        ...whereOrigen,
         fecha_movimiento: { [Op.between]: [`${anoMes}-01`, `${anoMes}-${diasMes}`] }
       }
     }),
     MovimientoLote.count({
       where: {
-        id_ubicacion_origen: { [Op.in]: idsUbicaciones },
+        ...whereOrigen,
         id_transporte: { [Op.ne]: null },
         fecha_recepcion: null
       }
@@ -157,15 +169,16 @@ async function kpisAdministrativo(idsUbicaciones) {
   };
 }
 
-// Calcula los KPIs del Enfermero: sus aplicaciones del día, del mes e históricas
-async function kpisEnfermero(id_usuario) {
+// Función para calcular los KPIs del Enfermero
+async function kpisEnfermero(id_usuario, alcance) {
   const { inicio: inicioHoy, fin: finHoy } = rangosDeHoy();
   const ahora = new Date();
+  const whereUbic = alcance.global ? {} : { id_ubicacion: alcance.idUbicacion };
 
   const [misAplicacionesHoy, misAplicacionesDelMes, totalMisAplicaciones] = await Promise.all([
-    Aplicacion.count({ where: { id_usuario, fecha_aplicacion: { [Op.between]: [inicioHoy, finHoy] } } }),
-    Aplicacion.count({ where: { id_usuario, fecha_aplicacion: { [Op.gte]: new Date(ahora.getFullYear(), ahora.getMonth(), 1) } } }),
-    Aplicacion.count({ where: { id_usuario } })
+    Aplicacion.count({ where: { id_usuario, ...whereUbic, fecha_aplicacion: { [Op.between]: [inicioHoy, finHoy] } } }),
+    Aplicacion.count({ where: { id_usuario, ...whereUbic, fecha_aplicacion: { [Op.gte]: new Date(ahora.getFullYear(), ahora.getMonth(), 1) } } }),
+    Aplicacion.count({ where: { id_usuario, ...whereUbic } })
   ]);
 
   return {
@@ -181,8 +194,10 @@ const dashboard = {};
 
 // Renderizar el dashboard con KPIs y últimas aplicaciones según el rol del usuario
 dashboard.index = async (req, res) => {
-  const { rol, id: id_usuario, ubicaciones: ubisSesion = [] } = req.session.usuario;
-  const idsUbicaciones = ubisSesion.map(u => u.id);
+  const { rol, id: id_usuario } = req.session.usuario;
+  // Alcance de datos según la ubicación activa
+  const alcance = alcanceUbicacion(req.session.usuario);
+  const whereUbic = alcance.global ? {} : { id_ubicacion: alcance.idUbicacion };
 
   let kpis = {};
   let ultimasAplicaciones = [];
@@ -190,13 +205,10 @@ dashboard.index = async (req, res) => {
 
   try {
     if (rol === 'Administrador') {
-      kpis = await kpisAdmin();
-
-      const ubicacionActual = req.session.usuario.ubicacionActual;
-      const whereAplic = ubicacionActual ? { id_ubicacion: ubicacionActual.id } : {};
+      kpis = await kpisAdmin(alcance);
 
       const [aplic, lotes] = await Promise.all([
-        Aplicacion.findAll({ where: whereAplic, include: includeUltimasAplic, order: [['fecha_aplicacion', 'DESC']], limit: 5 }),
+        Aplicacion.findAll({ where: whereUbic, include: includeUltimasAplic, order: [['fecha_aplicacion', 'DESC']], limit: 5 }),
         Lote.findAll({
           where: { fecha_venc: { [Op.lte]: en30DiasStr() }, deletedAt: null },
           include: [
@@ -217,27 +229,27 @@ dashboard.index = async (req, res) => {
       lotesAlerta = lotes;
 
     } else if (rol === 'Auditor') {
-      kpis = await kpisAuditor(idsUbicaciones);
+      kpis = await kpisAuditor(alcance);
 
       ultimasAplicaciones = (await Aplicacion.findAll({
-        where: { id_ubicacion: { [Op.in]: idsUbicaciones } },
+        where: whereUbic,
         include: includeUltimasAplic,
         order: [['fecha_aplicacion', 'DESC']],
         limit: 5
       })).map(a => ({ ...a.dataValues, fecha_aplicacion: formatearFechaHora(a.fecha_aplicacion) }));
 
     } else if (rol === 'Enfermero') {
-      kpis = await kpisEnfermero(id_usuario);
+      kpis = await kpisEnfermero(id_usuario, alcance);
 
       ultimasAplicaciones = (await Aplicacion.findAll({
-        where: { id_usuario },
+        where: { id_usuario, ...whereUbic },
         include: includeUltimasAplic,
         order: [['fecha_aplicacion', 'DESC']],
         limit: 5
       })).map(a => ({ ...a.dataValues, fecha_aplicacion: formatearFechaHora(a.fecha_aplicacion) }));
 
     } else if (rol === 'Administrativo') {
-      kpis = await kpisAdministrativo(idsUbicaciones);
+      kpis = await kpisAdministrativo(alcance);
     }
 
   } catch (error) {

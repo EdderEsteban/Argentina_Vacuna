@@ -6,7 +6,7 @@ block content
       i.bi.bi-building.me-2.text-primary
       | Listado de Laboratorios
 
-    if usuario.rol === 'Administrador'
+    if caps.gestionar
       a.btn.btn-primary.mb-3(href='/nuevolaboratorio')
         i.bi.bi-plus-circle.me-2
         | Nuevo Laboratorio
@@ -18,14 +18,14 @@ block content
           tr
             th(scope='col') Nombre
             th(scope='col') Nacionalidad
-            if usuario.rol === 'Administrador'
+            if caps.gestionar
               th(scope='col' style='width: 150px') Acciones
         tbody
           each laboratorio in laboratorios
             tr
               td= laboratorio.nombre
               td= laboratorio.nacionalidad
-              if usuario.rol === 'Administrador'
+              if caps.gestionar
                 td
                   .d-flex.gap-2
                     a.btn.btn-sm.btn-outline-primary.editar-laboratorio(data-id=laboratorio.id)

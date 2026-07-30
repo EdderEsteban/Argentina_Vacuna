@@ -15,6 +15,10 @@ block content
           i.bi.bi-capsule.me-2
           | Lote a Descartar
         .card-body
+          .form-check.mb-1
+            input.form-check-input#soloVencidos(type='checkbox' checked)
+            label.form-check-label(for='soloVencidos') Mostrar solo lotes vencidos
+          small#contadorLotes.form-text.text-muted.d-block.mb-3
           .form-floating.mb-3
             select.form-select#id_lote(name='id_lote' required)
               option(value='' disabled selected) -- Seleccione un lote --
@@ -23,7 +27,8 @@ block content
                   value=lote.id
                   data-tipo=(lote.vacunas && lote.vacunas.length > 0) ? lote.vacunas[0].tipo : ''
                   data-comercial=(lote.vacunas && lote.vacunas.length > 0) ? lote.vacunas[0].nombre_comercial : ''
-                )= lote.num_lote
+                  data-vencido=(lote.vencido ? 'true' : 'false')
+                )= lote.vencido ? (lote.num_lote + '  ⚠ VENCIDO') : lote.num_lote
             label(for='id_lote') Lote-Proveedor
 
           //- Info vacuna (auto-completado al seleccionar lote)

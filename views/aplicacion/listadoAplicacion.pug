@@ -8,7 +8,7 @@ block content
         i.bi.bi-capsule
         | Aplicaciones
       .page-actions
-        if usuario.rol === 'Enfermero'
+        if caps.vacunar
           a.btn.btn-primary(href='/nuevaaplicacion')
             i.bi.bi-plus-circle.me-2
             | Registrar
@@ -52,7 +52,7 @@ block content
                 td
                   code= a.lote ? a.lote.num_lote : '—'
                 td
-                  span.badge.rounded-pill(style='background:rgba(26,86,219,0.1);color:var(--av-blue)')= (a.lote && a.lote.vacunas && a.lote.vacunas.length > 0) ? a.lote.vacunas[0].tipo : '—'
+                  span.badge.rounded-pill(style='background:var(--av-accent-soft);color:var(--av-accent-deep)')= (a.lote && a.lote.vacunas && a.lote.vacunas.length > 0) ? a.lote.vacunas[0].tipo : '—'
                 td.text-muted.small= a.ubicacion ? a.ubicacion.nombre : '—'
                 td.text-muted.small= a.usuario ? `${a.usuario.nombre} ${a.usuario.apellido}` : '—'
 

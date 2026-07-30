@@ -6,7 +6,7 @@ block content
       i.bi.bi-trash.me-2.text-danger
       | Listado de Descartes
 
-    if usuario.rol === 'Administrador'
+    if caps.descartar
       .mb-3
         a.btn.btn-danger(href='/nuevodescarte')
           i.bi.bi-plus-circle.me-2

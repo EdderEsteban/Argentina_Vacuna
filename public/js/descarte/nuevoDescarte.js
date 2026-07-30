@@ -1,4 +1,4 @@
-// Inicialización de Select2 sobre el select de lote y re-disparo del change nativo
+// Inicialización de Select2 sobre el select de lote
 $(document).ready(function () {
   $('#id_lote').select2({
     placeholder: '',
@@ -10,6 +10,55 @@ $(document).ready(function () {
     const event = new Event('change', { bubbles: true });
     document.getElementById('id_lote').dispatchEvent(event);
   });
+
+  // Copia de las opciones del select para poder filtrarlas
+  const selLote = document.getElementById('id_lote');
+  const snapshot = Array.from(selLote.options).map(o => ({
+    value: o.value, text: o.text, placeholder: (o.value === ''),
+    tipo: o.dataset.tipo || '', comercial: o.dataset.comercial || '',
+    vencido: o.dataset.vencido === 'true'
+  }));
+  const chkVencidos = document.getElementById('soloVencidos');
+  const contadorLotes = document.getElementById('contadorLotes');
+
+  // Función para mostrar solo los lotes vencidos o todos los lotes
+  function aplicarFiltroLotes() {
+    const only = chkVencidos.checked;
+    let visibles = 0;
+    selLote.innerHTML = '';
+    snapshot.forEach(o => {
+      if (!o.placeholder && only && !o.vencido) return;
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.text;
+      if (o.placeholder) { opt.disabled = true; opt.selected = true; }
+      opt.dataset.tipo = o.tipo;
+      opt.dataset.comercial = o.comercial;
+      opt.dataset.vencido = o.vencido;
+      selLote.appendChild(opt);
+      if (!o.placeholder) visibles++;
+    });
+
+    if (contadorLotes) {
+      contadorLotes.textContent = only
+        ? `${visibles} lote(s) vencido(s) con stock. Destildá para ver también los vigentes.`
+        : `${visibles} lote(s) con stock (vencidos y vigentes).`;
+    }
+
+    // Limpiar ubicación y cantidad porque el lote quedó sin selección
+    $('#id_lote').val('').trigger('change.select2');
+    document.getElementById('infoVacuna').classList.add('d-none');
+    selectUbicacion.innerHTML = '<option value="" disabled selected>-- Primero seleccione un lote --</option>';
+    selectUbicacion.disabled = true;
+    inputCantidad.value = '';
+    inputCantidad.disabled = true;
+    stockInfo.textContent = '';
+  }
+
+  if (chkVencidos) {
+    chkVencidos.addEventListener('change', aplicarFiltroLotes);
+    aplicarFiltroLotes();
+  }
 });
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

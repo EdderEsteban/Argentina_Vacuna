@@ -1,5 +1,6 @@
-const { Laboratorio, Lote } = require('../models');
+const { Laboratorio, Lote, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { idsEnScope } = require('../modules/permisos');
 
 const labo = {}
 
@@ -10,8 +11,16 @@ labo.listar = async (req, res) => {
     const limit = 10; // Laboratorios por página
     const offset = (page - 1) * limit;
 
+    // Fuera del nivel nacional, solo laboratorios con lotes en el ámbito del usuario
+    const where = { deletedAt: null };
+    const scopeIds = await idsEnScope(req.session.usuario);
+    if (scopeIds !== null) {
+      const idsList = scopeIds.length ? scopeIds.join(',') : 'NULL';
+      where.id = { [Op.in]: sequelize.literal(`(SELECT DISTINCT id_laboratorio FROM lotes WHERE deletedAt IS NULL AND id IN (SELECT id_lote FROM stocks WHERE id_ubicacion IN (${idsList})))`) };
+    }
+
     const { count, rows: laboratorios } = await Laboratorio.findAndCountAll({
-      where: { deletedAt: null },
+      where,
       order: [['id', 'ASC']],
       limit,
       offset

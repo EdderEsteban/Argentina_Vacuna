@@ -1,13 +1,6 @@
 'use strict';
 
-// El Reporte 2 listaba "vencidas" como COUNT de filas de la tabla vacunas
-// (1 fila por lote) → contaba LOTES vencidos, no DOSIS. El resto de las columnas
-// (en_nacion, en_centros, aplicadas, descartadas) están en dosis, así que la
-// columna mezclaba unidades. El PDF pide "cuántas dosis se encuentran vencidas".
-//
-// Esta migration recrea sp_reporte2 para que "vencidas" sume las dosis en stock
-// de lotes cuyo fecha_venc ya pasó (consistente con el Reporte 5 y con el resto
-// de las columnas).
+// Corrige el Reporte 2 para que la columna de vencidas cuente dosis y no lotes
 
 module.exports = {
   async up(queryInterface) {
@@ -68,7 +61,7 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    // Revierte a la versión que contaba filas de vacuna (lotes) como vencidas
+    // Versión anterior del procedimiento, para el down()
     await queryInterface.sequelize.query('DROP PROCEDURE IF EXISTS sp_reporte2_lotes_por_tipo');
     await queryInterface.sequelize.query(`
       CREATE PROCEDURE sp_reporte2_lotes_por_tipo(IN p_ubicacion_id INT)

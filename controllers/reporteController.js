@@ -1,4 +1,5 @@
 const { sequelize } = require('../models');
+const { alcanceDatos } = require('../modules/permisos');
 
 const reporte = {};
 
@@ -9,100 +10,45 @@ function extractRows(raw) {
   return raw[0].filter(r => r && typeof r === 'object' && !('affectedRows' in r));
 }
 
-// Determina el alcance de visualización del usuario:
-//  - esNC: si el usuario ve datos a nivel nacional (Admin o ubicacionActual de tipo Deposito Nacional)
-//  - ubicacionSeleccionada: id de la ubicación cuando hay que filtrar; null si ve todo
-//  - mostrarSelector: si la vista debe mostrar el dropdown
-//  - ubicacionesDisponibles: lista de ubicaciones del usuario para el selector
+// Función para obtener los parámetros de alcance que reciben los procedimientos
 function getAlcance(req) {
   const usuario = req.session.usuario;
-  const ubicacionActual = usuario.ubicacionActual || null;
-  const ubicaciones = (usuario.ubicaciones || []).map(u => ({
-    id: u.id, nombre: u.nombre, tipo: u.tipo
-  }));
-  const qsId = req.query.ubicacion ? parseInt(req.query.ubicacion, 10) : null;
-
-  // Administrador: ve todo. Opcionalmente puede filtrar pasando ?ubicacion=
-  if (usuario.rol === 'Administrador') {
-    return {
-      esNC: true,
-      esAdmin: true,
-      ubicacionSeleccionada: Number.isInteger(qsId) ? qsId : null,
-      mostrarSelector: false,
-      ubicacionesDisponibles: ubicaciones
-    };
-  }
-
-  // Nivel Central: ve todo, no se filtra
-  if (ubicacionActual && ubicacionActual.tipo === 'Deposito Nacional') {
-    return {
-      esNC: true,
-      esAdmin: false,
-      ubicacionSeleccionada: null,
-      mostrarSelector: false,
-      ubicacionesDisponibles: ubicaciones
-    };
-  }
-
-  // No NC: filtra siempre por una ubicación
-  let idSel;
-  if (ubicaciones.length <= 1) {
-    idSel = ubicaciones[0]?.id ?? ubicacionActual?.id ?? null;
-    return {
-      esNC: false,
-      esAdmin: false,
-      ubicacionSeleccionada: idSel,
-      mostrarSelector: false,
-      ubicacionesDisponibles: ubicaciones
-    };
-  }
-
-  // Múltiples ubicaciones: validar ?ubicacion= o usar ubicacionActual como default
-  const esValida = ubicaciones.some(u => u.id === qsId);
-  idSel = esValida ? qsId : (ubicacionActual?.id ?? ubicaciones[0].id);
+  const a = alcanceDatos(usuario);
   return {
-    esNC: false,
-    esAdmin: false,
-    ubicacionSeleccionada: idSel,
-    mostrarSelector: true,
-    ubicacionesDisponibles: ubicaciones
+    nivel: a.nivel,
+    esNacional: a.global,
+    esProvincial: a.nivel === 'provincial',
+    esCentro: a.nivel === 'centro',
+    p_ubicacion: a.idUbicacion,                        // sólo centro
+    p_provincia: a.idUbicacion ? null : a.idProvincia, // sólo provincia
+    ubicacionActual: usuario.ubicacionActual || null,
   };
 }
 
-// Construye un query string para preservar el filtro en links de la vista
-function paramUbicacion(alcance) {
-  return alcance.ubicacionSeleccionada
-    ? `&ubicacion=${alcance.ubicacionSeleccionada}`
-    : '';
-}
-
-// Index — renderiza el hub de reportes con flags de visibilidad por rol/ubicación
+// Ruta para el índice de reportes
 reporte.index = (req, res) => {
   const alcance = getAlcance(req);
-  // Reporte 3 (Stock por Ubicación): si NO es NC y rol === Administrativo → ocultar
-  const esAdministrativo = req.session.usuario.rol === 'Administrativo';
-  const mostrarReporte3 = alcance.esNC || !esAdministrativo;
   res.render('reportes/index', {
     alcance,
-    mostrarReporte3
+    mostrarReporte1: !alcance.esCentro,
+    mostrarReporte3: true,
   });
 };
 
-// Reporte 1: Compras por laboratorio (con filtro de fechas y ubicación)
+// Reporte 1: Compras por laboratorio
 reporte.reporte1 = async (req, res) => {
   const alcance = getAlcance(req);
+  if (alcance.esCentro) {
+    return res.status(403).render('error403', { usuario: req.session.usuario });
+  }
   const { fecha_desde, fecha_hasta } = req.query;
   let resultados = null;
 
   if (fecha_desde && fecha_hasta) {
     try {
       const raw = await sequelize.query(
-        'CALL sp_reporte1_compras_por_laboratorio(:desde, :hasta, :ubic)',
-        { replacements: {
-            desde: fecha_desde,
-            hasta: fecha_hasta,
-            ubic: alcance.ubicacionSeleccionada
-          } }
+        'CALL sp_reporte1_compras_por_laboratorio(:desde, :hasta, :ubic, :prov)',
+        { replacements: { desde: fecha_desde, hasta: fecha_hasta, ubic: alcance.p_ubicacion, prov: alcance.p_provincia } }
       );
       resultados = extractRows(raw);
     } catch (error) {
@@ -116,43 +62,36 @@ reporte.reporte1 = async (req, res) => {
     fecha_desde: fecha_desde || '',
     fecha_hasta: fecha_hasta || '',
     alcance,
-    paramUbicacion: paramUbicacion(alcance)
   });
 };
 
-// Reporte 2: Lotes por tipo de vacuna
+// Reporte 2: Trazabilidad por lote-proveedor
 reporte.reporte2 = async (req, res) => {
   const alcance = getAlcance(req);
   try {
     const raw = await sequelize.query(
-      'CALL sp_reporte2_lotes_por_tipo(:ubic)',
-      { replacements: { ubic: alcance.ubicacionSeleccionada } }
+      'CALL sp_reporte2_lotes_por_tipo(:ubic, :prov)',
+      { replacements: { ubic: alcance.p_ubicacion, prov: alcance.p_provincia } }
     );
-    res.render('reportes/reporte2', {
-      resultados: extractRows(raw),
-      alcance
-    });
+    res.render('reportes/reporte2', { resultados: extractRows(raw), alcance });
   } catch (error) {
     console.error('Error reporte 2:', error.message);
     res.status(500).render('error500');
   }
 };
 
-// Reporte 3: Stock por (provincia | ubicación)
+// Reporte 3: Stock por provincia o vacunatorio
 reporte.reporte3 = async (req, res) => {
   const alcance = getAlcance(req);
-  // Bloqueo: Administrativo no-NC no puede ver este reporte
-  if (!alcance.esNC && req.session.usuario.rol === 'Administrativo') {
-    return res.redirect('/403');
-  }
   try {
     const raw = await sequelize.query(
-      'CALL sp_reporte3_stock_por_provincia(:ubic)',
-      { replacements: { ubic: alcance.ubicacionSeleccionada } }
+      'CALL sp_reporte3_stock_por_provincia(:ubic, :prov)',
+      { replacements: { ubic: alcance.p_ubicacion, prov: alcance.p_provincia } }
     );
     res.render('reportes/reporte3', {
       resultados: extractRows(raw),
-      alcance
+      alcance,
+      tituloScope: alcance.esCentro ? 'Stock en Vacunatorio' : 'Stock por Provincia',
     });
   } catch (error) {
     console.error('Error reporte 3:', error.message);
@@ -165,13 +104,10 @@ reporte.reporte4 = async (req, res) => {
   const alcance = getAlcance(req);
   try {
     const raw = await sequelize.query(
-      'CALL sp_reporte4_vacunados_vencidas(:ubic)',
-      { replacements: { ubic: alcance.ubicacionSeleccionada } }
+      'CALL sp_reporte4_vacunados_vencidas(:ubic, :prov)',
+      { replacements: { ubic: alcance.p_ubicacion, prov: alcance.p_provincia } }
     );
-    res.render('reportes/reporte4', {
-      resultados: extractRows(raw),
-      alcance
-    });
+    res.render('reportes/reporte4', { resultados: extractRows(raw), alcance });
   } catch (error) {
     console.error('Error reporte 4:', error.message);
     res.status(500).render('error500');
@@ -183,13 +119,10 @@ reporte.reporte5 = async (req, res) => {
   const alcance = getAlcance(req);
   try {
     const raw = await sequelize.query(
-      'CALL sp_reporte5_vencidas_no_descartadas(:ubic)',
-      { replacements: { ubic: alcance.ubicacionSeleccionada } }
+      'CALL sp_reporte5_vencidas_no_descartadas(:ubic, :prov)',
+      { replacements: { ubic: alcance.p_ubicacion, prov: alcance.p_provincia } }
     );
-    res.render('reportes/reporte5', {
-      resultados: extractRows(raw),
-      alcance
-    });
+    res.render('reportes/reporte5', { resultados: extractRows(raw), alcance });
   } catch (error) {
     console.error('Error reporte 5:', error.message);
     res.status(500).render('error500');
@@ -201,13 +134,10 @@ reporte.reporte6 = async (req, res) => {
   const alcance = getAlcance(req);
   try {
     const raw = await sequelize.query(
-      'CALL sp_reporte6_personas_vacunadas(:ubic)',
-      { replacements: { ubic: alcance.ubicacionSeleccionada } }
+      'CALL sp_reporte6_personas_vacunadas(:ubic, :prov)',
+      { replacements: { ubic: alcance.p_ubicacion, prov: alcance.p_provincia } }
     );
-    res.render('reportes/reporte6', {
-      resultados: extractRows(raw),
-      alcance
-    });
+    res.render('reportes/reporte6', { resultados: extractRows(raw), alcance });
   } catch (error) {
     console.error('Error reporte 6:', error.message);
     res.status(500).render('error500');

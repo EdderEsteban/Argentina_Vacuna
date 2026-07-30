@@ -1,6 +1,6 @@
 'use strict';
 
-// Crea las funciones fn_stock_disponible_lote y fn_dias_para_vencer
+// Recrea las funciones fn_stock_disponible_lote y fn_dias_para_vencer
 
 module.exports = {
   async up(queryInterface) {

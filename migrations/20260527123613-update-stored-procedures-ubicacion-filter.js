@@ -1,14 +1,7 @@
 'use strict';
 
-// Actualiza los 6 Stored Procedures de reportes para aceptar un parámetro
-// opcional `p_ubicacion_id INT`. Si es NULL, el SP devuelve datos globales
-// (comportamiento "Nivel Central"). Si es un id, filtra los datos al alcance
-// de esa ubicación específica.
-//
-// Reporte 3 se renombra conceptualmente a "Stock por Ubicación" — el SP sigue
-// llamándose igual por compatibilidad con el resto del proyecto, pero su
-// salida cuando se filtra por ubicación muestra el stock de esa única
-// ubicación (en lugar de agregaciones por provincia).
+// Agrega el parámetro opcional p_ubicacion_id a los 6 Stored Procedures de
+// reportes. Con NULL devuelven datos de todo el país
 
 module.exports = {
   async up(queryInterface) {
@@ -238,7 +231,7 @@ module.exports = {
     `);
   },
 
-  // Revierte a las versiones sin parámetro de ubicación
+  // Versiones anteriores sin parámetro de ubicación, para el down()
   async down(queryInterface) {
     await queryInterface.sequelize.query(`DROP PROCEDURE IF EXISTS sp_reporte1_compras_por_laboratorio`);
     await queryInterface.sequelize.query(`

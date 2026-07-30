@@ -6,7 +6,7 @@ block content
       h2.fw-bold
         i.bi.bi-arrow-left-right.me-2
         | Movimientos de Lotes
-      if usuario.rol === 'Administrador' || usuario.rol === 'Administrativo'
+      if caps.distribuir
         a.btn.btn-primary(href='/nuevomovimiento')
           i.bi.bi-plus-circle.me-2
           | Nuevo Movimiento
@@ -60,7 +60,7 @@ block content
                       span.text-muted.small Interno
                   td= new Date(m.fecha_movimiento).toLocaleDateString('es-AR')
                   td.text-center
-                    if m.transporte && !m.fecha_recepcion && (usuario.rol === 'Administrador' || usuario.rol === 'Administrativo' || usuario.rol === 'Enfermero')
+                    if m.transporte && !m.fecha_recepcion && caps.recibir
                       button.btn.btn-sm.btn-success.btn-recepcion(data-id=m.id data-lote=(m.lote ? m.lote.num_lote : '') data-origen=(m.origen ? m.origen.nombre : 'Depósito Nacional') data-destino=(m.destino ? m.destino.nombre : ''))
                         i.bi.bi-check-circle-fill.me-1
                         | Confirmar recepción

@@ -29,7 +29,7 @@ app.use(cookieParser());
 const sessionStore = new SequelizeStore({ db: sequelize });
 
 app.use(session({
-  secret: 'colgate de esta',
+  secret: 'colgate de esta', // Cambiar a una cadena secreta más segura en producción
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
@@ -48,10 +48,12 @@ app.use(passport.session());
 const csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
 
-// Pasar CSRF y usuario a todas las vistas
+// Variables disponibles en todas las vistas
+const { capacidades } = require('./modules/permisos');
 app.use((req, res, next) => {
   res.locals.csrfToken = req.csrfToken();
   res.locals.usuario = req.session?.usuario || null;
+  res.locals.caps = req.session?.usuario ? capacidades(req.session.usuario) : null;
   next();
 });
 
